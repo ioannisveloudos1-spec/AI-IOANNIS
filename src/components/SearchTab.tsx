@@ -1,0 +1,1332 @@
+import React, { useState, useMemo } from "react";
+import {
+  analyzeGreekText,
+  numberToGreekNumeral,
+  cleanAndNormalizePolytonic,
+  getAlphabetAndTextLetterBreakdown,
+  calculateWordIsopsephy,
+  getMathematicalProperties,
+} from "../utils/isopsephy";
+import { PRESET_TEXTS } from "../data/presets";
+import { SavedIsopsephyItem, WordIsopsephy, PhraseMatch } from "../types";
+import {
+  Search,
+  Sparkles,
+  Bookmark,
+  Check,
+  Trash2,
+  BookOpen,
+  Layers,
+  Filter,
+  Eye,
+  Copy,
+  X,
+  List,
+  SlidersHorizontal,
+  Maximize2,
+  Minimize2,
+  Type,
+  Hash,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Table,
+  AlignLeft,
+  GraduationCap,
+} from "lucide-react";
+
+interface SearchTabProps {
+  onSaveItem: (item: Omit<SavedIsopsephyItem, "id" | "createdAt">) => void;
+  onOpenAiModal: (text: string, number: number, words: string[]) => void;
+  savedItems: SavedIsopsephyItem[];
+}
+
+export const SearchTab: React.FC<SearchTabProps> = ({
+  onSaveItem,
+  onOpenAiModal,
+  savedItems,
+}) => {
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("delphi-pythagorean-147");
+  const [inputText, setInputText] = useState<string>(PRESET_TEXTS[0].text);
+  const [isExpandedTextarea, setIsExpandedTextarea] = useState<boolean>(false);
+  const [showExplanationSection, setShowExplanationSection] = useState<boolean>(true);
+
+  // Search Targets
+  const [wordQuery, setWordQuery] = useState<string>("");
+  const [singleWordTarget, setSingleWordTarget] = useState<string>("888");
+  const [phraseTarget, setPhraseTarget] = useState<string>("888");
+  const [phraseLengthMin, setPhraseLengthMin] = useState<number>(3);
+  const [phraseLengthMax, setPhraseLengthMax] = useState<number>(6);
+  const [minRange, setMinRange] = useState<string>("");
+  const [maxRange, setMaxRange] = useState<string>("");
+
+  // Active view tab inside search
+  const [viewMode, setViewMode] = useState<"matches" | "interactive-flow" | "interactive-list" | "lexicon">("interactive-list");
+  const [dismissedMatchIds, setDismissedMatchIds] = useState<Set<string>>(new Set());
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Lexicon sort state
+  const [lexiconSort, setLexiconSort] = useState<"freq" | "alpha" | "val-desc" | "val-asc">("freq");
+  const [lexiconSearch, setLexiconSearch] = useState<string>("");
+
+  // Selected word for interactive popup
+  const [selectedWordObj, setSelectedWordObj] = useState<WordIsopsephy | null>(null);
+
+  const singleTargetNum = singleWordTarget ? parseInt(singleWordTarget, 10) : undefined;
+  const phraseTargetNum = phraseTarget ? parseInt(phraseTarget, 10) : undefined;
+  const minRangeNum = minRange ? parseInt(minRange, 10) : undefined;
+  const maxRangeNum = maxRange ? parseInt(maxRange, 10) : undefined;
+
+  // Run analysis
+  const analysis = useMemo(() => {
+    return analyzeGreekText(inputText, {
+      singleWordTarget: singleTargetNum,
+      wordSearchQuery: wordQuery,
+      phraseTarget: phraseTargetNum,
+      phraseLengthMin,
+      phraseLengthMax,
+      minRange: minRangeNum,
+      maxRange: maxRangeNum,
+    });
+  }, [inputText, singleTargetNum, wordQuery, phraseTargetNum, phraseLengthMin, phraseLengthMax, minRangeNum, maxRangeNum]);
+
+  // Alphabet & Text breakdown calculation
+  const letterBreakdown = useMemo(() => {
+    return getAlphabetAndTextLetterBreakdown(inputText);
+  }, [inputText]);
+
+  const handleSelectPreset = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const pId = e.target.value;
+    setSelectedPresetId(pId);
+    const found = PRESET_TEXTS.find((p) => p.id === pId);
+    if (found) {
+      setInputText(cleanAndNormalizePolytonic(found.text));
+      if (found.suggestedTargets && found.suggestedTargets.length > 0) {
+        setSingleWordTarget(found.suggestedTargets[0].toString());
+        setPhraseTarget(found.suggestedTargets[0].toString());
+      }
+      setDismissedMatchIds(new Set());
+      setSelectedWordObj(null);
+    }
+  };
+
+  const handleDismissMatch = (id: string) => {
+    setDismissedMatchIds((prev) => new Set([...prev, id]));
+  };
+
+  const handleSaveWordMatch = (wordObj: WordIsopsephy) => {
+    const greekNum = numberToGreekNumeral(wordObj.value);
+    onSaveItem({
+      text: wordObj.rawWord,
+      normalized: wordObj.normalizedWord,
+      value: wordObj.value,
+      root: wordObj.root,
+      greekNumeral: greekNum || `${wordObj.value}`,
+      isPhrase: false,
+      wordCount: 1,
+      sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
+      notes: `Αποθηκευμένη λέξη (Ισοψηφία: ${wordObj.value}, Πυθμένας: ${wordObj.root})`,
+      category: "Μεμονωμένη Λέξη",
+    });
+  };
+
+  const handleSavePhraseMatch = (phraseObj: PhraseMatch) => {
+    const greekNum = numberToGreekNumeral(phraseObj.value);
+    onSaveItem({
+      text: phraseObj.phrase,
+      normalized: phraseObj.phrase.toUpperCase(),
+      value: phraseObj.value,
+      root: phraseObj.root,
+      greekNumeral: greekNum || `${phraseObj.value}`,
+      isPhrase: true,
+      wordCount: phraseObj.wordCount,
+      sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
+      notes: `Συνδυασμός ${phraseObj.wordCount} λέξεων: ${phraseObj.words.map((w) => `${w.rawWord}(${w.value})`).join(" + ")} = ${phraseObj.value}`,
+      category: "Συνδυασμός Φράσεων",
+    });
+  };
+
+  const handleCopyText = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // Quick helper to set exact N-word search
+  const handleSetExactWordLength = (len: number) => {
+    setPhraseLengthMin(len);
+    setPhraseLengthMax(len);
+  };
+
+  const handleSetWordRange = (min: number, max: number) => {
+    setPhraseLengthMin(min);
+    setPhraseLengthMax(max);
+  };
+
+  // Filtered phrase matches (ignoring dismissed)
+  const activePhraseMatches = analysis.phraseMatches.filter(
+    (m) => !dismissedMatchIds.has(m.id)
+  );
+
+  const activeSingleMatches = analysis.singleMatches.filter(
+    (w) => !dismissedMatchIds.has(`single-${w.indexInText}-${w.value}`)
+  );
+
+  const totalFoundMatches = activeSingleMatches.length + activePhraseMatches.length;
+
+  // Lexicon items array
+  const lexiconList = useMemo(() => {
+    const items = Array.from(analysis.uniqueWordsMap.entries()).map(([norm, data]) => ({
+      normalized: norm,
+      raw: data.raw,
+      count: data.count,
+      value: data.value,
+      root: data.root,
+    }));
+
+    // Filter by search
+    const filtered = items.filter(
+      (item) =>
+        item.raw.toLowerCase().includes(lexiconSearch.toLowerCase()) ||
+        item.normalized.toLowerCase().includes(lexiconSearch.toLowerCase()) ||
+        item.value.toString().includes(lexiconSearch)
+    );
+
+    // Sort
+    if (lexiconSort === "freq") {
+      return filtered.sort((a, b) => b.count - a.count || b.value - a.value);
+    } else if (lexiconSort === "alpha") {
+      return filtered.sort((a, b) => a.normalized.localeCompare(b.normalized, "el"));
+    } else if (lexiconSort === "val-desc") {
+      return filtered.sort((a, b) => b.value - a.value);
+    } else {
+      return filtered.sort((a, b) => a.value - b.value);
+    }
+  }, [analysis.uniqueWordsMap, lexiconSearch, lexiconSort]);
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto">
+      
+      {/* Top Header Card */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#2d251e] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
+            <span>Αναζήτηση & Ανάλυση Μεγάλων Κειμένων</span>
+            <span className="text-xs px-2 py-0.5 rounded bg-[#2a2219] text-[#c89b3c] border border-[#4a3a29] font-mono">
+              Στόχοι & Συνδυασμοί 2-6 Λέξεων
+            </span>
+          </h2>
+          <p className="text-xs text-[#a69680] mt-0.5 font-serif">
+            Εκτενής ανάλυση κλασικών κειμένων: Διαδραστική προβολή ανά σειρά, υπολογισμός λεξαρίθμων και αυτόματο μαρκάρισμα στόχων.
+          </p>
+        </div>
+
+        {/* Preset Selector */}
+        <div className="flex items-center gap-2 bg-[#12100e] p-2 rounded-xl border border-[#2d251e] self-start md:self-auto">
+          <BookOpen className="w-4 h-4 text-[#c89b3c]" />
+          <label htmlFor="select-preset-text" className="text-xs text-[#8c7e6c] font-serif whitespace-nowrap">
+            Έτοιμα Κείμενα:
+          </label>
+          <select
+            id="select-preset-text"
+            value={selectedPresetId}
+            onChange={handleSelectPreset}
+            className="bg-[#1c1813] border border-[#3d3224] rounded-lg px-2.5 py-1 text-xs font-serif text-[#f5ecd8] focus:border-[#c89b3c] outline-none cursor-pointer max-w-[230px] truncate"
+          >
+            {PRESET_TEXTS.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Large Textarea Area for Full Text Input */}
+      <div className="rounded-2xl bg-[#161310] border border-[#2d251e] p-5 space-y-4 shadow-xl shadow-black/30">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <label htmlFor="polytonic-textarea-input" className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold flex items-center gap-1.5">
+              <Type className="w-4 h-4 text-[#c89b3c]" />
+              <span>Πεδίο Κειμένου προς Ανάλυση & Αναζήτηση</span>
+            </label>
+            <span className="text-[10px] px-2 py-0.5 rounded bg-[#231d16] text-[#a69680] font-sans border border-[#332a20]">
+              Αυθεντικό Πολυτονικό / Μονοτονικό
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-mono text-[#8c7e6c]">
+            <span className="px-2 py-0.5 rounded bg-[#100e0c] border border-[#261f18] text-[#d6c7b2]">
+              {analysis.stats.totalWords} λέξεις
+            </span>
+            <span>•</span>
+            <span className="px-2 py-0.5 rounded bg-[#100e0c] border border-[#261f18] text-[#d6c7b2]">
+              {analysis.stats.totalChars} χαρακτήρες
+            </span>
+
+            <button
+              onClick={() => setIsExpandedTextarea(!isExpandedTextarea)}
+              className="p-1.5 rounded-lg bg-[#201a14] hover:bg-[#2e251c] text-[#e6c670] border border-[#3a2d1e] transition-colors ml-1"
+              title={isExpandedTextarea ? "Σύμπτυξη πεδίου" : "Μεγέθυνση πεδίου κειμένου"}
+            >
+              {isExpandedTextarea ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            </button>
+
+            <button
+              onClick={() => setInputText("")}
+              className="p-1.5 rounded-lg bg-[#201a14] hover:bg-red-950/50 text-[#8c7e6c] hover:text-red-300 border border-[#3a2d1e] hover:border-red-800/50 transition-colors"
+              title="Εκκαθάριση κειμένου"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Large Text Area */}
+        <div className="relative">
+          <textarea
+            id="polytonic-textarea-input"
+            value={inputText}
+            onChange={(e) => setInputText(cleanAndNormalizePolytonic(e.target.value))}
+            rows={isExpandedTextarea ? 18 : 8}
+            placeholder="Επικολλήστε ή πληκτρολογήστε ολόκληρο αρχαίο ή νεότερο ελληνικό κείμενο, κεφάλαια, ψαλμούς ή παραγράφους..."
+            className="w-full p-4 sm:p-5 bg-[#0e0c0a] border border-[#382d20] focus:border-[#c89b3c] focus:ring-1 focus:ring-[#c89b3c]/25 rounded-xl text-sm sm:text-base font-serif text-[#f5ecd8] placeholder-[#5c5144] resize-y outline-none transition-all leading-relaxed gold-scrollbar"
+          />
+          <div className="absolute bottom-3 right-3 text-[10px] font-sans text-[#706251] bg-[#14120e]/80 px-2 py-0.5 rounded border border-[#2d2419] pointer-events-none">
+            Σύρετε τη δεξιά κάτω γωνία για αυξομείωση ύψους
+          </div>
+        </div>
+
+        {/* =========================================================================
+            ΕΠΕΞΗΓΗΣΗ ΛΕΞΑΡΙΘΜΟΥ & ΣΥΝΟΛΙΚΟ ΑΘΡΟΙΣΜΑ 27 ΓΡΑΜΜΑΤΩΝ (4995)
+            ========================================================================= */}
+        <div className="rounded-xl bg-[#12100e] border border-[#3a2e20] overflow-hidden transition-all">
+          <div
+            onClick={() => setShowExplanationSection(!showExplanationSection)}
+            className="p-3.5 sm:p-4 bg-[#181410] border-b border-[#2d2318] flex items-center justify-between cursor-pointer hover:bg-[#201a14] transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <GraduationCap className="w-4 h-4 text-[#c89b3c]" />
+              <div>
+                <h3 className="text-xs sm:text-sm font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
+                  <span>Επεξήγηση Λεξαρίθμου & Αριθμητικές Αξίες Γραμμάτων Επιλεγμένου Κειμένου</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#282015] text-[#e6c670] border border-[#4a3924]">
+                    Σύνολο 27 Γραμμάτων = 4.995
+                  </span>
+                </h3>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-[#8c7e6c] font-serif hidden sm:inline">
+                {showExplanationSection ? "Απόκρυψη επεξήγησης" : "Προβολή επεξήγησης"}
+              </span>
+              {showExplanationSection ? (
+                <ChevronUp className="w-4 h-4 text-[#c89b3c]" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-[#c89b3c]" />
+              )}
+            </div>
+          </div>
+
+          {showExplanationSection && (
+            <div className="p-4 sm:p-5 space-y-5 text-xs font-serif leading-relaxed text-[#c4b5a2] animate-fadeIn">
+              
+              {/* Core Guide Explanation */}
+              <div className="p-4 rounded-xl bg-[#161310] border border-[#2b2219] space-y-2">
+                <h4 className="text-sm font-serif font-bold text-[#e6c670] flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-[#c89b3c]" />
+                  <span>Η Αρχή της Ισοψηφίας & το Πλήρες Ιωνικό Σύστημα των 27 Γραμμάτων</span>
+                </h4>
+                <p>
+                  Στην αρχαία ελληνική επιστήμη και φιλοσοφία, η <strong>Ισοψηφία</strong> (υπολογισμός λεξαρίθμων) βασίζεται στην αντιστοίχιση κάθε γράμματος του αλφαβήτου σε μία ακριβή αριθμητική αξία. Το σύστημα της <strong>Ιωνικής Αρίθμησης</strong> συγκροτείται από ακριβώς <strong>27 ιερά ψηφία</strong>, χωρισμένα σε τρεις τέλειες εννεάδες:
+                </p>
+
+                {/* 3 Enneads Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                  <div className="p-3 rounded-lg bg-[#0e0c0a] border border-[#261f18] space-y-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#f5ecd8]">
+                      <span>9 Μονάδες (1 - 9)</span>
+                      <span className="text-[#e6c670] font-mono">Σ = 45</span>
+                    </div>
+                    <p className="text-[11px] font-mono text-[#8c7e6c]">
+                      Α=1, Β=2, Γ=3, Δ=4, Ε=5, <strong>Ϛ/Ϝ=6</strong>, Ζ=7, Η=8, Θ=9
+                    </p>
+                    <div className="text-[10px] text-[#706251]">
+                      1+2+3+4+5+6+7+8+9 = <strong>45</strong> (Τετρακτύς & Πυθμένας: 9)
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-[#0e0c0a] border border-[#261f18] space-y-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#f5ecd8]">
+                      <span>9 Δεκάδες (10 - 90)</span>
+                      <span className="text-[#e6c670] font-mono">Σ = 450</span>
+                    </div>
+                    <p className="text-[11px] font-mono text-[#8c7e6c]">
+                      Ι=10, Κ=20, Λ=30, Μ=40, Ν=50, Ξ=60, Ο=70, Π=80, <strong>Ϟ=90</strong>
+                    </p>
+                    <div className="text-[10px] text-[#706251]">
+                      10+20+...+90 = <strong>450</strong> (10 × 45)
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-[#0e0c0a] border border-[#261f18] space-y-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#f5ecd8]">
+                      <span>9 Εκατοντάδες (100 - 900)</span>
+                      <span className="text-[#e6c670] font-mono">Σ = 4.500</span>
+                    </div>
+                    <p className="text-[11px] font-mono text-[#8c7e6c]">
+                      Ρ=100, Σ=200, Τ=300, Υ=400, Φ=500, Χ=600, Ψ=700, Ω=800, <strong>Ϡ=900</strong>
+                    </p>
+                    <div className="text-[10px] text-[#706251]">
+                      100+200+...+900 = <strong>4.500</strong> (100 × 45)
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grand Total Highlight */}
+                <div className="p-3 rounded-lg bg-[#1a1510] border border-[#c89b3c]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-serif font-bold text-[#f5ecd8]">
+                      Συνολικό Άθροισμα των 27 Γραμμάτων:
+                    </span>
+                    <span className="text-base font-mono font-bold text-[#e6c670]">
+                      45 + 450 + 4.500 = 4.995
+                    </span>
+                  </div>
+                  <div className="text-xs font-mono text-[#a69680]">
+                    Ιωνικός: <strong className="text-[#e6c670]">͵δϡϟε´</strong> • Πυθμένας: 4+9+9+5 = 27 → <strong className="text-[#e6c670]">9</strong> (Ιερά Εννεάδα)
+                  </div>
+                </div>
+              </div>
+
+              {/* Letter Breakdown Table of the Selected / Input Text */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold flex items-center gap-1.5">
+                    <Table className="w-3.5 h-3.5 text-[#c89b3c]" />
+                    <span>Κατανομή Αριθμητικών Αξιών Γραμμάτων Επιλεγμένου Κειμένου ({letterBreakdown.presentLetters.length} μοναδικά γράμματα)</span>
+                  </h4>
+                  <span className="text-[11px] font-mono text-[#8c7e6c]">
+                    Σύνολο γραμμάτων: {letterBreakdown.textTotalLetters}
+                  </span>
+                </div>
+
+                {letterBreakdown.presentLetters.length > 0 ? (
+                  <div className="overflow-x-auto rounded-xl border border-[#2a2219] bg-[#0e0c0a]">
+                    <table className="w-full text-left text-xs font-mono">
+                      <thead className="bg-[#181410] border-b border-[#2a2219] text-[#e6c670] font-serif text-[11px]">
+                        <tr>
+                          <th className="p-2.5">Γράμμα</th>
+                          <th className="p-2.5">Όνομα & Κατηγορία</th>
+                          <th className="p-2.5 text-center">Αξία (Ιωνικός)</th>
+                          <th className="p-2.5 text-center">Εμφανίσεις</th>
+                          <th className="p-2.5 text-center">Συνεισφορά στο Άθροισμα</th>
+                          <th className="p-2.5 text-right">% του Λεξαρίθμου</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#1e1812] text-[#d6c7b2]">
+                        {letterBreakdown.presentLetters
+                          .sort((a, b) => b.totalValue - a.totalValue)
+                          .map((item) => (
+                            <tr key={item.char} className="hover:bg-[#16120e] transition-colors">
+                              <td className="p-2.5 font-serif font-bold text-base text-[#f5ecd8]">
+                                {item.char}
+                              </td>
+                              <td className="p-2.5 font-serif text-[11px] text-[#a69680]">
+                                {item.name}{" "}
+                                <span className="text-[10px] text-[#706251]">
+                                  ({item.category === "monas" ? "Μονάδα" : item.category === "dekas" ? "Δεκάδα" : "Εκατοντάδα"})
+                                </span>
+                              </td>
+                              <td className="p-2.5 text-center font-serif text-[#e6c670]">
+                                <strong>{item.value}</strong>{" "}
+                                <span className="text-[10px] text-[#8c7e6c]">({item.greekNumeral})</span>
+                              </td>
+                              <td className="p-2.5 text-center text-[#f5ecd8]">
+                                {item.count} <span className="text-[10px] text-[#706251]">({item.percentageOfLetters.toFixed(1)}%)</span>
+                              </td>
+                              <td className="p-2.5 text-center font-bold text-[#e6c670]">
+                                {item.totalValue.toLocaleString("el-GR")}
+                              </td>
+                              <td className="p-2.5 text-right font-mono text-[#a69680]">
+                                {item.percentageOfSum.toFixed(1)}%
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                      <tfoot className="bg-[#181410] border-t border-[#2a2219] font-serif text-[#e6c670] font-bold">
+                        <tr>
+                          <td colSpan={3} className="p-2.5">
+                            Συνολικό Άθροισμα Επιλεγμένου Κειμένου:
+                          </td>
+                          <td className="p-2.5 text-center font-mono">
+                            {letterBreakdown.textTotalLetters}
+                          </td>
+                          <td className="p-2.5 text-center font-mono text-sm text-[#f5ecd8]">
+                            {letterBreakdown.textTotalSum.toLocaleString("el-GR")}
+                          </td>
+                          <td className="p-2.5 text-right font-mono">100%</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#8c7e6c] italic p-3 bg-[#0e0c0a] rounded-lg">
+                    Εισαγάγετε ελληνικό κείμενο στο παραπάνω πλαίσιο για να υπολογιστούν οι αριθμητικές αξίες των γραμμάτων του.
+                  </p>
+                )}
+              </div>
+
+            </div>
+          )}
+        </div>
+
+        {/* =========================================================================
+            DEDICATED SEARCH & COMBINATION CONTROLS PANEL (2-6 WORDS)
+           ========================================================================= */}
+        <div className="pt-2 border-t border-[#261f18] space-y-4">
+          
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-serif font-bold text-[#e6c670] uppercase tracking-wider flex items-center gap-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#c89b3c]" />
+              <span>Φίλτρα Αναζήτησης Λέξεων & Συνδυασμών (2 - 6 Λέξεις)</span>
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            
+            {/* 1. Word Search Field */}
+            <div className="p-3.5 rounded-xl bg-[#12100d] border border-[#2d241a] space-y-2 relative">
+              <div className="flex items-center justify-between">
+                <label htmlFor="input-word-search" className="block text-xs font-serif font-bold text-[#e6c670] flex items-center gap-1">
+                  <Search className="w-3.5 h-3.5 text-[#c89b3c]" />
+                  <span>Αναζήτηση Λέξης</span>
+                </label>
+                {wordQuery && (
+                  <button
+                    onClick={() => setWordQuery("")}
+                    className="text-[10px] text-[#8c7e6c] hover:text-[#e8dfd1]"
+                    title="Καθαρισμός λέξης"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <input
+                id="input-word-search"
+                type="text"
+                value={wordQuery}
+                onChange={(e) => setWordQuery(e.target.value)}
+                placeholder="π.χ. ΛΟΓΟΣ, ΘΕΟΣ, ΦΩΣ..."
+                className="w-full px-3 py-2 bg-[#1a1611] border border-[#3a2f22] focus:border-[#c89b3c] rounded-lg text-sm font-serif text-[#f5ecd8] outline-none placeholder-[#5a4d3e]"
+              />
+              <p className="text-[10px] text-[#857766] font-sans leading-tight">
+                Εντοπίζει και μαρκάρει αυτόματα κάθε εμφάνιση της λέξης στο κείμενο.
+              </p>
+            </div>
+
+            {/* 2. Target Number for Single Word */}
+            <div className="p-3.5 rounded-xl bg-[#12100d] border border-[#2d241a] space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="input-single-word-target" className="block text-xs font-serif font-bold text-[#e6c670] flex items-center gap-1">
+                  <Hash className="w-3.5 h-3.5 text-[#c89b3c]" />
+                  <span>Στόχος Μεμονωμένης Λέξης</span>
+                </label>
+                {singleWordTarget && (
+                  <button
+                    onClick={() => setSingleWordTarget("")}
+                    className="text-[10px] text-[#8c7e6c] hover:text-[#e8dfd1]"
+                    title="Καθαρισμός στόχου"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  id="input-single-word-target"
+                  type="number"
+                  value={singleWordTarget}
+                  onChange={(e) => setSingleWordTarget(e.target.value)}
+                  placeholder="π.χ. 666, 888, 373..."
+                  className="w-full px-3 py-2 bg-[#1a1611] border border-[#3a2f22] focus:border-[#c89b3c] rounded-lg text-sm font-mono text-[#f5ecd8] outline-none"
+                />
+                {singleWordTarget && (
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-serif text-[#c89b3c]">
+                    {numberToGreekNumeral(parseInt(singleWordTarget, 10))}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-[#857766] font-sans leading-tight">
+                Μαρκάρει όλες τις λέξεις με ακριβή λεξάριθμο ίσο με τον στόχο.
+              </p>
+            </div>
+
+            {/* 3. Target Number for Phrase Combinations */}
+            <div className="p-3.5 rounded-xl bg-[#12100d] border border-[#2d241a] space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="input-phrase-target" className="block text-xs font-serif font-bold text-[#e6c670] flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5 text-[#c89b3c]" />
+                  <span>Στόχος Συνδυασμού Φράσεων</span>
+                </label>
+                {phraseTarget && (
+                  <button
+                    onClick={() => setPhraseTarget("")}
+                    className="text-[10px] text-[#8c7e6c] hover:text-[#e8dfd1]"
+                    title="Καθαρισμός στόχου φράσης"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  id="input-phrase-target"
+                  type="number"
+                  value={phraseTarget}
+                  onChange={(e) => setPhraseTarget(e.target.value)}
+                  placeholder="π.χ. 888, 1480, 2368..."
+                  className="w-full px-3 py-2 bg-[#1a1611] border border-[#3a2f22] focus:border-[#c89b3c] rounded-lg text-sm font-mono text-[#f5ecd8] outline-none"
+                />
+                {phraseTarget && (
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-serif text-[#c89b3c]">
+                    {numberToGreekNumeral(parseInt(phraseTarget, 10))}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-[#857766] font-sans leading-tight">
+                Εντοπίζει διαδοχικές λέξεις (2 έως 6) που αθροίζουν στον στόχο.
+              </p>
+            </div>
+
+            {/* 4. Definition of 2, 3, 4, 5, 6 words (N-grams) */}
+            <div className="p-3.5 rounded-xl bg-[#12100d] border border-[#2d241a] space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-serif font-bold text-[#e6c670]">
+                  Ορισμός 2, 3, 4, 5 ή 6 Λέξεων
+                </label>
+                <span className="text-[11px] font-mono text-[#c89b3c] bg-[#1c1812] px-1.5 py-0.5 rounded border border-[#332616]">
+                  {phraseLengthMin === phraseLengthMax ? `${phraseLengthMin} λέξεις` : `${phraseLengthMin}-${phraseLengthMax} λέξεις`}
+                </span>
+              </div>
+
+              {/* Quick Preset Buttons for 2, 3, 4, 5, 6 words */}
+              <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                {[2, 3, 4, 5, 6].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => handleSetExactWordLength(num)}
+                    className={`px-2 py-1 rounded text-xs font-mono font-bold transition-all ${
+                      phraseLengthMin === num && phraseLengthMax === num
+                        ? "bg-[#c89b3c] text-[#12100d] shadow-sm shadow-[#c89b3c]/30"
+                        : "bg-[#1f1a14] hover:bg-[#2b241c] text-[#d6c7b2] border border-[#382d20]"
+                    }`}
+                    title={`Ακριβώς ${num} λέξεις`}
+                  >
+                    {num}λ
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => handleSetWordRange(2, 6)}
+                  className={`px-2 py-1 rounded text-[11px] font-sans transition-all ${
+                    phraseLengthMin === 2 && phraseLengthMax === 6
+                      ? "bg-[#c89b3c] text-[#12100d] font-bold"
+                      : "bg-[#181410] hover:bg-[#241e17] text-[#9c8b77] border border-[#2d2419]"
+                  }`}
+                  title="Εύρος από 2 έως 6 λέξεις"
+                >
+                  2-6
+                </button>
+              </div>
+
+              {/* Custom Min/Max dropdowns */}
+              <div className="flex items-center gap-2 pt-1 text-[11px] text-[#8c7e6c]">
+                <span>Ελάχ:</span>
+                <select
+                  value={phraseLengthMin}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setPhraseLengthMin(val);
+                    if (val > phraseLengthMax) setPhraseLengthMax(val);
+                  }}
+                  className="bg-[#1a1611] border border-[#3a2f22] rounded px-1.5 py-0.5 text-xs text-[#f5ecd8] font-mono outline-none"
+                >
+                  {[2, 3, 4, 5, 6].map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+
+                <span className="ml-1">Μέγ:</span>
+                <select
+                  value={phraseLengthMax}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setPhraseLengthMax(val);
+                    if (val < phraseLengthMin) setPhraseLengthMin(val);
+                  }}
+                  className="bg-[#1a1611] border border-[#3a2f22] rounded px-1.5 py-0.5 text-xs text-[#f5ecd8] font-mono outline-none"
+                >
+                  {[2, 3, 4, 5, 6, 7, 8].map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Range filter row */}
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-[#110f0d] border border-[#241d16] text-xs text-[#8c7e6c]">
+            <div className="flex items-center gap-2">
+              <Filter className="w-3.5 h-3.5 text-[#c89b3c]" />
+              <span className="font-serif text-[#d6c7b2]">Φίλτρο Εύρους Τιμών Λεξαρίθμου:</span>
+              <input
+                type="number"
+                value={minRange}
+                onChange={(e) => setMinRange(e.target.value)}
+                placeholder="Ελάχ."
+                className="w-20 px-2 py-1 bg-[#181410] border border-[#33291d] rounded text-xs font-mono text-[#f5ecd8] outline-none"
+              />
+              <span>έως</span>
+              <input
+                type="number"
+                value={maxRange}
+                onChange={(e) => setMaxRange(e.target.value)}
+                placeholder="Μέγ."
+                className="w-20 px-2 py-1 bg-[#181410] border border-[#33291d] rounded text-xs font-mono text-[#f5ecd8] outline-none"
+              />
+            </div>
+            {(minRange || maxRange) && (
+              <button
+                onClick={() => { setMinRange(""); setMaxRange(""); }}
+                className="text-[11px] text-[#c89b3c] hover:underline"
+              >
+                Καθαρισμός εύρους
+              </button>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      {/* Statistics Cards Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        
+        <div className="p-4 rounded-xl bg-[#14120f] border border-[#282119] space-y-1">
+          <span className="text-[11px] uppercase tracking-wider text-[#8c7e6c] font-mono">
+            Συνολικος Λεξαριθμος
+          </span>
+          <div className="text-xl sm:text-2xl font-serif font-bold text-[#e6c670]">
+            {analysis.stats.totalSum.toLocaleString("el-GR")}
+          </div>
+          <div className="text-[10px] font-mono text-[#736655]">
+            Ιωνικός: {numberToGreekNumeral(analysis.stats.totalSum)}
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#14120f] border border-[#282119] space-y-1">
+          <span className="text-[11px] uppercase tracking-wider text-[#8c7e6c] font-mono">
+            Συνολο / Μοναδικες
+          </span>
+          <div className="text-xl sm:text-2xl font-serif font-bold text-[#f5ecd8]">
+            {analysis.stats.totalWords} <span className="text-sm font-normal text-[#8c7e6c]">/ {analysis.stats.uniqueWords}</span>
+          </div>
+          <div className="text-[10px] font-mono text-[#736655]">
+            Ποσοστό ποικιλίας: {analysis.stats.totalWords > 0 ? Math.round((analysis.stats.uniqueWords / analysis.stats.totalWords) * 100) : 0}%
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#14120f] border border-[#282119] space-y-1">
+          <span className="text-[11px] uppercase tracking-wider text-[#8c7e6c] font-mono">
+            Μεσος Ορος Λεξαριθμου
+          </span>
+          <div className="text-xl sm:text-2xl font-serif font-bold text-[#d6c7b2]">
+            {analysis.stats.averageWordValue.toLocaleString("el-GR")}
+          </div>
+          <div className="text-[10px] font-mono text-[#736655]">
+            Διάμεσος: {analysis.stats.medianWordValue}
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#14120f] border border-[#282119] space-y-1">
+          <span className="text-[11px] uppercase tracking-wider text-[#8c7e6c] font-mono">
+            Βρεθεντες Στοχοι
+          </span>
+          <div className="text-xl sm:text-2xl font-serif font-bold text-emerald-400">
+            {totalFoundMatches}
+          </div>
+          <div className="text-[10px] font-mono text-[#736655]">
+            {activeSingleMatches.length} λέξεις • {activePhraseMatches.length} φράσεις
+          </div>
+        </div>
+
+      </div>
+
+      {/* Main Results View Mode Switcher */}
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between border-b border-[#2d251e] pb-2 gap-2">
+          <div className="flex flex-wrap space-x-1.5 sm:space-x-2">
+            
+            <button
+              onClick={() => setViewMode("interactive-list")}
+              id="tab-view-interactive-list"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-serif font-semibold transition-all ${
+                viewMode === "interactive-list"
+                  ? "bg-[#282116] text-[#e6c670] border border-[#c89b3c]/40"
+                  : "text-[#8c7e6c] hover:text-[#e8dfd1]"
+              }`}
+            >
+              <AlignLeft className="w-3.5 h-3.5" />
+              <span>Κάθετη Λίστα (1 Λέξη / Σειρά)</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode("interactive-flow")}
+              id="tab-view-interactive-flow"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-serif font-semibold transition-all ${
+                viewMode === "interactive-flow"
+                  ? "bg-[#282116] text-[#e6c670] border border-[#c89b3c]/40"
+                  : "text-[#8c7e6c] hover:text-[#e8dfd1]"
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Ροή Κειμένου & Highlighting</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode("matches")}
+              id="tab-view-matches"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-serif font-semibold transition-all ${
+                viewMode === "matches"
+                  ? "bg-[#282116] text-[#e6c670] border border-[#c89b3c]/40"
+                  : "text-[#8c7e6c] hover:text-[#e8dfd1]"
+              }`}
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Βρεθέντες Στόχοι ({totalFoundMatches})</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode("lexicon")}
+              id="tab-view-lexicon"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-serif font-semibold transition-all ${
+                viewMode === "lexicon"
+                  ? "bg-[#282116] text-[#e6c670] border border-[#c89b3c]/40"
+                  : "text-[#8c7e6c] hover:text-[#e8dfd1]"
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Λεξικό Συχνότητας ({analysis.uniqueWordsMap.size})</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 1. VERTICAL WORD-BY-WORD LIST VIEW (ONE WORD PER LINE WITH ISOPSEPHY) */}
+        {viewMode === "interactive-list" && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-[#14120e] border border-[#2d251e] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="text-xs font-serif text-[#a69680]">
+                📋 <strong>Κάθετη Προβολή:</strong> Εμφάνιση κάθε λέξης σε ξεχωριστή σειρά με τον ισοψηφικό λεξάριθμο, τα γράμματα και τον πυθμένα της. Οι λέξεις που ικανοποιούν τον στόχο ({singleTargetNum || wordQuery || "επιλεγμένο"}) μαρκάρονται με χρυσό πλαίσιο.
+              </div>
+              <div className="text-xs font-mono text-[#8c7e6c] whitespace-nowrap">
+                Σύνολο: {analysis.words.length} σειρές λέξεων
+              </div>
+            </div>
+
+            {/* Word List Table / Rows */}
+            <div className="space-y-2 max-h-[650px] overflow-y-auto gold-scrollbar pr-1">
+              {analysis.words.map((w, idx) => {
+                const isTargetMatch =
+                  (singleTargetNum !== undefined && w.value === singleTargetNum) ||
+                  (wordQuery &&
+                    (w.rawWord.toLowerCase().includes(wordQuery.toLowerCase()) ||
+                      w.normalizedWord.includes(wordQuery.toUpperCase())));
+                const isSelected = selectedWordObj?.indexInText === w.indexInText;
+                const isSaved = savedItems.some(
+                  (item) => item.text.trim().toUpperCase() === w.rawWord.toUpperCase() && item.value === w.value
+                );
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedWordObj(w)}
+                    className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      isSelected
+                        ? "bg-[#251e16] border-[#e6c670] ring-1 ring-[#e6c670] shadow-lg shadow-black/40"
+                        : isTargetMatch
+                        ? "bg-[#231b12] border-[#c89b3c] shadow-md shadow-[#c89b3c]/20 ring-1 ring-[#c89b3c]/60"
+                        : "bg-[#14110e] border-[#261f18] hover:border-[#3e3223]"
+                    }`}
+                  >
+                    {/* Left: Index, Word, Target Badge */}
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 text-xs font-mono text-[#736655] font-bold">
+                        #{idx + 1}
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-serif font-bold text-[#f5ecd8]">
+                            {w.rawWord}
+                          </span>
+                          {isTargetMatch && (
+                            <span className="px-2 py-0.5 rounded bg-[#c89b3c] text-black text-[10px] font-mono font-black uppercase tracking-wider animate-pulse">
+                              Στόχος!
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] font-mono text-[#8c7e6c]">
+                          {w.letters.map((l) => `${l.char}(${l.value})`).join(" + ")}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Value, Pythmen, Actions */}
+                    <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                      <div className="text-right">
+                        <div className="text-lg font-serif font-bold text-[#e6c670] bg-[#1c1610] px-3 py-0.5 rounded-lg border border-[#3e3122]">
+                          {w.value}
+                        </div>
+                        <div className="text-[10px] font-mono text-[#8c7e6c]">
+                          Πυθμένας: {w.root}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 border-l border-[#261f18] pl-2.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSaveWordMatch(w);
+                          }}
+                          className={`p-1.5 rounded-lg text-xs transition-colors ${
+                            isSaved
+                              ? "bg-emerald-900/40 text-emerald-300 border border-emerald-500/40"
+                              : "bg-[#1f1a14] hover:bg-[#2e241b] text-[#e6c670] border border-[#382d20]"
+                          }`}
+                          title={isSaved ? "Αποθηκεύτηκε" : "Αποθήκευση στο αρχείο"}
+                        >
+                          {isSaved ? <Check className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyText(`${w.rawWord} = ${w.value}`, `list-${idx}`);
+                          }}
+                          className="p-1.5 rounded-lg bg-[#1f1a14] hover:bg-[#2e241b] text-[#8c7e6c] hover:text-[#d6c7b2] border border-[#382d20] transition-colors"
+                          title="Αντιγραφή"
+                        >
+                          {copiedId === `list-${idx}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenAiModal(w.rawWord, w.value, [w.rawWord]);
+                          }}
+                          className="p-1.5 rounded-lg bg-[#271e14] hover:bg-[#382b1c] text-[#f5ecd8] border border-[#c89b3c]/40 text-xs transition-colors"
+                          title="AI Ερμηνεία"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-[#e6c670]" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 2. INTERACTIVE CONTINUOUS FLOW TEXT WITH GLOWING TARGET HIGHLIGHTING */}
+        {viewMode === "interactive-flow" && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-[#14120e] border border-[#2d251e] space-y-2">
+              <span className="text-xs font-serif text-[#8c7e6c]">
+                💡 <strong>Ροή Κειμένου:</strong> Κάντε κλικ σε οποιαδήποτε λέξη του κειμένου για να δείτε άμεσα την ισοψηφία και τα γράμματά της. Οι λέξεις που ικανοποιούν τον στόχο ({singleTargetNum || wordQuery || "στόχος"}) εμφανίζονται μαρκαρισμένες με χρυσό φόντο.
+              </span>
+              
+              <div className="p-5 bg-[#0f0e0c] rounded-xl border border-[#211b15] leading-loose text-base sm:text-lg font-serif text-[#e8dfd1] flex flex-wrap gap-x-2.5 gap-y-3.5 max-h-[550px] overflow-y-auto gold-scrollbar">
+                {analysis.words.map((w, idx) => {
+                  const isMatch =
+                    (singleTargetNum !== undefined && w.value === singleTargetNum) ||
+                    (wordQuery &&
+                      (w.rawWord.toLowerCase().includes(wordQuery.toLowerCase()) ||
+                        w.normalizedWord.includes(wordQuery.toUpperCase())));
+                  const isSelected = selectedWordObj?.indexInText === w.indexInText;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedWordObj(w)}
+                      className={`px-2 py-1 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                        isSelected
+                          ? "bg-[#c89b3c] text-black font-bold ring-2 ring-[#e6c670] shadow-lg shadow-black/50"
+                          : isMatch
+                          ? "bg-[#3e2e1a] text-[#f5ecd8] border-2 border-[#e6c670] font-bold shadow-md shadow-[#c89b3c]/30 scale-105"
+                          : "hover:bg-[#251e17] hover:text-[#f5ecd8] border border-transparent"
+                      }`}
+                    >
+                      <span>{w.rawWord}</span>
+                      <span className={`text-[10px] font-mono px-1 py-0.2 rounded ${
+                        isSelected ? "bg-black/30 text-black font-bold" : isMatch ? "bg-[#c89b3c] text-black font-bold" : "text-[#c89b3c] bg-[#1a1510]"
+                      }`}>
+                        {w.value}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Selected Word Details Card (appears when clicking any word in list or flow) */}
+        {selectedWordObj && (
+          <div className="p-5 rounded-xl bg-[#1a1612] border border-[#c89b3c]/60 space-y-4 animate-fadeIn shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-serif font-bold text-[#f5ecd8]">
+                  «{selectedWordObj.rawWord}»
+                </span>
+                <span className="text-sm font-mono text-[#8c7e6c]">
+                  (Κανονικοποίηση: {selectedWordObj.normalizedWord})
+                </span>
+              </div>
+              <div className="text-xl font-serif font-bold text-[#e6c670] bg-[#2a2116] px-3 py-1 rounded-lg border border-[#4a3924]">
+                {selectedWordObj.value} ({numberToGreekNumeral(selectedWordObj.value)})
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+              <div className="p-2.5 rounded bg-[#100e0c] border border-[#261f18]">
+                <span className="text-[#8c7e6c] block text-[10px]">Πυθμένας (Ρίζα):</span>
+                <strong className="text-[#e6c670] text-sm">{selectedWordObj.root}</strong>
+              </div>
+              <div className="p-2.5 rounded bg-[#100e0c] border border-[#261f18]">
+                <span className="text-[#8c7e6c] block text-[10px]">Αριθμός Γραμμάτων:</span>
+                <strong className="text-[#f5ecd8] text-sm">{selectedWordObj.letters.length}</strong>
+              </div>
+              <div className="p-2.5 rounded bg-[#100e0c] border border-[#261f18]">
+                <span className="text-[#8c7e6c] block text-[10px]">Θέση στο Κείμενο:</span>
+                <strong className="text-[#f5ecd8] text-sm">#{selectedWordObj.indexInText! + 1}</strong>
+              </div>
+              <div className="p-2.5 rounded bg-[#100e0c] border border-[#261f18]">
+                <span className="text-[#8c7e6c] block text-[10px]">Συχνότητα στο Κείμενο:</span>
+                <strong className="text-[#f5ecd8] text-sm">
+                  {analysis.uniqueWordsMap.get(selectedWordObj.normalizedWord)?.count || 1} φορές
+                </strong>
+              </div>
+            </div>
+
+            {/* Letters Breakdown */}
+            <div className="p-3 bg-[#100e0c] rounded-lg border border-[#261f18] text-xs font-mono text-[#d6c7b2] flex flex-wrap gap-2 items-center">
+              {selectedWordObj.letters.map((l, i) => (
+                <span key={i} className="px-2 py-1 bg-[#1a1612] rounded border border-[#2f251c]">
+                  <strong className="text-[#e6c670]">{l.originalChar}</strong> = {l.value}
+                </span>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => handleSaveWordMatch(selectedWordObj)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#282017] hover:bg-[#382b1d] text-xs font-serif text-[#e6c670] border border-[#3e3122]"
+              >
+                <Bookmark className="w-3.5 h-3.5" />
+                <span>Αποθήκευση Λέξης</span>
+              </button>
+
+              <button
+                onClick={() => onOpenAiModal(selectedWordObj.rawWord, selectedWordObj.value, [selectedWordObj.rawWord])}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2e2316] hover:bg-[#3f2f1d] text-xs font-serif text-[#f5ecd8] border border-[#c89b3c]/50"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#e6c670]" />
+                <span>AI Ερμηνεία</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 3. MATCHES VIEW (Found words & N-gram phrases) */}
+        {viewMode === "matches" && (
+          <div className="space-y-6">
+            
+            {/* Single Word Matches Section */}
+            {activeSingleMatches.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold flex items-center gap-2">
+                    <span>
+                      {wordQuery 
+                        ? `Εμφανίσεις λέξης «${wordQuery}»`
+                        : `Μεμονωμένες Λέξεις με Στόχο = ${singleWordTarget || `${minRange}-${maxRange}`}`
+                      }
+                    </span>
+                    <span className="px-2 py-0.2 rounded-full bg-[#2a2219] text-[#c89b3c] text-[10px] font-mono">
+                      {activeSingleMatches.length}
+                    </span>
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {activeSingleMatches.map((wordObj, idx) => {
+                    const matchId = `single-${wordObj.indexInText}-${wordObj.value}`;
+                    const isSaved = savedItems.some(
+                      (item) => item.text.trim().toUpperCase() === wordObj.rawWord.toUpperCase() && item.value === wordObj.value
+                    );
+
+                    return (
+                      <div
+                        key={`${matchId}-${idx}`}
+                        className="p-4 rounded-xl bg-[#15120f] border border-[#2d251e] hover:border-[#4a3c2c] transition-all space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="text-lg font-serif font-bold text-[#f5ecd8]">
+                              {wordObj.rawWord}
+                            </span>
+                            <span className="text-xs text-[#8c7e6c] font-mono ml-2">
+                              (Θέση #{wordObj.indexInText! + 1})
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base font-serif font-bold text-[#e6c670] bg-[#221b14] px-2.5 py-0.5 rounded-lg border border-[#3e3223]">
+                              {wordObj.value}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Letters formula */}
+                        <div className="text-xs font-mono text-[#a69680] bg-[#100e0b] p-2 rounded-lg border border-[#211b15]">
+                          {wordObj.letters.map((l) => `${l.char}(${l.value})`).join(" + ")} = <strong className="text-[#f5ecd8]">{wordObj.value}</strong>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleSaveWordMatch(wordObj)}
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                                isSaved
+                                   ? "bg-emerald-900/40 text-emerald-300 border border-emerald-500/40"
+                                  : "bg-[#251e17] hover:bg-[#33281d] text-[#e6c670] border border-[#3e3223]"
+                              }`}
+                            >
+                              {isSaved ? <Check className="w-3 h-3 text-emerald-400" /> : <Bookmark className="w-3 h-3" />}
+                              <span>{isSaved ? "Αποθηκεύτηκε" : "Αποθήκευση"}</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleCopyText(`${wordObj.rawWord} = ${wordObj.value}`, matchId)}
+                              className="p-1.5 rounded-lg bg-[#1f1a14] hover:bg-[#2c231a] text-[#8c7e6c] hover:text-[#d6c7b2] border border-[#2d2419] transition-colors"
+                              title="Αντιγραφή"
+                            >
+                              {copiedId === matchId ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={() => onOpenAiModal(wordObj.rawWord, wordObj.value, [wordObj.rawWord])}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#271e14] hover:bg-[#382b1c] text-[#f5ecd8] border border-[#c89b3c]/30 text-xs transition-colors"
+                          >
+                            <Sparkles className="w-3 h-3 text-[#e6c670]" />
+                            <span>AI Ερμηνεία</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Phrase Matches Section (N-grams) */}
+            {activePhraseMatches.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold flex items-center gap-2">
+                    <span>
+                      Συνδυασμοί {phraseLengthMin === phraseLengthMax ? `${phraseLengthMin}` : `${phraseLengthMin}-${phraseLengthMax}`} Λέξεων με Στόχο = {phraseTarget}
+                    </span>
+                    <span className="px-2 py-0.2 rounded-full bg-[#2a2219] text-[#c89b3c] text-[10px] font-mono">
+                      {activePhraseMatches.length}
+                    </span>
+                  </h3>
+                </div>
+
+                <div className="space-y-3">
+                  {activePhraseMatches.map((phraseObj) => {
+                    const isSaved = savedItems.some(
+                      (item) => item.text.trim().toUpperCase() === phraseObj.phrase.toUpperCase() && item.value === phraseObj.value
+                    );
+
+                    return (
+                      <div
+                        key={phraseObj.id}
+                        className="p-4 sm:p-5 rounded-xl bg-[#15120f] border border-[#2d251e] hover:border-[#4a3c2c] transition-all space-y-3"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <span className="text-lg font-serif font-bold text-[#f5ecd8]">
+                              «{phraseObj.phrase}»
+                            </span>
+                            <div className="flex items-center gap-2 mt-1 text-xs text-[#8c7e6c] font-mono">
+                              <span className="px-1.5 py-0.5 rounded bg-[#201a14] border border-[#30261c] text-[#e6c670]">
+                                {phraseObj.wordCount} λέξεις
+                              </span>
+                              <span>•</span>
+                              <span>Λέξεις #{phraseObj.startIndex + 1} έως #{phraseObj.endIndex + 1}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 self-start sm:self-auto">
+                            <span className="text-lg sm:text-xl font-serif font-bold text-[#e6c670] bg-[#221b14] px-3 py-1 rounded-lg border border-[#3e3223]">
+                              {phraseObj.value}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Breakdown of each word in phrase */}
+                        <div className="text-xs font-mono text-[#a69680] bg-[#100e0b] p-2.5 rounded-lg border border-[#211b15] flex flex-wrap gap-1.5 items-center">
+                          {phraseObj.words.map((w, wIdx) => (
+                            <React.Fragment key={wIdx}>
+                              <span className="text-[#f5ecd8] font-bold">{w.rawWord}</span>
+                              <span className="text-[#8c7e6c]">({w.value})</span>
+                              {wIdx < phraseObj.words.length - 1 && <span className="text-[#c89b3c] font-bold">+</span>}
+                            </React.Fragment>
+                          ))}
+                          <span className="text-[#c89b3c] font-bold ml-1">=</span>
+                          <strong className="text-[#e6c670] text-sm">{phraseObj.value}</strong>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleSavePhraseMatch(phraseObj)}
+                              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                                isSaved
+                                  ? "bg-emerald-900/40 text-emerald-300 border border-emerald-500/40"
+                                  : "bg-[#251e17] hover:bg-[#33281d] text-[#e6c670] border border-[#3e3223]"
+                              }`}
+                            >
+                              {isSaved ? <Check className="w-3 h-3 text-emerald-400" /> : <Bookmark className="w-3 h-3" />}
+                              <span>{isSaved ? "Αποθηκεύτηκε" : "Αποθήκευση"}</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleCopyText(`${phraseObj.phrase} = ${phraseObj.value}`, phraseObj.id)}
+                              className="p-1.5 rounded-lg bg-[#1f1a14] hover:bg-[#2c231a] text-[#8c7e6c] hover:text-[#d6c7b2] border border-[#2d2419] transition-colors"
+                              title="Αντιγραφή"
+                            >
+                              {copiedId === phraseObj.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            </button>
+
+                            <button
+                              onClick={() => handleDismissMatch(phraseObj.id)}
+                              className="p-1.5 rounded-lg bg-[#1f1a14] hover:bg-red-950/40 text-[#8c7e6c] hover:text-red-300 border border-[#2d2419] transition-colors"
+                              title="Απόκρυψη αποτελέσματος"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={() => onOpenAiModal(phraseObj.phrase, phraseObj.value, phraseObj.words.map((w) => w.rawWord))}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#271e14] hover:bg-[#382b1c] text-[#f5ecd8] border border-[#c89b3c]/30 text-xs transition-colors"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-[#e6c670]" />
+                            <span>AI Ερμηνεία</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* No matches state */}
+            {totalFoundMatches === 0 && (
+              <div className="py-12 text-center space-y-3 bg-[#13110e] rounded-xl border border-[#261f18] p-6">
+                <Search className="w-8 h-8 text-[#5c4f3e] mx-auto" />
+                <p className="text-sm font-serif text-[#a69680]">
+                  Δεν βρέθηκαν λέξεις ή συνδυασμοί που να ικανοποιούν τα τρέχοντα κριτήρια.
+                </p>
+                <p className="text-xs text-[#736655]">
+                  Δοκιμάστε να αλλάξετε τον αριθμητικό στόχο, τη λέξη αναζήτησης ή να διευρύνετε το μήκος των φράσεων (π.χ. 2, 3, 4, 5 ή 6 λέξεις).
+                </p>
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* 4. LEXICON & FREQUENCY VIEW */}
+        {viewMode === "lexicon" && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#14120f] p-3.5 rounded-xl border border-[#282119]">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#8c7e6c]" />
+                <input
+                  type="text"
+                  value={lexiconSearch}
+                  onChange={(e) => setLexiconSearch(e.target.value)}
+                  placeholder="Αναζήτηση στο λεξικό..."
+                  className="w-full pl-8 pr-3 py-1.5 bg-[#1a1611] border border-[#33281c] rounded-lg text-xs font-serif text-[#f5ecd8] outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 text-xs font-serif text-[#8c7e6c]">
+                <span>Ταξινόμηση:</span>
+                <select
+                  value={lexiconSort}
+                  onChange={(e) => setLexiconSort(e.target.value as any)}
+                  className="bg-[#1a1611] border border-[#33281c] rounded-lg px-2 py-1 text-xs text-[#f5ecd8] font-serif outline-none"
+                >
+                  <option value="freq">Συχνότητα (Πιο συχνές)</option>
+                  <option value="alpha">Αλφαβητικά (Α-Ω)</option>
+                  <option value="val-desc">Λεξάριθμος (Φθίνουσα)</option>
+                  <option value="val-asc">Λεξάριθμος (Αύξουσα)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-[600px] overflow-y-auto gold-scrollbar p-1">
+              {lexiconList.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-3 rounded-lg bg-[#14110e] border border-[#261f18] hover:border-[#3d3021] flex items-center justify-between transition-colors"
+                >
+                  <div>
+                    <span className="text-sm font-serif font-bold text-[#f5ecd8]">
+                      {item.raw}
+                    </span>
+                    <div className="text-[10px] font-mono text-[#8c7e6c]">
+                      Συχνότητα: {item.count} {item.count === 1 ? "φορά" : "φορές"}
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-sm font-serif font-bold text-[#e6c670]">
+                      {item.value}
+                    </span>
+                    <div className="text-[10px] font-mono text-[#7a6c5a]">
+                      Πυθμένας: {item.root}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+
+    </div>
+  );
+};

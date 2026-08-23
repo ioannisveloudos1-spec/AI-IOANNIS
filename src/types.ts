@@ -1,0 +1,95 @@
+export type TabType = "calculator" | "search" | "stats" | "archive" | "guide";
+
+export interface IonicLetter {
+  char: string;
+  upper: string;
+  lower: string;
+  name: string;
+  value: number;
+  category: "monas" | "dekas" | "ekatontas";
+  archaic?: boolean;
+  greekNumeral: string;
+  description: string;
+}
+
+export interface LetterBreakdown {
+  char: string;
+  originalChar: string;
+  value: number;
+}
+
+export interface WordIsopsephy {
+  rawWord: string;
+  normalizedWord: string;
+  value: number;
+  letters: LetterBreakdown[];
+  root: number; // Πυθμένας (1-9)
+  count?: number;
+  indexInText?: number;
+}
+
+export interface PhraseMatch {
+  id: string;
+  phrase: string;
+  words: WordIsopsephy[];
+  value: number;
+  root: number;
+  startIndex: number;
+  endIndex: number;
+  wordCount: number;
+  saved?: boolean;
+  rejected?: boolean;
+}
+
+export interface SavedIsopsephyItem {
+  id: string;
+  text: string;
+  normalized: string;
+  value: number;
+  root: number;
+  greekNumeral: string;
+  isPhrase: boolean;
+  wordCount: number;
+  sourceText?: string;
+  notes?: string;
+  category?: string;
+  createdAt: string;
+}
+
+export interface TextAnalysisStats {
+  totalChars: number;
+  totalGreekChars: number;
+  totalWords: number;
+  uniqueWords: number;
+  totalSum: number;
+  averageWordValue: number;
+  medianWordValue: number;
+  highestWord: WordIsopsephy | null;
+  lowestWord: WordIsopsephy | null;
+}
+
+export interface UniqueWordStat {
+  count: number;
+  value: number;
+  raw: string;
+  root: number;
+}
+
+export interface TextAnalysisResult {
+  stats: TextAnalysisStats;
+  words: WordIsopsephy[];
+  singleMatches: WordIsopsephy[];
+  phraseMatches: PhraseMatch[];
+  uniqueWordsMap: Map<string, UniqueWordStat>;
+}
+
+export interface PresetText {
+  id: string;
+  title: string;
+  author: string;
+  era: string;
+  category: "classical" | "biblical" | "philosophical" | "poetry";
+  text: string;
+  description: string;
+  suggestedTargets?: number[];
+}

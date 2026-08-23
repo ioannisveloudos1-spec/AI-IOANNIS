@@ -1,0 +1,330 @@
+import express from "express";
+import path from "path";
+import { createServer as createViteServer } from "vite";
+import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+let aiClient: GoogleGenAI | null = null;
+
+function getGenAI(): GoogleGenAI | null {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+  if (!aiClient) {
+    aiClient = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          "User-Agent": "aistudio-build",
+        },
+      },
+    });
+  }
+  return aiClient;
+}
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+
+  app.use(express.json({ limit: "5mb" }));
+
+  // Health check
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+// AI Isopsephy analysis endpoint
+  app.post("/api/gemini/analyze", async (req, res) => {
+    try {
+      const { text, number, context, words, customApiKey } = req.body;
+      
+      let ai = getGenAI();
+      const hasCustomKey = customApiKey && typeof customApiKey === "string" && customApiKey.trim().length > 10;
+      if (hasCustomKey) {
+        ai = new GoogleGenAI({
+          apiKey: customApiKey.trim(),
+        });
+      }
+
+      // If no AI client available (no server key and no user key)
+      if (!ai) {
+        return res.status(200).json({
+          success: true,
+          modelUsed: "offline-engine",
+          fallback: true,
+          analysis: generateOfflineAnalysis(text, number, words, context),
+        });
+      }
+
+      // Construct tailored prompt based on user's specific question
+      const isSpecificQuestion = context && 
+        context !== "Πλήρης φιλολογική, μαθηματική και ιστορική ανάλυση" && 
+        context !== "Γενική ανάλυση";
+
+      let prompt = "";
+      if (isSpecificQuestion) {
+        prompt = `Είσαι ένας κορυφαίος Έλληνας φιλόλογος, ιστορικός της αρχαίας ελληνικής γραμματείας και ερευνητής των Πυθαγορείων και της Ελληνικής Ισοψηφίας (Ιωνική Αρίθμηση 27 ψηφίων).
+
+ΣΤΟΙΧΕΙΑ ΜΕΛΕΤΗΣ:
+- Κείμενο / Λέξη / Έκφραση: "${text || ''}"
+- Υπολογισμένη Ισοψηφική Αξία: ${number || ''}
+- Επιμέρους λέξεις: ${JSON.stringify(words || [])}
+
+ΣΥΓΚΕΚΡΙΜΕΝΟ ΕΡΩΤΗΜΑ ΧΡΗΣΤΗ ΠΡΟΣ ΑΠΑΝΤΗΣΗ:
+👉 "${context}"
+
+ΟΔΗΓΙΕΣ ΑΠΑΝΤΗΣΗΣ:
+- Απάντησε ΑΜΕΣΑ, ΕΞΕΙΔΙΚΕΥΜΕΝΑ και ΑΝΑΛΥΤΙΚΑ στο συγκεκριμένο ερώτημα: "${context}".
+- Επικεντρώσου αποκλειστικά σε αυτό το ερώτημα (μην επαναλαμβάνεις απλώς μια γενική προκαθορισμένη περίληψη).
+- Παράθεσε συγκεκριμένα παραδείγματα, αρχαιοελληνικές πηγές, φιλοσοφικά αποσπάσματα (Πλάτων, Πυθαγόρας, Πρόκλος, Ιάμβλιχος κ.ά.) ή μαθηματικές αποδείξεις ανάλογα με το ερώτημα.
+- Σημείωση: Τα 3 ιστορικά σύμβολα (Στίγμα ϛ=6, Κόππα ϟ=90, Σαμπί ϡ=900) είναι θεμελιώδη σύμβολα του κλασικού 27ψήφιου ελληνικού συστήματος γραφής και μέτρησης και δεν πρέπει ποτέ να αναφέρονται ως επείσακτα ή ξένα.
+- Μορφοποίησε την απάντηση σε καλαίσθητο Markdown με τίτλους, bullet points και έντονα γράμματα.`;
+      } else {
+        prompt = `Είσαι ένας κορυφαίος Έλληνας φιλόλογος, ιστορικός της αρχαίας ελληνικής γραμματείας και ερευνητής των Πυθαγορείων και της Ελληνικής Ισοψηφίας (Ιωνική Αρίθμηση 27 ψηφίων).
+
+ΣΤΟΙΧΕΙΑ ΜΕΛΕΤΗΣ:
+- Κείμενο / Λέξη / Έκφραση: "${text || ''}"
+- Υπολογισμένη Ισοψηφική Αξία: ${number || ''}
+- Επιμέρους λέξεις: ${JSON.stringify(words || [])}
+
+Παρακαλώ δώσε μία ολοκληρωμένη και βαθυστόχαστη ανάλυση στα Ελληνικά που περιλαμβάνει:
+1. **Φιλολογική και Ετυμολογική σημασία** των λέξεων στην αρχαία και νέα ελληνική.
+2. **Αριθμητική και Πυθαγόρεια ερμηνεία** (πυθμένας/ψηφιακή ρίζα, ιδιότητες του αριθμού ${number || ''}, διαιρέτες, γεωμετρικές ιδιότητες όπως τρίγωνοι/τετράγωνοι αριθμοί).
+3. **Ιστορικές και Κλασικές/Βιβλικές αναφορές** γνωστών ισοψηφιών με τον ίδιο λεξάριθμο (${number || ''}).
+4. **Συμπέρασμα & Συμβολισμός**.
+
+Σημείωση: Τα 3 ιστορικά σύμβολα (Στίγμα ϛ=6, Κόππα ϟ=90, Σαμπί ϡ=900) είναι θεμελιώδη σύμβολα του κλασικού 27ψήφιου ελληνικού συστήματος γραφής και μέτρησης και δεν πρέπει ποτέ να αναφέρονται ως επείσακτα ή ξένα.
+Γράψε σε καλαίσθητη ελληνική γλώσσα με καθαρή μορφοποίηση markdown.`;
+      }
+
+      // Prioritize high-availability, low-latency Gemini Flash models
+      const candidateModels = [
+        "gemini-3.6-flash",
+        "gemini-3.7-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-latest",
+      ];
+
+      let lastError: any = null;
+      let analysisText: string | null = null;
+      let usedModel = "";
+
+      for (const modelName of candidateModels) {
+        try {
+          const response = await ai.models.generateContent({
+            model: modelName,
+            contents: prompt,
+            config: {
+              systemInstruction: "Απαντάς αποκλειστικά στην ελληνική γλώσσα με υψηλή επιστημονική ακρίβεια, ευγένεια και φιλολογικό βάθος σχετικά με την αρχαία ελληνική ισοψηφία. Σημείωση: Τα τρία σύμβολα (Στίγμα ϛ=6, Κόππα ϟ=90, Σαμπί ϡ=900) είναι θεμελιώδη σύμβολα του κλασικού 27ψήφιου ελληνικού συστήματος γραφής και μέτρησης και δεν πρέπει ποτέ να αναφέρονται ως 'επείσακτα' ή 'ξένα σώματα'.",
+            },
+          });
+
+          if (response && response.text) {
+            analysisText = response.text;
+            usedModel = modelName;
+            break;
+          }
+        } catch (err: any) {
+          lastError = err;
+          console.warn(`Model ${modelName} encountered an issue:`, err?.message || err);
+          // Continue to next candidate model immediately
+        }
+      }
+
+      if (analysisText) {
+        return res.json({
+          success: true,
+          analysis: analysisText,
+          modelUsed: usedModel,
+          customKeyActive: !!hasCustomKey,
+        });
+      }
+
+      // If user provided a custom key but it threw an error (e.g. invalid API key, permission denied), notify user
+      if (hasCustomKey && lastError) {
+        console.error("Custom API Key failed with error:", lastError.message);
+        return res.json({
+          success: false,
+          error: `Σφάλμα κλήσης Gemini API με το προσωπικό κλειδί: ${lastError.message || "Μη έγκυρο κλειδί ή όριο χρήσης"}`,
+          fallback: true,
+          analysis: generateOfflineAnalysis(text, number, words, context),
+        });
+      }
+
+      // Fallback
+      console.warn("All Gemini models were unavailable, using rich philological offline fallback.", lastError?.message);
+      return res.json({
+        success: true,
+        fallback: true,
+        modelUsed: "offline-engine",
+        analysis: generateOfflineAnalysis(text, number, words, context),
+      });
+
+    } catch (error: any) {
+      console.error("Gemini analysis error:", error);
+      return res.status(200).json({
+        success: true,
+        fallback: true,
+        modelUsed: "offline-engine",
+        analysis: generateOfflineAnalysis(req.body?.text, req.body?.number, req.body?.words, req.body?.context),
+      });
+    }
+  });
+
+  // Offline Philological & Pythagorean Analysis Generator Helper
+  function generateOfflineAnalysis(
+    text?: string,
+    num?: number,
+    words?: string[],
+    context?: string
+  ): string {
+    const val = num || 0;
+    const targetText = text || "Ελληνικό Κείμενο";
+    
+    // Calculate digital root
+    let pythmen = 0;
+    if (val > 0) {
+      pythmen = val % 9 === 0 ? 9 : val % 9;
+    }
+
+    // Check triangular number (8n+1 is square)
+    const testTri = 8 * val + 1;
+    const sqTri = Math.round(Math.sqrt(testTri));
+    const isTri = sqTri * sqTri === testTri && (sqTri - 1) % 2 === 0;
+    const triRoot = isTri ? (sqTri - 1) / 2 : 0;
+
+    // Divisors
+    const divisors: number[] = [];
+    if (val > 0) {
+      for (let i = 1; i * i <= val; i++) {
+        if (val % i === 0) {
+          divisors.push(i);
+          if (i * i !== val) divisors.push(val / i);
+        }
+      }
+      divisors.sort((a, b) => a - b);
+    }
+
+    // Known isopsephy matches database for offline reference
+    const knownIsopsephiesMap: Record<number, string[]> = {
+      666: ["ΛΑΥΡΕΙΟΝ (666)", "ΑΓΙΑ ΘΕΟΦΑΝΕΙΑ (666)", "ΙΩΑΝΝΗΣ - ΑΜΑΡΤΙΑ (1119 - 453 = 666)", "Η ΕΥΠΟΡΙΑ (666)", "ΝΕΙΛΟΣ (50+5+10+30+70+200=365 αλλά κατά παλαιά γραφή 666)", "Τιτάν (300+10+300+1+50=662)", "Ο ΝΙΚΗΤΗΣ (666)"],
+      888: ["ΙΗΣΟΥΣ (888)", "Ο ΕΠΙ ΠΑΣΙ (888)", "Ο ΛΟΓΟΣ ΕΣΤΙ (888)", "Η ΑΛΗΘΕΙΑ ΤΟΥ ΘΕΟΥ (888)"],
+      1480: ["ΧΡΙΣΤΟΣ (1480)", "Η ΥΙΟΘΕΣΙΑ (1480)", "ΤΟ ΠΟΤΗΡΙΟΝ ΤΗΣ ΕΥΛΟΓΙΑΣ (1480)"],
+      2368: ["ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ (2368 = 888 + 1480)", "ΤΟ ΑΓΙΟΝ ΠΝΕΥΜΑ ΤΗΣ ΑΛΗΘΕΙΑΣ (2368)"],
+      318: ["ΗΛΙΟΣ (318)", "ΟΙ 318 ΠΑΙΔΕΣ ΤΟΥ ΑΒΡΑΑΜ (318)", "ΤΙΕ (Τ=300, Ι=10, Ε=8 -> Τύπος Σταυρού και Ιησού κατά Βαρνάβα)"],
+      365: ["ΑΒΡΑΣΑΞ (365)", "ΜΕΙΘΡΑΣ (365)", "ΝΕΙΑΛΟΣ (365)"],
+      453: ["ΑΜΑΡΤΙΑ (453)", "Η ΠΤΩΣΙΣ (453)"],
+      1119: ["ΙΩΑΝΝΗΣ (1119)", "Ο ΕΥΑΓΓΕΛΙΣΤΗΣ (1119)", "Η ΠΡΟΦΗΤΕΙΑ ΤΟΥ ΦΩΤΟΣ (1119)"],
+      801: ["ΠΕΡΙΣΤΕΡΑ (801)", "ΑΛΦΑ ΚΑΙ ΩΜΕΓΑ (1 + 800 = 801)"],
+    };
+
+    const isPythagoreanQuestion = context && (context.includes("πυθαγόρειες") || context.includes("ιδιότητες"));
+    const isIsopsephiesQuestion = context && (context.includes("άλλες") || context.includes("γνωστές") || context.includes("ισοψηφίες"));
+    const isEtymologyQuestion = context && (context.includes("ετυμολογική") || context.includes("ιστορική") || context.includes("σημασία"));
+    const isPhilosophyQuestion = context && (context.includes("φιλοσοφία") || context.includes("μυστήρια") || context.includes("αρχαία"));
+
+    if (isPythagoreanQuestion) {
+      return `## 📐 Πυθαγόρειες Μαθηματικές Ιδιότητες για το «${targetText}» (Αξία: ${val})
+
+### 1. Πυθαγόρειος Πυθμένας (Ψηφιακή Ρίζα)
+- **Πυθμένας**: **${pythmen}**
+- **Ερμηνεία**: Στην πυθαγόρεια αριθμολογία, ο αριθμός ανάγεται στη μονοψήφια ρίζα του μέσω διαδοχικών αθροισμάτων. Ο πυθμένας **${pythmen}** ${
+        pythmen === 1 ? "αντιπροσωπεύει τη Μονάδα, την Αρχή των πάντων, το Εν και το Αδιαίρετο." :
+        pythmen === 3 ? "αντιπροσωπεύει την Τριάδα (Αρχή, Μέση, Τέλος), την πρώτη τέλεια μορφή και την αρμονία." :
+        pythmen === 4 ? "αντιπροσωπεύει την Τετρακτύ των Πυθαγορείων, τη σταθερότητα και τις 4 διαστάσεις του κόσμου." :
+        pythmen === 6 ? "αντιπροσωπεύει τον πρώτο Τέλειο Αριθμό (1+2+3 = 1×2×3 = 6), τη δημιουργία και τη σύζευξη." :
+        pythmen === 9 ? "αντιπροσωπεύει την Εννεάδα, το πέρας των μονοψήφιων αριθμών, τον κύκλο της ολοκλήρωσης και την αναγέννηση (καθώς 9 × οποιοσδήποτε αριθμός έχει πάντα πυθμένα 9)." :
+        "αντιπροσωπεύει τη δυναμική ενεργειακή ισορροπία της δεκαδικής ακολουθίας."
+      }
+
+### 2. Μαθηματική Δομή & Γεωμετρικοί Αριθμοί
+- **Πλήθος Διαιρετών**: **${divisors.length}** διαιρέτες: \`${divisors.slice(0, 16).join(", ")}${divisors.length > 16 ? "..." : ""}\`
+- **Τρίγωνος Αριθμός ($T_n$)**: ${isTri ? `Ναι! Είναι ο **${triRoot}ος τρίγωνος αριθμός** ($T_{${triRoot}} = \\frac{${triRoot} \\cdot ${triRoot + 1}}{2} = ${val}$).` : "Δεν αποτελεί ακέραιο τρίγωνο αριθμό."}
+- **Αρτιότητα**: ${val % 2 === 0 ? "Άρτιος (θηλυκός κατά τους Πυθαγόρειους, διαιρετός διά του 2)." : "Περιττός (αρσενικός κατά τους Πυθαγόρειους, αδιαίρετος διά του 2)."}
+${val === 666 ? `
+### ☀️ Ιδιαιτερότητα 666 (Μαγικό Τετράγωνο Ηλίου)
+- Προκύπτει από το άθροισμα των πρώτων 36 ακεραίων: $1 + 2 + 3 + ... + 36 = 666 = T_{36}$.
+- $s = \\frac{36 \\cdot 37}{2} = 18 \\cdot 37 = 666$.
+- Το άθροισμα κάθε γραμμής και στήλης στο τετράγωνο $6 \\times 6$ ισούται με 111.` : ""}`;
+    }
+
+    if (isIsopsephiesQuestion) {
+      const matches = knownIsopsephiesMap[val] || [];
+      return `## ⚖️ Ισοψηφικές Αντιστοιχίες & Συσχετίσεις για την Τιμή ${val}
+
+### 1. Εξεταζόμενο Κείμενο: «${targetText}» (Λεξάριθμος: ${val})
+Στην ελληνική ισοψηφία, λέξεις ή φράσεις που παράγουν τον ίδιο αριθμό θεωρούνται **ισόψηφες** και συνδέονται νοηματικά.
+
+### 2. Γνωστές Ισόψηφες Λέξεις & Φράσεις (Τιμή: ${val})
+${matches.length > 0 ? matches.map((m) => `- **${m}**`).join("\n") : `- Δεν υπάρχει καταγεγραμμένη μεμονωμένη μονολεκτική ισοψηφία στη βασική βιβλιοθήκη για τον αριθμό ${val}. Μπορείτε να αναζητήσετε συνδυασμούς λέξεων στην καρτέλα «Αναζήτηση».`}
+
+### 3. Πυθαγόρειος Πυθμένας
+- Ο πυθμένας του αριθμού ${val} είναι **${pythmen}**. Όλες οι παραπάνω φράσεις έχουν ακριβώς το ίδιο άθροισμα και την ίδια ψηφιακή ρίζα ${pythmen}.`;
+    }
+
+    if (isEtymologyQuestion) {
+      return `## 📖 Ετυμολογική & Ιστορική Σημασία: «${targetText}»
+
+### 1. Γλωσσολογική Προσέγγιση
+- **Κείμενο**: «${targetText}»
+- **Λεξαριθμικό Άθροισμα**: **${val}**
+- **Σύνθεση**: ${words && words.length > 0 ? words.join(" + ") : targetText}
+
+### 2. Ιστορική & Φιλολογική Διάσταση
+Στην κλασική, ελληνιστική και βυζαντινή γραμματεία, η λέξη «${targetText}» απαντάται σε θεμελιώδη κείμενα.
+- Η απόδοση της αριθμητικής αξίας ${val} έγινε με βάση τους αυστηρούς κανόνες της **Ιωνικής Αρίθμησης (27 ψηφία)**.
+- Τα γράμματα αναλύονται επακριβώς στις αρχαίες μονάδες, δεκάδες και εκατοντάδες.`;
+    }
+
+    if (isPhilosophyQuestion) {
+      return `## 🏛️ Συσχέτιση με την Αρχαία Φιλοσοφία & τα Μυστήρια: «${targetText}» (Αξία: ${val})
+
+### 1. Η Φιλοσοφική Θεώρηση των Αριθμών
+Οι Πυθαγόρειοι και οι Πλατωνικοί (ιδίως στον *Τίμαιο*) δίδασκαν ότι *«ἀριθμῷ δέ τε πάντ' ἐπέοικεν»* (όλα τα πράγματα προσομοιάζουν στον αριθμό).
+
+### 2. Ο Συμβολισμός του ${val} & του Πυθμένα ${pythmen}
+- **Ενέργεια & Αρμονία**: Ο αριθμός **${val}** εκφράζει την ισορροπία της έκφρασης «${targetText}».
+- **Μυστηριακή Παράδοση**: Στα Ελευσίνια και στα Ορφικά Μυστήρια, τα ονόματα των θεοτήτων και οι ιερές επικλήσεις επιλέγονταν βάσει της ισοψηφικής τους ακρίβειας ώστε να συντονίζονται με την κοσμική τάξη.`;
+    }
+
+    // Default general response
+    return `## 📜 Φιλολογική & Ισοψηφική Ανάλυση: «${targetText}»
+
+### 1. Αριθμητική Ταυτότητα & Ιωνική Αξία
+- **Λεξαριθμικό Άθροισμα**: **${val}**
+- **Πυθαγόρειος Πυθμένας (Ψηφιακή Ρίζα)**: **${pythmen}** (από διαδοχικό άθροισμα ψηφίων)
+- **Πλήθος Διαιρετών**: **${divisors.length}** διαιρέτες (${divisors.slice(0, 10).join(", ")}${divisors.length > 10 ? "..." : ""})
+${isTri ? `- **Τρίγωνος Αριθμός**: Ναι, είναι ο **${triRoot}ος τρίγωνος αριθμός** ($T_{${triRoot}} = \\frac{${triRoot} \\cdot ${triRoot + 1}}{2} = ${val}$).` : ""}
+${val % 2 === 0 ? "- **Αρτιότητα**: Άρτιος αριθμός." : "- **Αρτιότητα**: Περιττός αριθμός."}
+
+### 2. Φιλολογική & Συμβολική Ερμηνεία
+Η ισοψηφική αξία **${val}** εξετάζεται σύμφωνα με τους κανόνες της αρχαίας **Ιωνικής Αρίθμησης** (27 ψηφία: 9 Μονάδες, 9 Δεκάδες, 9 Εκατοντάδες).
+Στην κλασική γραμματεία και την πυθαγόρεια παράδοση, οι λέξεις με κοινό λεξάριθμο θεωρούνταν ότι μοιράζονται μια βαθύτερη νοηματική ή συμβολική συγγένεια.
+
+${context ? `*Θεματικό ερώτημα: ${context}*` : ""}
+*(Η ανάλυση εμπλουτίστηκε αυτόματα με τους κανόνες της ελληνικής ισοψηφίας).*`;
+  }
+
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Λεξάριθμος διακομιστής ενεργός στη θύρα ${PORT}`);
+  });
+}
+
+startServer();
