@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Sparkles, X, Copy, Check, RefreshCw, Send, AlertCircle, Key, Cpu, HelpCircle } from "lucide-react";
+import { generateLocalOfflineAnalysis, generateClientGeminiAnalysis } from "../utils/offlineAnalysis";
 
 interface AiAnalysisModalProps {
   isOpen: boolean;
@@ -51,6 +52,30 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
       setActiveQuestion(question);
     }
 
+    // 1. If user provided their own custom API key, call Gemini directly from the client (works 100% on Netlify/APK!)
+    if (customApiKey && customApiKey.trim().length > 10) {
+      try {
+        const clientRes = await generateClientGeminiAnalysis(
+          customApiKey.trim(),
+          text,
+          number,
+          words,
+          queryContext
+        );
+        setAnalysis(clientRes.analysis);
+        setModelUsed(clientRes.modelUsed);
+        setIsLiveAi(clientRes.success);
+        if (!clientRes.success && clientRes.error) {
+          setError(clientRes.error);
+        }
+        setLoading(false);
+        return;
+      } catch (err: any) {
+        console.warn("Client Gemini direct call fallback:", err);
+      }
+    }
+
+    // 2. Try calling the backend server endpoint if available
     try {
       const res = await fetch("/api/gemini/analyze", {
         method: "POST",
@@ -64,20 +89,36 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
         }),
       });
 
-      const data = await res.json();
-      if (data.success) {
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}`);
+      }
+
+      const textOutput = await res.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(textOutput);
+      } catch {
+        throw new Error("Invalid response format");
+      }
+
+      if (data && data.success) {
         setAnalysis(data.analysis);
         setModelUsed(data.modelUsed || "gemini-3.7-flash");
         setIsLiveAi(!data.fallback);
-      } else {
-        if (data.error) {
-          setError(data.error);
-        }
-        setAnalysis(data.analysis || "Δεν ήταν δυνατή η ολοκλήρωση της ανάλυσης.");
+        setLoading(false);
+        return;
+      } else if (data && data.analysis) {
+        setAnalysis(data.analysis);
         setIsLiveAi(false);
+        if (data.error) setError(data.error);
+        setLoading(false);
+        return;
       }
-    } catch (err: any) {
-      setError("Σφάλμα επικοινωνίας με τον διακομιστή: " + err.message);
+    } catch {
+      // 3. Robust Offline Local Engine (Guaranteed zero-crash in APK / Static Netlify)
+      const offlineResult = generateLocalOfflineAnalysis(text, number, words, queryContext);
+      setAnalysis(offlineResult);
+      setModelUsed("Αυτόνομη Φιλολογική Μηχανή");
       setIsLiveAi(false);
     } finally {
       setLoading(false);
