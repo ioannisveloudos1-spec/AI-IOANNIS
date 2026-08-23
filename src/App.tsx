@@ -236,7 +236,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0c0a] text-[#e8dfd1] flex flex-col font-sans selection:bg-[#c89b3c]/30 selection:text-[#f4e2b7]">
+    <div className="min-h-screen bg-[#0d0c0a] text-[#e8dfd1] flex flex-col font-sans selection:bg-[#c89b3c]/30 selection:text-[#f4e2b7] pt-[env(safe-area-inset-top,0px)]">
       
       {/* App Header */}
       <Header

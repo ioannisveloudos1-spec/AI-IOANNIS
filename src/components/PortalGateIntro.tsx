@@ -1,7 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import portalImage from "../assets/images/lavrion_oudos_gate_1787492688641.jpg";
-import { ArrowRight, Music, Check, Upload } from "lucide-react";
-import { playPortalSound, getSavedPortalAudio, savePortalAudio } from "../utils/portalAudio";
+import { ArrowRight } from "lucide-react";
+import { playPortalSound } from "../utils/portalAudio";
 
 interface PortalGateIntroProps {
   onEnter: () => void;
@@ -14,9 +14,6 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({
 }) => {
   // Animation phases: 'idle' | 'pressed' | 'metamorphosis' | 'dissolving'
   const [phase, setPhase] = useState<"idle" | "pressed" | "metamorphosis" | "dissolving">("idle");
-  const [hasCustomAudio, setHasCustomAudio] = useState<boolean>(() => !!getSavedPortalAudio());
-  const [audioStatusMsg, setAudioStatusMsg] = useState<string>("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleEnterClick = () => {
     if (phase !== "idle") return;
@@ -43,33 +40,12 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({
     }, 3100);
   };
 
-  const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        savePortalAudio(dataUrl);
-        setHasCustomAudio(true);
-        setAudioStatusMsg("Ο ήχος Suno αποθηκεύτηκε επιτυχώς!");
-        setTimeout(() => setAudioStatusMsg(""), 3500);
-        // Play short preview
-        const preview = new Audio(dataUrl);
-        preview.volume = 0.9;
-        preview.play().catch(() => {});
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
   const isTransitioning = phase !== "idle";
 
   return (
     <div
       id="portal-gate-overlay"
-      className={`fixed inset-0 z-50 flex flex-col justify-between bg-black text-center overflow-hidden select-none transition-opacity duration-700 ${
+      className={`fixed inset-0 z-50 flex flex-col justify-between bg-black text-center overflow-hidden select-none transition-opacity duration-700 pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] ${
         phase === "dissolving" ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
@@ -110,9 +86,9 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({
         }}
       />
 
-      {/* Top Header: Deeply Carved Inscription ΛΑΥΡΕΙΟΝ */}
+      {/* Top Header: Deeply Carved Inscription ΛΑΥΡΕΙΟΝ with Safe Top Spacing */}
       <div 
-        className={`relative z-10 w-full pt-8 sm:pt-10 px-4 flex flex-col items-center transition-all duration-700 ${
+        className={`relative z-10 w-full pt-10 sm:pt-14 md:pt-16 px-4 flex flex-col items-center transition-all duration-700 ${
           isTransitioning ? "opacity-0 -translate-y-6 pointer-events-none" : "opacity-100 translate-y-0"
         }`}
       >
@@ -124,14 +100,14 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({
         >
           ΛΑΥΡΕΙΟΝ
         </h1>
-        <div className="mt-1 text-[11px] sm:text-xs font-mono tracking-[0.2em] text-[#c89b3c] drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+        <div className="mt-1.5 text-[11px] sm:text-xs font-mono tracking-[0.2em] text-[#c89b3c] drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
           ΟΥΔΟΣ • ΑΠΟ ΤΟ ΣΚΟΤΟΣ ΠΡΟΣ ΤΟ ΦΩΣ
         </div>
       </div>
 
       {/* Bottom Floating Area: Inscription & 3D Mechanical Button */}
       <div 
-        className={`relative z-10 w-full max-w-lg mx-auto px-4 pb-8 sm:pb-10 pt-4 flex flex-col items-center gap-3 transition-all duration-700 ${
+        className={`relative z-10 w-full max-w-lg mx-auto px-4 pb-10 sm:pb-14 pt-4 flex flex-col items-center gap-4 transition-all duration-700 ${
           isTransitioning ? "opacity-0 translate-y-8 pointer-events-none" : "opacity-100 translate-y-0"
         }`}
       >
@@ -182,59 +158,6 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({
               }}
             />
           </button>
-        </div>
-
-        {/* Audio File Input with direct test button */}
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          accept="audio/*,.mp3,.wav,.m4a,.ogg" 
-          onChange={handleAudioUpload} 
-          className="hidden" 
-        />
-
-        {/* Audio Status & Controls */}
-        <div className="flex flex-col items-center gap-2 mt-2">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 text-xs font-sans text-[#f0cf7e] hover:text-white transition-colors py-1.5 px-3.5 rounded-full bg-[#1e150d] hover:bg-[#2e2114] border border-[#8a6828] shadow-md cursor-pointer active:scale-95"
-            >
-              {hasCustomAudio ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>Ήχος Suno ενεργός (αλλαγή αρχείου)</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-3.5 h-3.5 text-[#e6c670] shrink-0" />
-                  <span>Φόρτωση αρχείου ήχου Suno (.mp3)</span>
-                </>
-              )}
-            </button>
-
-            {hasCustomAudio && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  playPortalSound();
-                }}
-                className="flex items-center gap-1 text-xs font-sans text-[#e6c670] hover:text-white transition-colors py-1.5 px-3 rounded-full bg-black/60 hover:bg-black/90 border border-[#8a6828]/70 cursor-pointer active:scale-95"
-                title="Δοκιμή ήχου"
-              >
-                <Music className="w-3 h-3 text-emerald-400" />
-                <span>Δοκιμή</span>
-              </button>
-            )}
-          </div>
-
-          {audioStatusMsg && (
-            <p className="text-xs text-emerald-400 font-sans font-medium animate-fade-in bg-black/60 px-3 py-1 rounded-full border border-emerald-500/30">
-              {audioStatusMsg}
-            </p>
-          )}
         </div>
       </div>
     </div>

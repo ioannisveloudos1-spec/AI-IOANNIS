@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
+import Markdown from "react-markdown";
 import { Sparkles, X, Copy, Check, RefreshCw, Send, AlertCircle, Key, Cpu, HelpCircle } from "lucide-react";
-import { generateLocalOfflineAnalysis, generateClientGeminiAnalysis } from "../utils/offlineAnalysis";
+import { generateLocalOfflineAnalysis, generateClientGeminiAnalysis, cleanAndFormatAiText, formatAiModelDisplayName } from "../utils/offlineAnalysis";
 
 interface AiAnalysisModalProps {
   isOpen: boolean;
@@ -34,7 +35,7 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
   const [copied, setCopied] = useState<boolean>(false);
   const [customQuestion, setCustomQuestion] = useState<string>("");
   const [activeQuestion, setActiveQuestion] = useState<string>("Πλήρης Φιλολογική & Ισοψηφική Ανάλυση");
-  const [modelUsed, setModelUsed] = useState<string>("");
+  const [modelUsed, setModelUsed] = useState<string>("Τ.Ν. ΙΩΑΝΝΗΣ 1.0");
   const [isLiveAi, setIsLiveAi] = useState<boolean>(false);
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
       setActiveQuestion(question);
     }
 
-    // 1. If user provided their own custom API key, call Gemini directly from the client (works 100% on Netlify/APK!)
+    // 1. If user provided their own custom API key, call Gemini directly from client (works 100% in APK/Netlify)
     if (customApiKey && customApiKey.trim().length > 10) {
       try {
         const clientRes = await generateClientGeminiAnalysis(
@@ -62,8 +63,8 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
           words,
           queryContext
         );
-        setAnalysis(clientRes.analysis);
-        setModelUsed(clientRes.modelUsed);
+        setAnalysis(cleanAndFormatAiText(clientRes.analysis));
+        setModelUsed(formatAiModelDisplayName(clientRes.modelUsed));
         setIsLiveAi(clientRes.success);
         if (!clientRes.success && clientRes.error) {
           setError(clientRes.error);
@@ -71,11 +72,11 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
         setLoading(false);
         return;
       } catch (err: any) {
-        console.warn("Client Gemini direct call fallback:", err);
+        console.warn("Client AI direct call fallback:", err);
       }
     }
 
-    // 2. Try calling the backend server endpoint if available
+    // 2. Try calling backend server endpoint if available
     try {
       const res = await fetch("/api/gemini/analyze", {
         method: "POST",
@@ -102,13 +103,13 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
       }
 
       if (data && data.success) {
-        setAnalysis(data.analysis);
-        setModelUsed(data.modelUsed || "gemini-3.7-flash");
+        setAnalysis(cleanAndFormatAiText(data.analysis));
+        setModelUsed(formatAiModelDisplayName(data.modelUsed));
         setIsLiveAi(!data.fallback);
         setLoading(false);
         return;
       } else if (data && data.analysis) {
-        setAnalysis(data.analysis);
+        setAnalysis(cleanAndFormatAiText(data.analysis));
         setIsLiveAi(false);
         if (data.error) setError(data.error);
         setLoading(false);
@@ -117,8 +118,8 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
     } catch {
       // 3. Robust Offline Local Engine (Guaranteed zero-crash in APK / Static Netlify)
       const offlineResult = generateLocalOfflineAnalysis(text, number, words, queryContext);
-      setAnalysis(offlineResult);
-      setModelUsed("Αυτόνομη Φιλολογική Μηχανή");
+      setAnalysis(cleanAndFormatAiText(offlineResult));
+      setModelUsed("ΙΩΑΝΝΗΣ (Offline)");
       setIsLiveAi(false);
     } finally {
       setLoading(false);
@@ -157,19 +158,19 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
                   AI Φιλολογική & Ισοψηφική Ερμηνεία
                 </h3>
                 {isLiveAi ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-700/50 text-[10px] font-sans font-medium text-emerald-300">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-700/50 text-[10px] font-sans font-medium text-emerald-300">
                     <Cpu className="w-2.5 h-2.5" />
-                    Live Gemini AI ({modelUsed})
+                    Live AI ({modelUsed})
                   </span>
                 ) : (
                   <button
                     type="button"
                     onClick={onOpenApiKeyModal}
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950/50 hover:bg-amber-900/60 border border-amber-600/40 text-[10px] font-sans text-amber-300 transition-colors cursor-pointer"
-                    title="Πατήστε για να συνδέσετε το Gemini API Key σας"
+                    title="Πατήστε για να συνδέσετε το API Key σας"
                   >
                     <Key className="w-2.5 h-2.5" />
-                    Offline Λειτουργία (Σύνδεση Gemini API ➔)
+                    {modelUsed} ➔ Σύνδεση API Key
                   </button>
                 )}
                 {customApiKey && isLiveAi && (
@@ -216,7 +217,7 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
                   Διεξαγωγή Φιλολογικής & Πυθαγόρειας Ανάλυσης...
                 </p>
                 <p className="text-xs text-[#8c7e6c]">
-                  Απάντηση από το Google Gemini AI στα Ελληνικά
+                  Απάντηση από την Τ.Ν. ΙΩΑΝΝΗΣ 1.0 στα Ελληνικά
                 </p>
               </div>
             </div>
@@ -245,8 +246,60 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
               </div>
             </div>
           ) : (
-            <div className="space-y-4 whitespace-pre-line leading-relaxed bg-[#0f0e0c] p-4 sm:p-5 rounded-xl border border-[#261f18]">
-              {analysis}
+            <div className="bg-[#0f0e0c] p-4 sm:p-5 rounded-xl border border-[#261f18] text-[#d6c7b2] leading-relaxed">
+              <div className="markdown-body space-y-3 font-serif">
+                <Markdown
+                  components={{
+                    h1: ({ children }) => (
+                      <h1 className="text-base sm:text-lg font-bold text-[#f5ecd8] border-b border-[#382c1f] pb-1.5 mb-2 mt-3">
+                        {children}
+                      </h1>
+                    ),
+                    h2: ({ children }) => (
+                      <h2 className="text-sm sm:text-base font-bold text-[#e6c670] border-b border-[#2d2318] pb-1 mb-2 mt-3">
+                        {children}
+                      </h2>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 className="text-xs sm:text-sm font-bold text-[#d4b465] mb-1.5 mt-2.5">
+                        {children}
+                      </h3>
+                    ),
+                    p: ({ children }) => (
+                      <p className="text-xs sm:text-sm leading-relaxed mb-2.5 text-[#d6c7b2]">
+                        {children}
+                      </p>
+                    ),
+                    strong: ({ children }) => (
+                      <strong className="font-bold text-[#f5ecd8]">
+                        {children}
+                      </strong>
+                    ),
+                    em: ({ children }) => (
+                      <em className="italic text-[#e6c670]">
+                        {children}
+                      </em>
+                    ),
+                    ul: ({ children }) => (
+                      <ul className="list-disc list-inside space-y-1.5 pl-1 mb-2.5 text-xs sm:text-sm">
+                        {children}
+                      </ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol className="list-decimal list-inside space-y-1.5 pl-1 mb-2.5 text-xs sm:text-sm">
+                        {children}
+                      </ol>
+                    ),
+                    li: ({ children }) => (
+                      <li className="text-[#d6c7b2] leading-relaxed">
+                        {children}
+                      </li>
+                    ),
+                  }}
+                >
+                  {analysis}
+                </Markdown>
+              </div>
             </div>
           )}
 
@@ -281,7 +334,7 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
           {!loading && (
             <form onSubmit={handleCustomSubmit} className="pt-2 space-y-1.5">
               <label className="block text-[11px] font-serif text-[#8c7e6c]">
-                Ή γράψτε ένα δικό σας ερώτημα προς το Gemini:
+                Ή γράψτε ένα δικό σας ερώτημα προς την Τ.Ν. ΙΩΑΝΝΗΣ 1.0:
               </label>
               <div className="flex gap-2">
                 <input

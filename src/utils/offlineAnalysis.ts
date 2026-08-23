@@ -23,6 +23,68 @@ const KNOWN_ISOPSEPHIES_MAP: Record<number, string[]> = {
 };
 
 /**
+ * Clean up any raw LaTeX symbols, code artifacts, or unescaped math commands
+ */
+export function cleanAndFormatAiText(rawText: string): string {
+  if (!rawText) return "";
+
+  let cleaned = rawText
+    // Replace LaTeX arrows with unicode arrows
+    .replace(/\\longrightarrow/g, " ➔ ")
+    .replace(/\\rightarrow/g, " ➔ ")
+    .replace(/\\Rightarrow/g, " ➔ ")
+    .replace(/\\to/g, " ➔ ")
+    // Replace font wrappers
+    .replace(/\\mathbf\{([^}]+)\}/g, "**$1**")
+    .replace(/\\mathbf\s+/g, "")
+    .replace(/\\mathit\{([^}]+)\}/g, "*$1*")
+    .replace(/\\mathrm\{([^}]+)\}/g, "$1")
+    .replace(/\\text\{([^}]+)\}/g, "$1")
+    .replace(/\\underline\{([^}]+)\}/g, "$1")
+    // Replace fractions
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1 / $2)")
+    // Replace operators & dots
+    .replace(/\\cdot/g, "·")
+    .replace(/\\times/g, "×")
+    .replace(/\\sum/g, "Σ")
+    .replace(/\\dots/g, "...")
+    .replace(/\\ldots/g, "...")
+    .replace(/\\approx/g, "≈")
+    .replace(/\\leq/g, "≤")
+    .replace(/\\geq/g, "≥")
+    .replace(/\\neq/g, "≠")
+    .replace(/\\alpha/g, "α")
+    .replace(/\\beta/g, "β")
+    .replace(/\\gamma/g, "γ")
+    .replace(/\\delta/g, "δ")
+    .replace(/\\pi/g, "π")
+    .replace(/\\omega/g, "ω")
+    // Remove brackets/delimiters
+    .replace(/\\\[/g, "")
+    .replace(/\\\]/g, "")
+    .replace(/\\\(/g, "")
+    .replace(/\\\)/g, "")
+    .replace(/\$\$/g, "")
+    .replace(/\$/g, "")
+    // Remove residual isolated backslashes before plain letters
+    .replace(/\\([a-zA-Z]+)/g, "$1");
+
+  return cleaned.trim();
+}
+
+/**
+ * Format any model name to always show ΙΩΑΝΝΗΣ branding
+ */
+export function formatAiModelDisplayName(modelName?: string): string {
+  if (!modelName) return "Τ.Ν. ΙΩΑΝΝΗΣ 1.0";
+  const lower = modelName.toLowerCase();
+  if (lower.includes("offline") || lower.includes("local")) {
+    return "Τ.Ν. ΙΩΑΝΝΗΣ 1.0 (Offline)";
+  }
+  return "Τ.Ν. ΙΩΑΝΝΗΣ 1.0";
+}
+
+/**
  * Generate rich philological and Pythagorean analysis offline without any network/server dependency
  */
 export function generateLocalOfflineAnalysis(
@@ -64,7 +126,7 @@ export function generateLocalOfflineAnalysis(
   const isPhilosophyQuestion = context && (context.includes("φιλοσοφία") || context.includes("μυστήρια") || context.includes("αρχαία"));
 
   if (isPythagoreanQuestion) {
-    return `## 📐 Πυθαγόρειες Μαθηματικές Ιδιότητες για το «${targetText}» (Αξία: ${val})
+    return cleanAndFormatAiText(`## 📐 Πυθαγόρειες Μαθηματικές Ιδιότητες για το «${targetText}» (Αξία: ${val})
 
 ### 1. Πυθαγόρειος Πυθμένας (Ψηφιακή Ρίζα)
 - **Πυθμένας**: **${pythmen}**
@@ -78,19 +140,19 @@ export function generateLocalOfflineAnalysis(
     }
 
 ### 2. Μαθηματική Δομή & Γεωμετρικοί Αριθμοί
-- **Πλήθος Διαιρετών**: **${divisors.length}** διαιρέτες: \`${divisors.slice(0, 16).join(", ")}${divisors.length > 16 ? "..." : ""}\`
+- **Πλήθος Διαιρετών**: **${divisors.length}** διαιρέτες: ${divisors.slice(0, 16).join(", ")}${divisors.length > 16 ? "..." : ""}
 - **Τρίγωνος Αριθμός ($T_n$)**: ${isTri ? `Ναι! Είναι ο **${triRoot}ος τρίγωνος αριθμός** ($T_{${triRoot}} = \\frac{${triRoot} \\cdot ${triRoot + 1}}{2} = ${val}$).` : "Δεν αποτελεί ακέραιο τρίγωνο αριθμό."}
 - **Αρτιότητα**: ${val % 2 === 0 ? "Άρτιος (θηλυκός κατά τους Πυθαγόρειους, διαιρετός διά του 2)." : "Περιττός (αρσενικός κατά τους Πυθαγόρειους, αδιαίρετος διά του 2)."}
 ${val === 666 ? `
 ### ☀️ Ιδιαιτερότητα 666 (Μαγικό Τετράγωνο Ηλίου)
-- Προκύπτει από το άθροισμα των πρώτων 36 ακεραίων: $1 + 2 + 3 + ... + 36 = 666 = T_{36}$.
-- $s = \\frac{36 \\cdot 37}{2} = 18 \\cdot 37 = 666$.
-- Το άθροισμα κάθε γραμμής και στήλης στο τετράγωνο $6 \\times 6$ ισούται με 111.` : ""}`;
+- Προκύπτει από το άθροισμα των πρώτων 36 ακεραίων: 1 + 2 + 3 + ... + 36 = 666.
+- 36 × 37 / 2 = 18 × 37 = 666.
+- Το άθροισμα κάθε γραμμής και στήλης στο μαγικό τετράγωνο 6 × 6 ισούται με 111.` : ""}`);
   }
 
   if (isIsopsephiesQuestion) {
     const matches = KNOWN_ISOPSEPHIES_MAP[val] || [];
-    return `## ⚖️ Ισοψηφικές Αντιστοιχίες & Συσχετίσεις για την Τιμή ${val}
+    return cleanAndFormatAiText(`## ⚖️ Ισοψηφικές Αντιστοιχίες & Συσχετίσεις για την Τιμή ${val}
 
 ### 1. Εξεταζόμενο Κείμενο: «${targetText}» (Λεξάριθμος: ${val})
 Στην ελληνική ισοψηφία, λέξεις ή φράσεις που παράγουν τον ίδιο αριθμό θεωρούνται **ισόψηφες** και συνδέονται νοηματικά.
@@ -99,11 +161,11 @@ ${val === 666 ? `
 ${matches.length > 0 ? matches.map((m) => `- **${m}**`).join("\n") : `- Δεν υπάρχει καταγεγραμμένη μεμονωμένη μονολεκτική ισοψηφία στη βασική βιβλιοθήκη για τον αριθμό ${val}. Μπορείτε να αναζητήσετε συνδυασμούς λέξεων στην καρτέλα «Αναζήτηση».`}
 
 ### 3. Πυθαγόρειος Πυθμένας
-- Ο πυθμένας του αριθμού ${val} είναι **${pythmen}**. Όλες οι παραπάνω φράσεις έχουν ακριβώς το ίδιο άθροισμα και την ίδια ψηφιακή ρίζα ${pythmen}.`;
+- Ο πυθμένας του αριθμού ${val} είναι **${pythmen}**. Όλες οι παραπάνω φράσεις έχουν ακριβώς το ίδιο άθροισμα και την ίδια ψηφιακή ρίζα ${pythmen}.`);
   }
 
   if (isEtymologyQuestion) {
-    return `## 📖 Ετυμολογική & Ιστορική Σημασία: «${targetText}»
+    return cleanAndFormatAiText(`## 📖 Ετυμολογική & Ιστορική Σημασία: «${targetText}»
 
 ### 1. Γλωσσολογική Προσέγγιση
 - **Κείμενο**: «${targetText}»
@@ -113,22 +175,22 @@ ${matches.length > 0 ? matches.map((m) => `- **${m}**`).join("\n") : `- Δεν �
 ### 2. Ιστορική & Φιλολογική Διάσταση
 Στην κλασική, ελληνιστική και βυζαντινή γραμματεία, η λέξη «${targetText}» απαντάται σε θεμελιώδη κείμενα.
 - Η απόδοση της αριθμητικής αξίας ${val} έγινε με βάση τους αυστηρούς κανόνες της **Ιωνικής Αρίθμησης (27 ψηφία)**.
-- Τα γράμματα αναλύονται επακριβώς στις αρχαίες μονάδες, δεκάδες και εκατοντάδες.`;
+- Τα γράμματα αναλύονται επακριβώς στις αρχαίες μονάδες, δεκάδες και εκατοντάδες.`);
   }
 
   if (isPhilosophyQuestion) {
-    return `## 🏛️ Συσχέτιση με την Αρχαία Φιλοσοφία & τα Μυστήρια: «${targetText}» (Αξία: ${val})
+    return cleanAndFormatAiText(`## 🏛️ Συσχέτιση με την Αρχαία Φιλοσοφία & τα Μυστήρια: «${targetText}» (Αξία: ${val})
 
 ### 1. Η Φιλοσοφική Θεώρηση των Αριθμών
 Οι Πυθαγόρειοι και οι Πλατωνικοί (ιδίως στον *Τίμαιο*) δίδασκαν ότι *«ἀριθμῷ δέ τε πάντ' ἐπέοικεν»* (όλα τα πράγματα προσομοιάζουν στον αριθμό).
 
 ### 2. Ο Συμβολισμός του ${val} & του Πυθμένα ${pythmen}
 - **Ενέργεια & Αρμονία**: Ο αριθμός **${val}** εκφράζει την ισορροπία της έκφρασης «${targetText}».
-- **Μυστηριακή Παράδοση**: Στα Ελευσίνια και στα Ορφικά Μυστήρια, τα ονόματα των θεοτήτων και οι ιερές επικλήσεις επιλέγονταν βάσει της ισοψηφικής τους ακρίβειας ώστε να συντονίζονται με την κοσμική τάξη.`;
+- **Μυστηριακή Παράδοση**: Στα Ελευσίνια και στα Ορφικά Μυστήρια, τα ονόματα των θεοτήτων και οι ιερές επικλήσεις επιλέγονταν βάσει της ισοψηφικής τους ακρίβειας ώστε να συντονίζονται με την κοσμική τάξη.`);
   }
 
   // Default general response
-  return `## 📜 Φιλολογική & Ισοψηφική Ανάλυση: «${targetText}»
+  return cleanAndFormatAiText(`## 📜 Φιλολογική & Ισοψηφική Ανάλυση: «${targetText}»
 
 ### 1. Αριθμητική Ταυτότητα & Ιωνική Αξία
 - **Λεξαριθμικό Άθροισμα**: **${val}**
@@ -142,11 +204,11 @@ ${val % 2 === 0 ? "- **Αρτιότητα**: Άρτιος αριθμός." : "- 
 Στην κλασική γραμματεία και την πυθαγόρεια παράδοση, οι λέξεις με κοινό λεξάριθμο θεωρούνταν ότι μοιράζονται μια βαθύτερη νοηματική ή συμβολική συγγένεια.
 
 ${context ? `*Θεματικό ερώτημα: ${context}*` : ""}
-*(Η ανάλυση δημιουργήθηκε αυτόνομα με βάση τους κανόνες της ελληνικής ισοψηφίας).*`;
+*(Η ανάλυση δημιουργήθηκε αυτόνομα από την Τ.Ν. ΙΩΑΝΝΗΣ 1.0).*`);
 }
 
 /**
- * Execute direct client-side Gemini AI call if API Key is present in app/localStorage/env
+ * Execute direct client-side AI call if API Key is present in app/localStorage/env
  */
 export async function generateClientGeminiAnalysis(
   apiKey: string,
@@ -161,7 +223,7 @@ export async function generateClientGeminiAnalysis(
       return {
         success: false,
         analysis: generateLocalOfflineAnalysis(text, number, words, context),
-        modelUsed: "offline-engine",
+        modelUsed: "Τ.Ν. ΙΩΑΝΝΗΣ 1.0 (Offline)",
         error: "Δεν έχει οριστεί API Key",
       };
     }
@@ -174,7 +236,7 @@ export async function generateClientGeminiAnalysis(
 
     let prompt = "";
     if (isSpecificQuestion) {
-      prompt = `Είσαι ένας κορυφαίος Έλληνας φιλόλογος, ιστορικός της αρχαίας ελληνικής γραμματείας και ερευνητής των Πυθαγορείων και της Ελληνικής Ισοψηφίας (Ιωνική Αρίθμηση 27 ψηφίων).
+      prompt = `Το όνομά σου ως τεχνητή νοημοσύνη είναι «Τ.Ν. ΙΩΑΝΝΗΣ 1.0». Είσαι ένας κορυφαίος Έλληνας φιλόλογος, ιστορικός της αρχαίας ελληνικής γραμματείας και ερευνητής των Πυθαγορείων και της Ελληνικής Ισοψηφίας (Ιωνική Αρίθμηση 27 ψηφίων).
 
 ΣΤΟΙΧΕΙΑ ΜΕΛΕΤΗΣ:
 - Κείμενο / Λέξη / Έκφραση: "${text || ''}"
@@ -187,11 +249,13 @@ export async function generateClientGeminiAnalysis(
 ΟΔΗΓΙΕΣ ΑΠΑΝΤΗΣΗΣ:
 - Απάντησε ΑΜΕΣΑ, ΕΞΕΙΔΙΚΕΥΜΕΝΑ και ΑΝΑΛΥΤΙΚΑ στο συγκεκριμένο ερώτημα: "${context}".
 - Επικεντρώσου αποκλειστικά σε αυτό το ερώτημα.
-- Παράθεσε συγκεκριμένα παραδείγματα, αρχαιοελληνικές πηγές, φιλοσοφικά αποσπάσματα (Πλάτων, Πυθαγόρας, Πρόκλος, Ιάμβλιχος κ.ά.) ή μαθηματικές αποδείξεις ανάλογα με το ερώτημα.
+- Παράθεσε συγκεκριμένα παραδείγματα, αρχαιοελληνικές πηγές, φιλοσοφικά αποσπάσματα (Πλάτων, Πυθαγόρας, Πρόκλος, Ιάμβλιχος κ.ά.) ή μαθηματικές αναλύσεις.
+- ΑΠΑΓΟΡΕΥΕΤΑΙ ΑΥΣΤΗΡΑ η χρήση κώδικα LaTeX (ΜΗΝ γράφεις ποτέ \\longrightarrow, \\mathbf, $$, \\frac, \\cdot κλπ). Χρησιμοποίησε μόνο απλά σύμβολα (➔, ·, /, =, +).
+- ΜΗΝ αναφέρεις ποτέ ότι είσαι μοντέλο Gemini ή Google. Είσαι αποκλειστικά η «Τ.Ν. ΙΩΑΝΝΗΣ 1.0».
 - Σημείωση: Τα 3 ιστορικά σύμβολα (Στίγμα ϛ=6, Κόππα ϟ=90, Σαμπί ϡ=900) είναι θεμελιώδη σύμβολα του κλασικού 27ψήφιου ελληνικού συστήματος γραφής και μέτρησης και δεν πρέπει ποτέ να αναφέρονται ως επείσακτα ή ξένα.
 - Μορφοποίησε την απάντηση σε καλαίσθητο Markdown με τίτλους, bullet points και έντονα γράμματα.`;
     } else {
-      prompt = `Είσαι ένας κορυφαίος Έλληνας φιλόλογος, ιστορικός της αρχαίας ελληνικής γραμματείας και ερευνητής των Πυθαγορείων και της Ελληνικής Ισοψηφίας (Ιωνική Αρίθμηση 27 ψηφίων).
+      prompt = `Το όνομά σου ως τεχνητή νοημοσύνη είναι «Τ.Ν. ΙΩΑΝΝΗΣ 1.0». Είσαι ένας κορυφαίος Έλληνας φιλόλογος, ιστορικός της αρχαίας ελληνικής γραμματείας και ερευνητής των Πυθαγορείων και της Ελληνικής Ισοψηφίας (Ιωνική Αρίθμηση 27 ψηφίων).
 
 ΣΤΟΙΧΕΙΑ ΜΕΛΕΤΗΣ:
 - Κείμενο / Λέξη / Έκφραση: "${text || ''}"
@@ -204,11 +268,18 @@ export async function generateClientGeminiAnalysis(
 3. **Ιστορικές και Κλασικές/Βιβλικές αναφορές** γνωστών ισοψηφιών με τον ίδιο λεξάριθμο (${number || ''}).
 4. **Συμπέρασμα & Συμβολισμός**.
 
-Σημείωση: Τα 3 ιστορικά σύμβολα (Στίγμα ϛ=6, Κόππα ϟ=90, Σαμπί ϡ=900) είναι θεμελιώδη σύμβολα του κλασικού 27ψήφιου ελληνικού συστήματος γραφής και μέτρησης και δεν πρέπει ποτέ να αναφέρονται ως επείσακτα ή ξένα.
-Γράψε σε καλαίσθητη ελληνική γλώσσα με καθαρή μορφοποίηση markdown.`;
+ΚΑΝΟΝΕΣ ΜΟΡΦΟΠΟΙΗΣΗΣ:
+- ΑΠΑΓΟΡΕΥΕΤΑΙ ΑΥΣΤΗΡΑ η χρήση κώδικα LaTeX (ΜΗΝ γράφεις ποτέ \\longrightarrow, \\mathbf, $$, \\frac, \\cdot κλπ). Χρησιμοποίησε μόνο απλά σύμβολα (➔, ·, /, =, +).
+- ΜΗΝ αναφέρεις ποτέ ότι είσαι μοντέλο Gemini ή Google. Είσαι αποκλειστικά η «Τ.Ν. ΙΩΑΝΝΗΣ 1.0».
+- Σημείωση: Τα 3 ιστορικά σύμβολα (Στίγμα ϛ=6, Κόππα ϟ=90, Σαμπί ϡ=900) είναι θεμελιώδη σύμβολα του κλασικού 27ψήφιου ελληνικού συστήματος γραφής και μέτρησης και δεν πρέπει ποτέ να αναφέρονται ως επείσακτα ή ξένα.
+- Γράψε σε καλαίσθητη ελληνική γλώσσα με καθαρή μορφοποίηση markdown.`;
     }
 
-    const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
+    const candidateModels = [
+      "gemini-3.6-flash",
+      "gemini-3.7-flash",
+      "gemini-flash-latest",
+    ];
 
     let lastError: any = null;
     for (const modelName of candidateModels) {
@@ -217,15 +288,15 @@ export async function generateClientGeminiAnalysis(
           model: modelName,
           contents: prompt,
           config: {
-            systemInstruction: "Απαντάς αποκλειστικά στην ελληνική γλώσσα με υψηλή επιστημονική ακρίβεια, ευγένεια και φιλολογικό βάθος σχετικά με την αρχαία ελληνική ισοψηφία.",
+            systemInstruction: "Είσαι η «Τ.Ν. ΙΩΑΝΝΗΣ 1.0», ειδικός ερευνητής της ελληνικής ισοψηφίας και φιλολογίας. Απαντάς αποκλειστικά στην ελληνική γλώσσα με υψηλή επιστημονική ακρίβεια, ευγένεια και φιλολογικό βάθος. Απαγορεύεται η χρήση συμβόλων LaTeX.",
           },
         });
 
         if (response && response.text) {
           return {
             success: true,
-            analysis: response.text,
-            modelUsed: modelName,
+            analysis: cleanAndFormatAiText(response.text),
+            modelUsed: "Τ.Ν. ΙΩΑΝΝΗΣ 1.0",
           };
         }
       } catch (err: any) {
@@ -236,15 +307,15 @@ export async function generateClientGeminiAnalysis(
     return {
       success: false,
       analysis: generateLocalOfflineAnalysis(text, number, words, context),
-      modelUsed: "offline-engine",
-      error: lastError?.message || "Αδυναμία σύνδεσης με το Gemini API",
+      modelUsed: "Τ.Ν. ΙΩΑΝΝΗΣ 1.0 (Offline)",
+      error: lastError?.message || "Αδυναμία σύνδεσης με την υπηρεσία AI",
     };
   } catch (err: any) {
     return {
       success: false,
       analysis: generateLocalOfflineAnalysis(text, number, words, context),
-      modelUsed: "offline-engine",
-      error: err?.message || "Σφάλμα κλήσης Gemini API",
+      modelUsed: "Τ.Ν. ΙΩΑΝΝΗΣ 1.0 (Offline)",
+      error: err?.message || "Σφάλμα κλήσης AI",
     };
   }
 }

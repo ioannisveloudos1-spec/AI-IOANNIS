@@ -24,6 +24,46 @@ function getGenAI(): GoogleGenAI | null {
   return aiClient;
 }
 
+// Helper to clean raw LaTeX and math formatting
+function cleanAiText(rawText: string): string {
+  if (!rawText) return "";
+  return rawText
+    .replace(/\\longrightarrow/g, " ➔ ")
+    .replace(/\\rightarrow/g, " ➔ ")
+    .replace(/\\Rightarrow/g, " ➔ ")
+    .replace(/\\to/g, " ➔ ")
+    .replace(/\\mathbf\{([^}]+)\}/g, "**$1**")
+    .replace(/\\mathbf\s+/g, "")
+    .replace(/\\mathit\{([^}]+)\}/g, "*$1*")
+    .replace(/\\mathrm\{([^}]+)\}/g, "$1")
+    .replace(/\\text\{([^}]+)\}/g, "$1")
+    .replace(/\\underline\{([^}]+)\}/g, "$1")
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1 / $2)")
+    .replace(/\\cdot/g, "·")
+    .replace(/\\times/g, "×")
+    .replace(/\\sum/g, "Σ")
+    .replace(/\\dots/g, "...")
+    .replace(/\\ldots/g, "...")
+    .replace(/\\approx/g, "≈")
+    .replace(/\\leq/g, "≤")
+    .replace(/\\geq/g, "≥")
+    .replace(/\\neq/g, "≠")
+    .replace(/\\alpha/g, "α")
+    .replace(/\\beta/g, "β")
+    .replace(/\\gamma/g, "γ")
+    .replace(/\\delta/g, "δ")
+    .replace(/\\pi/g, "π")
+    .replace(/\\omega/g, "ω")
+    .replace(/\\\[/g, "")
+    .replace(/\\\]/g, "")
+    .replace(/\\\(/g, "")
+    .replace(/\\\)/g, "")
+    .replace(/\$\$/g, "")
+    .replace(/\$/g, "")
+    .replace(/\\([a-zA-Z]+)/g, "$1")
+    .trim();
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -35,7 +75,7 @@ async function startServer() {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-// AI Isopsephy analysis endpoint
+  // AI Isopsephy analysis endpoint
   app.post("/api/gemini/analyze", async (req, res) => {
     try {
       const { text, number, context, words, customApiKey } = req.body;
@@ -52,9 +92,9 @@ async function startServer() {
       if (!ai) {
         return res.status(200).json({
           success: true,
-          modelUsed: "offline-engine",
+          modelUsed: "Τ.Ν. ΙΩΑΝΝΗΣ 1.0 (Offline)",
           fallback: true,
-          analysis: generateOfflineAnalysis(text, number, words, context),
+          analysis: cleanAiText(generateOfflineAnalysis(text, number, words, context)),
         });
       }
 
@@ -65,7 +105,7 @@ async function startServer() {
 
       let prompt = "";
       if (isSpecificQuestion) {
-        prompt = `Είσαι ένας κορυφαίος Έλληνας φιλόλογος, ιστορικός της αρχαίας ελληνικής γραμματείας και ερευνητής των Πυθαγορείων και της Ελληνικής Ισοψηφίας (Ιωνική Αρίθμηση 27 ψηφίων).
+        prompt = `Το όνομά σου ως τεχνητή νοημοσύνη είναι «Τ.Ν. ΙΩΑΝΝΗΣ 1.0». Είσαι ένας κορυφαίος Έλληνας φιλόλογος, ιστορικός της αρχαίας ελληνικής γραμματείας και ερευνητής των Πυθαγορείων και της Ελληνικής Ισοψηφίας (Ιωνική Αρίθμηση 27 ψηφίων).
 
 ΣΤΟΙΧΕΙΑ ΜΕΛΕΤΗΣ:
 - Κείμενο / Λέξη / Έκφραση: "${text || ''}"
@@ -77,12 +117,14 @@ async function startServer() {
 
 ΟΔΗΓΙΕΣ ΑΠΑΝΤΗΣΗΣ:
 - Απάντησε ΑΜΕΣΑ, ΕΞΕΙΔΙΚΕΥΜΕΝΑ και ΑΝΑΛΥΤΙΚΑ στο συγκεκριμένο ερώτημα: "${context}".
-- Επικεντρώσου αποκλειστικά σε αυτό το ερώτημα (μην επαναλαμβάνεις απλώς μια γενική προκαθορισμένη περίληψη).
-- Παράθεσε συγκεκριμένα παραδείγματα, αρχαιοελληνικές πηγές, φιλοσοφικά αποσπάσματα (Πλάτων, Πυθαγόρας, Πρόκλος, Ιάμβλιχος κ.ά.) ή μαθηματικές αποδείξεις ανάλογα με το ερώτημα.
+- Επικεντρώσου αποκλειστικά σε αυτό το ερώτημα.
+- Παράθεσε συγκεκριμένα παραδείγματα, αρχαιοελληνικές πηγές, φιλοσοφικά αποσπάσματα (Πλάτων, Πυθαγόρας, Πρόκλος, Ιάμβλιχος κ.ά.) ή μαθηματικές αναλύσεις.
+- ΑΠΑΓΟΡΕΥΕΤΑΙ ΑΥΣΤΗΡΑ η χρήση κώδικα LaTeX (ΜΗΝ γράφεις ποτέ \\longrightarrow, \\mathbf, $$, \\frac, \\cdot κλπ). Χρησιμοποίησε μόνο απλά σύμβολα (➔, ·, /, =, +).
+- ΜΗΝ αναφέρεις ποτέ ότι είσαι μοντέλο Gemini ή Google. Είσαι αποκλειστικά η «Τ.Ν. ΙΩΑΝΝΗΣ 1.0».
 - Σημείωση: Τα 3 ιστορικά σύμβολα (Στίγμα ϛ=6, Κόππα ϟ=90, Σαμπί ϡ=900) είναι θεμελιώδη σύμβολα του κλασικού 27ψήφιου ελληνικού συστήματος γραφής και μέτρησης και δεν πρέπει ποτέ να αναφέρονται ως επείσακτα ή ξένα.
 - Μορφοποίησε την απάντηση σε καλαίσθητο Markdown με τίτλους, bullet points και έντονα γράμματα.`;
       } else {
-        prompt = `Είσαι ένας κορυφαίος Έλληνας φιλόλογος, ιστορικός της αρχαίας ελληνικής γραμματείας και ερευνητής των Πυθαγορείων και της Ελληνικής Ισοψηφίας (Ιωνική Αρίθμηση 27 ψηφίων).
+        prompt = `Το όνομά σου ως τεχνητή νοημοσύνη είναι «Τ.Ν. ΙΩΑΝΝΗΣ 1.0». Είσαι ένας κορυφαίος Έλληνας φιλόλογος, ιστορικός της αρχαίας ελληνικής γραμματείας και ερευνητής των Πυθαγορείων και της Ελληνικής Ισοψηφίας (Ιωνική Αρίθμηση 27 ψηφίων).
 
 ΣΤΟΙΧΕΙΑ ΜΕΛΕΤΗΣ:
 - Κείμενο / Λέξη / Έκφραση: "${text || ''}"
@@ -95,21 +137,22 @@ async function startServer() {
 3. **Ιστορικές και Κλασικές/Βιβλικές αναφορές** γνωστών ισοψηφιών με τον ίδιο λεξάριθμο (${number || ''}).
 4. **Συμπέρασμα & Συμβολισμός**.
 
-Σημείωση: Τα 3 ιστορικά σύμβολα (Στίγμα ϛ=6, Κόππα ϟ=90, Σαμπί ϡ=900) είναι θεμελιώδη σύμβολα του κλασικού 27ψήφιου ελληνικού συστήματος γραφής και μέτρησης και δεν πρέπει ποτέ να αναφέρονται ως επείσακτα ή ξένα.
-Γράψε σε καλαίσθητη ελληνική γλώσσα με καθαρή μορφοποίηση markdown.`;
+ΚΑΝΟΝΕΣ ΜΟΡΦΟΠΟΙΗΣΗΣ:
+- ΑΠΑΓΟΡΕΥΕΤΑΙ ΑΥΣΤΗΡΑ η χρήση κώδικα LaTeX (ΜΗΝ γράφεις ποτέ \\longrightarrow, \\mathbf, $$, \\frac, \\cdot κλπ). Χρησιμοποίησε μόνο απλά σύμβολα (➔, ·, /, =, +).
+- ΜΗΝ αναφέρεις ποτέ ότι είσαι μοντέλο Gemini ή Google. Είσαι αποκλειστικά η «Τ.Ν. ΙΩΑΝΝΗΣ 1.0».
+- Σημείωση: Τα 3 ιστορικά σύμβολα (Στίγμα ϛ=6, Κόππα ϟ=90, Σαμπί ϡ=900) είναι θεμελιώδη σύμβολα του κλασικού 27ψήφιου ελληνικού συστήματος γραφής και μέτρησης και δεν πρέπει ποτέ να αναφέρονται ως επείσακτα ή ξένα.
+- Γράψε σε καλαίσθητη ελληνική γλώσσα με καθαρή μορφοποίηση markdown.`;
       }
 
-      // Prioritize high-availability, low-latency Gemini Flash models
+      // Prioritize high-availability models
       const candidateModels = [
         "gemini-3.6-flash",
         "gemini-3.7-flash",
-        "gemini-3.1-flash-lite",
         "gemini-flash-latest",
       ];
 
       let lastError: any = null;
       let analysisText: string | null = null;
-      let usedModel = "";
 
       for (const modelName of candidateModels) {
         try {
@@ -117,19 +160,17 @@ async function startServer() {
             model: modelName,
             contents: prompt,
             config: {
-              systemInstruction: "Απαντάς αποκλειστικά στην ελληνική γλώσσα με υψηλή επιστημονική ακρίβεια, ευγένεια και φιλολογικό βάθος σχετικά με την αρχαία ελληνική ισοψηφία. Σημείωση: Τα τρία σύμβολα (Στίγμα ϛ=6, Κόππα ϟ=90, Σαμπί ϡ=900) είναι θεμελιώδη σύμβολα του κλασικού 27ψήφιου ελληνικού συστήματος γραφής και μέτρησης και δεν πρέπει ποτέ να αναφέρονται ως 'επείσακτα' ή 'ξένα σώματα'.",
+              systemInstruction: "Είσαι η «Τ.Ν. ΙΩΑΝΝΗΣ 1.0», ειδικός ερευνητής της ελληνικής ισοψηφίας και φιλολογίας. Απαντάς αποκλειστικά στην ελληνική γλώσσα με υψηλή επιστημονική ακρίβεια, ευγένεια και φιλολογικό βάθος. Απαγορεύεται η χρήση συμβόλων LaTeX.",
             },
           });
 
           if (response && response.text) {
-            analysisText = response.text;
-            usedModel = modelName;
+            analysisText = cleanAiText(response.text);
             break;
           }
         } catch (err: any) {
           lastError = err;
           console.warn(`Model ${modelName} encountered an issue:`, err?.message || err);
-          // Continue to next candidate model immediately
         }
       }
 
@@ -137,38 +178,37 @@ async function startServer() {
         return res.json({
           success: true,
           analysis: analysisText,
-          modelUsed: usedModel,
+          modelUsed: "Τ.Ν. ΙΩΑΝΝΗΣ 1.0",
           customKeyActive: !!hasCustomKey,
         });
       }
 
-      // If user provided a custom key but it threw an error (e.g. invalid API key, permission denied), notify user
+      // If user provided a custom key but it threw an error
       if (hasCustomKey && lastError) {
         console.error("Custom API Key failed with error:", lastError.message);
         return res.json({
           success: false,
-          error: `Σφάλμα κλήσης Gemini API με το προσωπικό κλειδί: ${lastError.message || "Μη έγκυρο κλειδί ή όριο χρήσης"}`,
+          error: `Σφάλμα κλήσης AI με το προσωπικό κλειδί: ${lastError.message || "Μη έγκυρο κλειδί ή όριο χρήσης"}`,
           fallback: true,
-          analysis: generateOfflineAnalysis(text, number, words, context),
+          analysis: cleanAiText(generateOfflineAnalysis(text, number, words, context)),
         });
       }
 
       // Fallback
-      console.warn("All Gemini models were unavailable, using rich philological offline fallback.", lastError?.message);
       return res.json({
         success: true,
         fallback: true,
-        modelUsed: "offline-engine",
-        analysis: generateOfflineAnalysis(text, number, words, context),
+        modelUsed: "Τ.Ν. ΙΩΑΝΝΗΣ 1.0 (Offline)",
+        analysis: cleanAiText(generateOfflineAnalysis(text, number, words, context)),
       });
 
     } catch (error: any) {
-      console.error("Gemini analysis error:", error);
+      console.error("AI analysis error:", error);
       return res.status(200).json({
         success: true,
         fallback: true,
-        modelUsed: "offline-engine",
-        analysis: generateOfflineAnalysis(req.body?.text, req.body?.number, req.body?.words, req.body?.context),
+        modelUsed: "Τ.Ν. ΙΩΑΝΝΗΣ 1.0 (Offline)",
+        analysis: cleanAiText(generateOfflineAnalysis(req.body?.text, req.body?.number, req.body?.words, req.body?.context)),
       });
     }
   });

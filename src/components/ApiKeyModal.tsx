@@ -56,10 +56,10 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-serif font-bold text-[#f5ecd8]">
-                Ρύθμιση Gemini API Key
+                Σύνδεση API Key (Τ.Ν. ΙΩΑΝΝΗΣ 1.0)
               </h3>
               <p className="text-[11px] text-[#a69680] font-serif">
-                Προσωπικό κλειδί για βαθύτερη φιλολογική & αριθμολογική AI ανάλυση
+                Προσωπικό κλειδί για ζωντανή και βαθιά φιλολογική ανάλυση
               </p>
             </div>
           </div>
@@ -81,14 +81,14 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
               <span>Γιατί να προσθέσετε δικό σας API Key;</span>
             </div>
             <p className="text-[#a69680] text-[11px] leading-relaxed">
-              Εισάγοντας το δικό σας δωρεάν Google Gemini API Key εξασφαλίζετε απεριόριστη και άμεση πρόσβαση στο μοντέλο <strong>Gemini 3.7 Flash</strong> για εκτενείς φιλολογικές, πυθαγόρειες και θεολογικές ερμηνείες των αρχαίων ελληνικών κειμένων και λεξαρίθμων.
+              Εισάγοντας το δικό σας δωρεάν API Key εξασφαλίζετε απεριόριστη και άμεση πρόσβαση στη μηχανή τεχνητής νοημοσύνης <strong>Τ.Ν. ΙΩΑΝΝΗΣ 1.0</strong> για εξατομικευμένες απαντήσεις σε κάθε ερώτημά σας, πυθαγόρειες ερμηνείες και λεξαριθμικές αναλύσεις.
             </p>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label htmlFor="user-gemini-key-input" className="font-bold text-[#f5ecd8]">
-                Το Google Gemini API Key σας:
+                Το API Key σας:
               </label>
               <a
                 href="https://aistudio.google.com/app/apikey"
@@ -96,7 +96,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                 rel="noreferrer"
                 className="text-[11px] text-[#c89b3c] hover:text-[#f5ecd8] flex items-center gap-1 underline underline-offset-2"
               >
-                <span>Δημιουργία δωρεάν κλειδιού στο AI Studio</span>
+                <span>Λήψη δωρεάν κλειδιού στο AI Studio</span>
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>
@@ -122,7 +122,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
             
             <p className="text-[10px] text-[#7d7061] flex items-center gap-1.5 pt-0.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Το κλειδί αποθηκεύεται αποκλειστικά τοπικά στη συσκευή σας (localStorage) και χρησιμοποιείται μόνο για τις AI αναλύσεις σας.</span>
+              <span>Το κλειδί αποθηκεύεται αποκλειστικά τοπικά στη συσκευή σας (localStorage) και χρησιμοποιείται μόνο για τις αναλύσεις σας.</span>
             </p>
           </div>
 

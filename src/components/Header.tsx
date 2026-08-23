@@ -60,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="border-b border-[#2d251e] bg-[#14120f]/95 backdrop-blur-md sticky top-0 z-40">
+    <header className="border-b border-[#2d251e] bg-[#14120f]/95 backdrop-blur-md sticky top-0 z-40 pt-1.5 sm:pt-0">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between py-2.5 sm:py-3 gap-2.5 sm:gap-3">
           
@@ -108,7 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onOpenApiKeyModal}
                 id="header-api-key-btn"
                 className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-[#1c1813] hover:bg-[#282117] border border-[#3e3223] hover:border-[#c89b3c] text-xs font-serif text-[#e6c670] transition-colors relative shadow-sm shrink-0"
-                title="Ρύθμιση Gemini API Key"
+                title="Ρύθμιση API Key (AI ΙΩΑΝΝΗΣ)"
               >
                 <Key className="w-3.5 h-3.5 text-[#e6c670]" />
                 <span className="text-[11px] font-sans font-medium hidden sm:inline">API Key</span>
@@ -123,10 +123,10 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onOpenAiAssistant}
                 id="header-ai-assistant-btn"
                 className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg bg-gradient-to-r from-[#2a2218] via-[#3d2f1f] to-[#2a2218] border border-[#c89b3c]/60 hover:border-[#c89b3c] text-[#f5ecd8] text-xs font-serif shadow-md shadow-[#c89b3c]/15 transition-all shrink-0 active:scale-95"
-                title="AI Φιλολογική & Ισοψηφική Ερμηνεία"
+                title="Τ.Ν. ΙΩΑΝΝΗΣ 1.0 - Φιλολογική & Ισοψηφική Ερμηνεία"
               >
                 <Sparkles className="w-3.5 h-3.5 text-[#e6c670] animate-pulse" />
-                <span className="text-[11px] sm:text-xs font-medium font-sans">AI Ερμηνεία</span>
+                <span className="text-[11px] sm:text-xs font-medium font-sans">Τ.Ν. ΙΩΑΝΝΗΣ 1.0</span>
               </button>
             </div>
           </div>
