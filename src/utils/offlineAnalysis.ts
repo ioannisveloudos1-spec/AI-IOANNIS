@@ -146,7 +146,7 @@ ${context ? `*Θεματικό ερώτημα: ${context}*` : ""}
 }
 
 /**
- * Execute direct client-side Gemini AI call if API Key is present in app/localStorage
+ * Execute direct client-side Gemini AI call if API Key is present in app/localStorage/env
  */
 export async function generateClientGeminiAnalysis(
   apiKey: string,
@@ -156,7 +156,17 @@ export async function generateClientGeminiAnalysis(
   context: string
 ): Promise<{ success: boolean; analysis: string; modelUsed: string; error?: string }> {
   try {
-    const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
+    const keyToUse = apiKey?.trim() || (import.meta as any).env?.VITE_GEMINI_API_KEY || "";
+    if (!keyToUse) {
+      return {
+        success: false,
+        analysis: generateLocalOfflineAnalysis(text, number, words, context),
+        modelUsed: "offline-engine",
+        error: "Δεν έχει οριστεί API Key",
+      };
+    }
+
+    const ai = new GoogleGenAI({ apiKey: keyToUse });
     
     const isSpecificQuestion = context && 
       context !== "Πλήρης φιλολογική, μαθηματική και ιστορική ανάλυση" && 

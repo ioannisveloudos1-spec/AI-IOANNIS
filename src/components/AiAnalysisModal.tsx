@@ -156,16 +156,26 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({
                 <h3 className="text-base font-serif font-bold text-[#f5ecd8]">
                   AI Φιλολογική & Ισοψηφική Ερμηνεία
                 </h3>
-                {isLiveAi && (
+                {isLiveAi ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-700/50 text-[10px] font-sans font-medium text-emerald-300">
                     <Cpu className="w-2.5 h-2.5" />
-                    Live AI: {modelUsed}
+                    Live Gemini AI ({modelUsed})
                   </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onOpenApiKeyModal}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950/50 hover:bg-amber-900/60 border border-amber-600/40 text-[10px] font-sans text-amber-300 transition-colors cursor-pointer"
+                    title="Πατήστε για να συνδέσετε το Gemini API Key σας"
+                  >
+                    <Key className="w-2.5 h-2.5" />
+                    Offline Λειτουργία (Σύνδεση Gemini API ➔)
+                  </button>
                 )}
-                {customApiKey && (
+                {customApiKey && isLiveAi && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#332615] border border-[#c89b3c]/40 text-[10px] font-sans text-[#e6c670]">
                     <Key className="w-2.5 h-2.5" />
-                    Προσωπικό Κλειδί
+                    Ενεργό Προσωπικό Key
                   </span>
                 )}
               </div>
