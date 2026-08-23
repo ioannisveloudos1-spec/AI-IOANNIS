@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { TabType } from "../types";
-import { Calculator, Search, BarChart3, BookMarked, BookOpen, Sparkles, Key, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calculator, Search, BarChart3, BookMarked, BookOpen, Sparkles, Key, ChevronLeft, ChevronRight, Compass } from "lucide-react";
 import appLogoImg from "../assets/images/ego_eimi_logo_1787417709332.jpg";
 
 interface HeaderProps {
@@ -9,6 +9,7 @@ interface HeaderProps {
   savedCount: number;
   onOpenAiAssistant: () => void;
   onOpenApiKeyModal: () => void;
+  onOpenPortalGate?: () => void;
   hasCustomApiKey?: boolean;
 }
 
@@ -18,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   savedCount,
   onOpenAiAssistant,
   onOpenApiKeyModal,
+  onOpenPortalGate,
   hasCustomApiKey = false,
 }) => {
   const tabs = [
@@ -88,8 +90,20 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons (API Key & AI Assistant) - Clearly visible on all screens */}
+            {/* Action Buttons (API Key & AI Assistant & Portal Gate) - Clearly visible on all screens */}
             <div className="flex items-center gap-1.5 shrink-0">
+              {onOpenPortalGate && (
+                <button
+                  onClick={onOpenPortalGate}
+                  id="header-portal-gate-btn"
+                  className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-lg bg-[#1a140d] hover:bg-[#281e13] border border-[#c89b3c]/50 hover:border-[#e6c670] text-xs font-serif text-[#e6c670] transition-all shadow-sm shrink-0"
+                  title="Μυστική Πύλη Λαυρείου (ΒΕΛΟΣ + ΟΥΔΟΣ)"
+                >
+                  <Compass className="w-3.5 h-3.5 text-[#e6c670]" />
+                  <span className="text-[11px] font-sans font-medium hidden sm:inline">Πύλη</span>
+                </button>
+              )}
+
               <button
                 onClick={onOpenApiKeyModal}
                 id="header-api-key-btn"

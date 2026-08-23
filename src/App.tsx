@@ -8,6 +8,7 @@ import { ArchiveTab } from "./components/ArchiveTab";
 import { GuideTab } from "./components/GuideTab";
 import { AiAnalysisModal } from "./components/AiAnalysisModal";
 import { ApiKeyModal } from "./components/ApiKeyModal";
+import { PortalGateIntro } from "./components/PortalGateIntro";
 import { numberToGreekNumeral } from "./utils/isopsephy";
 
 const LOCAL_STORAGE_KEY = "greek_isopsephy_saved_archive_v1";
@@ -153,6 +154,9 @@ export default function App() {
   const [aiNumber, setAiNumber] = useState<number>(888);
   const [aiWords, setAiWords] = useState<string[]>(["ΙΗΣΟΥΣ"]);
 
+  // Portal Gate Intro state (always shows on launch/refresh)
+  const [showPortalGate, setShowPortalGate] = useState<boolean>(true);
+
   // Sync to local storage
   useEffect(() => {
     try {
@@ -241,6 +245,7 @@ export default function App() {
         savedCount={savedItems.length}
         hasCustomApiKey={!!customApiKey}
         onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
+        onOpenPortalGate={() => setShowPortalGate(true)}
         onOpenAiAssistant={() => handleOpenAiModal("ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ", 2368, ["ΙΗΣΟΥΣ", "ΧΡΙΣΤΟΣ"])}
       />
 
@@ -321,6 +326,14 @@ export default function App() {
         onSaveKey={handleSaveApiKey}
         currentKey={customApiKey}
       />
+
+      {/* Mystical Portal Gate Intro (Lavreion / Velos + Oudos) */}
+      {showPortalGate && (
+        <PortalGateIntro
+          onEnter={() => setShowPortalGate(false)}
+          onClose={() => setShowPortalGate(false)}
+        />
+      )}
 
       {/* Toast Notification */}
       {toastMessage && (

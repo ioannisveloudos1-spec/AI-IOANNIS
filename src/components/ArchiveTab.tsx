@@ -2,7 +2,10 @@ import React, { useState, useMemo } from "react";
 import { SavedIsopsephyItem } from "../types";
 import { HISTORICAL_ISOPSEPHIES, HistoricalIsopsephyEntry } from "../data/historicalIsopsephies";
 import { numberToGreekNumeral, getMathematicalProperties, calculateWordIsopsephy, cleanAndNormalizePolytonic } from "../utils/isopsephy";
-import { Search, Bookmark, Trash2, Download, Upload, Sparkles, Scale, BookOpen, Layers, Check, Copy, ExternalLink, Plus, Folder, Hash } from "lucide-react";
+import { Search, Bookmark, Trash2, Download, Upload, Sparkles, Scale, BookOpen, Layers, Check, Copy, ExternalLink, Plus, Folder, Hash, ArrowUpDown, ArrowDownAZ, ArrowUpAZ, ArrowDown01, ArrowUp10, Clock, LayoutGrid, ListFilter } from "lucide-react";
+
+type SortOption = "value_desc" | "value_asc" | "alpha_asc" | "alpha_desc" | "date_desc" | "date_asc" | "count_desc";
+type ViewMode = "folders" | "flat";
 
 interface ArchiveTabProps {
   savedItems: SavedIsopsephyItem[];
@@ -24,6 +27,8 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<"saved" | "classical" | "compare">("saved");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [sortOption, setSortOption] = useState<SortOption>("value_desc");
+  const [viewMode, setViewMode] = useState<ViewMode>("folders");
   const [compareItemIds, setCompareItemIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -33,9 +38,9 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
   const [newNotes, setNewNotes] = useState<string>("");
   const [newCategory, setNewCategory] = useState<string>("Προσωπικό");
 
-  // Filtered saved items
-  const filteredItems = useMemo(() => {
-    return savedItems.filter((item) => {
+  // Filtered and sorted saved items
+  const filteredAndSortedItems = useMemo(() => {
+    const filtered = savedItems.filter((item) => {
       const matchQuery =
         item.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.value.toString().includes(searchTerm) ||
@@ -49,19 +54,78 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
 
       return matchQuery && matchCat;
     });
-  }, [savedItems, searchTerm, selectedCategory]);
+
+    return filtered.sort((a, b) => {
+      switch (sortOption) {
+        case "value_desc":
+          return b.value - a.value || a.text.localeCompare(b.text, "el");
+        case "value_asc":
+          return a.value - b.value || a.text.localeCompare(b.text, "el");
+        case "alpha_asc":
+          return a.text.localeCompare(b.text, "el") || b.value - a.value;
+        case "alpha_desc":
+          return b.text.localeCompare(a.text, "el") || b.value - a.value;
+        case "date_desc":
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        case "date_asc":
+          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        case "count_desc":
+          return (b.wordCount || 1) - (a.wordCount || 1) || b.value - a.value;
+        default:
+          return b.value - a.value;
+      }
+    });
+  }, [savedItems, searchTerm, selectedCategory, sortOption]);
 
   // Group saved items by Isopsephy Number
   const groupedByNumber = useMemo(() => {
     const map = new Map<number, SavedIsopsephyItem[]>();
-    for (const item of filteredItems) {
+    for (const item of filteredAndSortedItems) {
       const list = map.get(item.value) || [];
       list.push(item);
       map.set(item.value, list);
     }
-    // Sort keys descending
-    return Array.from(map.entries()).sort((a, b) => b[0] - a[0]);
-  }, [filteredItems]);
+    
+    // Sort groups according to selected sortOption
+    const entries = Array.from(map.entries());
+    return entries.sort((a, b) => {
+      const valA = a[0];
+      const valB = b[0];
+      const itemsA = a[1];
+      const itemsB = b[1];
+
+      switch (sortOption) {
+        case "value_desc":
+          return valB - valA;
+        case "value_asc":
+          return valA - valB;
+        case "alpha_asc": {
+          const firstA = itemsA[0]?.text || "";
+          const firstB = itemsB[0]?.text || "";
+          return firstA.localeCompare(firstB, "el");
+        }
+        case "alpha_desc": {
+          const firstA = itemsA[0]?.text || "";
+          const firstB = itemsB[0]?.text || "";
+          return firstB.localeCompare(firstA, "el");
+        }
+        case "count_desc":
+          return itemsB.length - itemsA.length || valB - valA;
+        case "date_desc": {
+          const latestA = Math.max(...itemsA.map((i) => new Date(i.createdAt || 0).getTime()));
+          const latestB = Math.max(...itemsB.map((i) => new Date(i.createdAt || 0).getTime()));
+          return latestB - latestA;
+        }
+        case "date_asc": {
+          const earliestA = Math.min(...itemsA.map((i) => new Date(i.createdAt || 0).getTime()));
+          const earliestB = Math.min(...itemsB.map((i) => new Date(i.createdAt || 0).getTime()));
+          return earliestA - earliestB;
+        }
+        default:
+          return valB - valA;
+      }
+    });
+  }, [filteredAndSortedItems, sortOption]);
 
   const handleExportJSON = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(savedItems, null, 2));
@@ -245,6 +309,51 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
+                {/* View Mode Switcher */}
+                <div className="flex bg-[#0e0c0a] p-1 rounded-lg border border-[#2a2218]" title="Προβολή">
+                  <button
+                    onClick={() => setViewMode("folders")}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-serif transition-colors ${
+                      viewMode === "folders"
+                        ? "bg-[#251e17] text-[#e6c670] font-bold shadow-sm"
+                        : "text-[#8c7e6c] hover:text-[#d6c7b2]"
+                    }`}
+                  >
+                    <Folder className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Φάκελοι</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode("flat")}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-serif transition-colors ${
+                      viewMode === "flat"
+                        ? "bg-[#251e17] text-[#e6c670] font-bold shadow-sm"
+                        : "text-[#8c7e6c] hover:text-[#d6c7b2]"
+                    }`}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Όλες οι Λέξεις</span>
+                  </button>
+                </div>
+
+                {/* Sort Option Dropdown */}
+                <div className="flex items-center gap-1.5 bg-[#0e0c0a] px-2.5 py-1 rounded-lg border border-[#2a2218] text-xs font-serif text-[#d6c7b2]">
+                  <ArrowUpDown className="w-3.5 h-3.5 text-[#c89b3c]" />
+                  <span className="text-[#8c7e6c] text-[11px] hidden md:inline">Ταξινόμηση:</span>
+                  <select
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value as SortOption)}
+                    className="bg-transparent text-[#e6c670] font-serif text-xs outline-none cursor-pointer pr-1"
+                  >
+                    <option value="value_desc" className="bg-[#181410] text-[#f5ecd8]">Τιμή: Φθίνουσα (9999→1)</option>
+                    <option value="value_asc" className="bg-[#181410] text-[#f5ecd8]">Τιμή: Αύξουσα (1→9999)</option>
+                    <option value="alpha_asc" className="bg-[#181410] text-[#f5ecd8]">Αλφαβητικά (Α → Ω)</option>
+                    <option value="alpha_desc" className="bg-[#181410] text-[#f5ecd8]">Αλφαβητικά (Ω → Α)</option>
+                    <option value="date_desc" className="bg-[#181410] text-[#f5ecd8]">Ημερομηνία: Νεότερα πρώτα</option>
+                    <option value="date_asc" className="bg-[#181410] text-[#f5ecd8]">Ημερομηνία: Παλαιότερα πρώτα</option>
+                    <option value="count_desc" className="bg-[#181410] text-[#f5ecd8]">Πλήθος Λέξεων</option>
+                  </select>
+                </div>
+
                 <div className="flex bg-[#0e0c0a] p-1 rounded-lg border border-[#2a2218]">
                   {[
                     { id: "all", label: "Όλα" },
@@ -320,8 +429,113 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
             )}
           </div>
 
-          {/* Grouped by Isopsephy Number List */}
-          {groupedByNumber.length > 0 ? (
+          {/* Content List: Folders vs Flat View */}
+          {filteredAndSortedItems.length === 0 ? (
+            <div className="p-12 rounded-2xl bg-[#14120f] border border-[#282119] text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-[#201a14] border border-[#352a1d] text-[#c89b3c] flex items-center justify-center mx-auto text-xl font-serif">
+                📖
+              </div>
+              <h4 className="text-base font-serif font-bold text-[#f5ecd8]">
+                Δεν βρέθηκαν στοιχεία
+              </h4>
+              <p className="text-xs text-[#8c7e6c] max-w-md mx-auto">
+                {searchTerm
+                  ? `Δεν υπάρχει καταχώριση που να ταιριάζει με "${searchTerm}". Δοκιμάστε άλλον όρο ή αριθμό.`
+                  : "Χρησιμοποιήστε τον Υπολογιστή ή την Αναζήτηση για να αποθηκεύσετε λέξεις και φράσεις με τους λεξαρίθμους τους."}
+              </p>
+            </div>
+          ) : viewMode === "flat" ? (
+            /* Flat List of All Items */
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-xs text-[#8c7e6c] px-1 font-serif">
+                <span>Προβολή {filteredAndSortedItems.length} στοιχείων (Ενιαία Λίστα)</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filteredAndSortedItems.map((item) => {
+                  const isCompared = compareItemIds.includes(item.id);
+                  const greekNum = item.greekNumeral || numberToGreekNumeral(item.value);
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-4 rounded-xl bg-[#171410] border transition-all space-y-3 shadow-md ${
+                        isCompared ? "border-emerald-500/60 bg-[#162217]" : "border-[#2d241b] hover:border-[#423425]"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-0.5">
+                          <span className="text-lg font-serif font-bold text-[#f5ecd8] leading-tight block">
+                            {item.text}
+                          </span>
+                          <span className="text-[10px] text-[#8c7e6c] font-mono">
+                            {item.category} • {item.isPhrase ? `Φράση (${item.wordCount} λέξεις)` : "Λέξη"}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col items-end">
+                          <span className="text-lg font-serif font-black text-[#e6c670]">
+                            {item.value.toLocaleString("el-GR")}
+                          </span>
+                          <span className="text-[10px] font-serif font-bold text-[#c89b3c]">
+                            {greekNum} (Ρίζα: {item.root})
+                          </span>
+                        </div>
+                      </div>
+
+                      {item.notes && (
+                        <p className="text-xs font-serif text-[#a69680] bg-[#100d0a] p-2 rounded border border-[#241c14] line-clamp-2">
+                          {item.notes}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between pt-2 text-[11px] font-mono text-[#736655] border-t border-[#261e16]">
+                        <button
+                          onClick={() =>
+                            onOpenAiModal(item.text, item.value, [item.text])
+                          }
+                          className="flex items-center gap-1 text-[10px] text-[#c89b3c] hover:text-[#f5ecd8] font-serif transition-colors"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          <span>AI Ανάλυση</span>
+                        </button>
+                        
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => toggleCompare(item.id)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-serif transition-colors ${
+                              isCompared
+                                ? "bg-emerald-800 text-emerald-100"
+                                : "bg-[#251e16] text-[#a69680] hover:text-[#f5ecd8]"
+                            }`}
+                            title="Προσθήκη στη σύγκριση"
+                          >
+                            {isCompared ? "✓ Σύγκριση" : "+ Σύγκριση"}
+                          </button>
+
+                          <button
+                            onClick={() => handleCopyText(`${item.text} = ${item.value}`, item.id)}
+                            className="p-1 rounded bg-[#251e16] hover:bg-[#33281d] text-[#a69680]"
+                            title="Αντιγραφή"
+                          >
+                            {copiedId === item.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          </button>
+
+                          <button
+                            onClick={() => onDeleteItem(item.id)}
+                            className="text-[#6e5f50] hover:text-red-400 transition-colors p-1"
+                            title="Διαγραφή"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            /* Folders View Grouped by Isopsephy */
             <div className="space-y-6">
               {groupedByNumber.map(([numberVal, items]) => {
                 const greekNum = numberToGreekNumeral(numberVal);
@@ -431,18 +645,6 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                   </div>
                 );
               })}
-            </div>
-          ) : (
-            <div className="p-12 rounded-2xl bg-[#14120f] border border-[#282119] text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-[#201a14] border border-[#352a1d] text-[#c89b3c] flex items-center justify-center mx-auto text-xl font-serif">
-                📖
-              </div>
-              <h4 className="text-base font-serif font-bold text-[#f5ecd8]">
-                Το αρχείο σας είναι άδειο
-              </h4>
-              <p className="text-xs text-[#8c7e6c] max-w-md mx-auto">
-                Χρησιμοποιήστε τον Υπολογιστή ή την Αναζήτηση για να αποθηκεύσετε λέξεις και φράσεις με τους λεξαρίθμους τους.
-              </p>
             </div>
           )}
 
