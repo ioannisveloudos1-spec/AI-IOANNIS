@@ -1,7 +1,7 @@
 import React from "react";
 import { Sparkles, BookOpen, Compass, Flame, ShieldCheck, Sun, UserCheck } from "lucide-react";
 import portalImage from "../assets/images/lavrion_mine_portal_1787601965868.jpg";
-import ianeusImage from "../assets/images/ianeus_exact_portrait_1787603029303.jpg";
+import ianeusImage from "../assets/images/ianeus_ena_on_1787605143950.jpg";
 
 export const LavreionStoryView: React.FC = () => {
   return (

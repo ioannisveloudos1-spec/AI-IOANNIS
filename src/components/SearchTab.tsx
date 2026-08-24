@@ -371,14 +371,14 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                 onClick={() => setTopTextViewMode("highlighted")}
                 className={`px-2.5 py-1 rounded text-xs font-serif transition-all flex items-center gap-1.5 ${
                   topTextViewMode === "highlighted"
-                    ? "bg-[#ffe600] text-black font-extrabold shadow-md shadow-yellow-500/30"
-                    : "text-[#e6c670] hover:text-white"
+                    ? "bg-purple-600 text-white font-extrabold shadow-md shadow-purple-600/30"
+                    : "text-purple-300 hover:text-white"
                 }`}
               >
-                <span>🟡 Κίτρινο Μαρκάρισμα</span>
+                <span>🟣 Μωβ Μαρκάρισμα</span>
                 {totalFoundMatches > 0 && (
                   <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-                    topTextViewMode === "highlighted" ? "bg-black text-[#ffe600]" : "bg-[#ffe600] text-black"
+                    topTextViewMode === "highlighted" ? "bg-purple-950 text-white" : "bg-purple-600 text-white"
                   }`}>
                     {totalFoundMatches}
                   </span>
@@ -430,20 +430,20 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             </div>
           </div>
         ) : (
-          /* Yellow Highlighted Full Text Box */
+          /* Purple Highlighted Full Text Box */
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs font-serif px-1 text-[#d6c7b2]">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#ffe600] animate-pulse"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
                 <span>
-                  <strong>Κίτρινο Μαρκάρισμα Στόχων:</strong>{" "}
-                  {wordQuery && <span className="text-[#ffe600]">Λέξη «{wordQuery}» • </span>}
-                  {singleWordTarget && <span className="text-[#ffe600]">Στόχος Λέξης = {singleWordTarget} • </span>}
-                  {phraseTarget && <span className="text-[#ffe600]">Στόχος Φράσης = {phraseTarget} ({phraseLengthMin}-{phraseLengthMax}λ)</span>}
+                  <strong>Μωβ Μαρκάρισμα Στόχων (Άσπρα Γράμματα):</strong>{" "}
+                  {wordQuery && <span className="text-purple-300">Λέξη «{wordQuery}» • </span>}
+                  {singleWordTarget && <span className="text-purple-300">Στόχος Λέξης = {singleWordTarget} • </span>}
+                  {phraseTarget && <span className="text-purple-300">Στόχος Φράσης = {phraseTarget} ({phraseLengthMin}-{phraseLengthMax}λ)</span>}
                   {!wordQuery && !singleWordTarget && !phraseTarget && "Ορίστε στόχους παρακάτω για αυτόματο μαρκάρισμα"}
                 </span>
               </div>
-              <span className="font-mono text-[#ffe600] font-bold">
+              <span className="font-mono text-purple-300 font-bold bg-purple-950/60 border border-purple-500/40 px-2 py-0.5 rounded">
                 {totalFoundMatches} ευρέσεις
               </span>
             </div>
@@ -464,9 +464,9 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       <span
                         key={idx}
                         onClick={() => setSelectedWordObj(w)}
-                        className={`cursor-pointer transition-all inline-flex items-center gap-1 rounded ${
+                        className={`cursor-pointer transition-all inline-flex items-center gap-1.5 rounded ${
                           isTargetMatch
-                            ? "bg-[#ffe600] text-black font-black px-2 py-0.5 rounded shadow-[0_0_12px_rgba(255,230,0,0.65)] ring-2 ring-yellow-400 scale-105"
+                            ? "bg-purple-600 text-white font-black px-2 py-0.5 rounded shadow-[0_0_12px_rgba(168,85,247,0.75)] ring-2 ring-purple-300 scale-105"
                             : isSelected
                             ? "bg-[#c89b3c] text-black font-bold px-1.5 py-0.5 rounded"
                             : "hover:bg-[#251e17] hover:text-[#f5ecd8] px-1 py-0.5"
@@ -475,9 +475,9 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                           isSingleMatch ? " - ΣΤΟΧΟΣ ΛΕΞΗΣ" : ""
                         }${isPhraseMatch ? ` - ΜΕΡΟΣ ΣΥΝΔΥΑΣΜΟΥ ΦΡΑΣΗΣ (${phrases[0].value})` : ""}`}
                       >
-                        <span className={isTargetMatch ? "text-black font-black" : ""}>{w.rawWord}</span>
+                        <span className={isTargetMatch ? "text-white font-black" : ""}>{w.rawWord}</span>
                         {isTargetMatch && (
-                          <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-black text-[#ffe600] font-bold">
+                          <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-purple-950 text-white font-bold border border-purple-400/40">
                             {w.value}
                           </span>
                         )}
@@ -1235,7 +1235,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           <div className="space-y-4">
             <div className="p-4 rounded-xl bg-[#14120e] border border-[#2d251e] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="text-xs font-serif text-[#a69680]">
-                📋 <strong>Κάθετη Προβολή:</strong> Εμφάνιση κάθε λέξης σε ξεχωριστή σειρά με τον ισοψηφικό λεξάριθμο, τα γράμματα και τον πυθμένα της. Οι λέξεις που ικανοποιούν στόχο λέξης ({singleTargetNum || wordQuery || "-"}) ή αποτελούν μέρος στόχου φράσης ({phraseTarget || "-"}) μαρκάρονται αυτόματα με <span className="bg-[#ffe600] text-black font-bold px-1.5 py-0.5 rounded">κίτρινο χρώμα</span>.
+                📋 <strong>Κάθετη Προβολή:</strong> Εμφάνιση κάθε λέξης σε ξεχωριστή σειρά με τον ισοψηφικό λεξάριθμο, τα γράμματα και τον πυθμένα της. Οι λέξεις που ικανοποιούν στόχο λέξης ({singleTargetNum || wordQuery || "-"}) ή αποτελούν μέρος στόχου φράσης ({phraseTarget || "-"}) μαρκάρονται αυτόματα με <span className="bg-purple-600 text-white font-bold px-1.5 py-0.5 rounded">μωβ χρώμα και άσπρα γράμματα</span>.
               </div>
               <div className="text-xs font-mono text-[#8c7e6c] whitespace-nowrap">
                 Σύνολο: {analysis.words.length} σειρές λέξεων
@@ -1265,10 +1265,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                       isSelected
                         ? "bg-[#251e16] border-[#e6c670] ring-1 ring-[#e6c670] shadow-lg shadow-black/40"
-                        : isComboWord
-                        ? "bg-[#2b1736] border-purple-400 ring-2 ring-purple-400/80 shadow-md shadow-purple-500/30"
-                        : isTargetMatch
-                        ? "bg-[#28220f] border-yellow-500/80 shadow-md shadow-yellow-500/20 ring-1 ring-yellow-400/50"
+                        : (isComboWord || isTargetMatch)
+                        ? "bg-[#271433] border-purple-500/80 shadow-md shadow-purple-500/25 ring-1 ring-purple-400/60"
                         : "bg-[#14110e] border-[#261f18] hover:border-[#3e3223]"
                     }`}
                   >
@@ -1280,11 +1278,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           {isComboWord ? (
-                            <mark className="text-lg font-serif font-black bg-purple-300 text-purple-950 px-2 py-0.5 rounded shadow-sm">
+                            <mark className="text-lg font-serif font-black bg-purple-600 text-white px-2 py-0.5 rounded shadow-sm">
                               {w.rawWord}
                             </mark>
                           ) : isTargetMatch ? (
-                            <mark className="text-lg font-serif font-black bg-[#ffe600] text-black px-2 py-0.5 rounded shadow-sm">
+                            <mark className="text-lg font-serif font-black bg-purple-600 text-white px-2 py-0.5 rounded shadow-sm">
                               {w.rawWord}
                             </mark>
                           ) : (
@@ -1294,19 +1292,19 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                           )}
 
                           {isComboWord && (
-                            <span className="px-2 py-0.5 rounded bg-purple-500 text-white text-[10px] font-mono font-black uppercase tracking-wider shadow-sm animate-pulse">
+                            <span className="px-2 py-0.5 rounded bg-purple-600 text-white text-[10px] font-mono font-black uppercase tracking-wider shadow-sm animate-pulse">
                               🧩 Μέρος Συνδυασμού ({selectedAnywhereCombo?.value})
                             </span>
                           )}
 
                           {isSingleMatch && (
-                            <span className="px-2 py-0.5 rounded bg-[#ffe600] text-black text-[10px] font-mono font-black uppercase tracking-wider shadow-sm animate-pulse">
+                            <span className="px-2 py-0.5 rounded bg-purple-600 text-white text-[10px] font-mono font-black uppercase tracking-wider shadow-sm animate-pulse">
                               🎯 Στόχος Λέξης {w.value}
                             </span>
                           )}
 
                           {isPhraseMatch && (
-                            <span className="px-2 py-0.5 rounded bg-yellow-400 text-black text-[10px] font-mono font-black uppercase tracking-wider shadow-sm">
+                            <span className="px-2 py-0.5 rounded bg-purple-700 text-white text-[10px] font-mono font-black uppercase tracking-wider shadow-sm">
                               🎯 Μέρος Φράσης ({phrases.map((p) => `${p.wordCount}λ=${p.value}`).join(", ")})
                             </span>
                           )}
@@ -1321,10 +1319,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     <div className="flex items-center gap-2.5 self-end sm:self-auto">
                       <div className="text-right">
                         <div className={`text-lg font-serif font-bold px-3 py-0.5 rounded-lg border ${
-                          isComboWord
-                            ? "bg-purple-900 text-amber-300 font-black border-purple-400 shadow-sm"
-                            : isTargetMatch
-                            ? "bg-[#ffe600] text-black font-black border-yellow-400 shadow-sm"
+                          isComboWord || isTargetMatch
+                            ? "bg-purple-900 text-white font-black border-purple-400 shadow-sm"
                             : "text-[#e6c670] bg-[#1c1610] border-[#3e3122]"
                         }`}>
                           {w.value}
@@ -1386,9 +1382,9 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             <div className="p-4 rounded-xl bg-[#14120e] border border-[#2d251e] space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-serif text-[#a69680]">
                 <span>
-                  💡 <strong>Ροή Κειμένου & Μαρκάρισμα:</strong> Κάντε κλικ σε οποιαδήποτε λέξη για να δείτε τα γράμματα και την ισοψηφία της. Όλες οι ευρέσεις στόχων λέξεων ή συνδυασμών φράσεων εμφανίζονται με <span className="bg-[#ffe600] text-black font-bold px-1.5 py-0.5 rounded">κίτρινο μαρκάρισμα</span>, και οι επιλεγμένοι συνδυασμοί με <span className="bg-purple-500 text-white font-bold px-1.5 py-0.5 rounded">μοβ μαρκάρισμα</span>.
+                  💡 <strong>Ροή Κειμένου & Μαρκάρισμα:</strong> Κάντε κλικ σε οποιαδήποτε λέξη για να δείτε τα γράμματα και την ισοψηφία της. Όλες οι ευρέσεις στόχων λέξεων ή συνδυασμών φράσεων εμφανίζονται με <span className="bg-purple-600 text-white font-bold px-1.5 py-0.5 rounded">μωβ μαρκάρισμα</span> και άσπρα γράμματα.
                 </span>
-                <span className="font-mono text-[#ffe600] font-bold">
+                <span className="font-mono text-purple-300 font-bold bg-purple-950/60 border border-purple-500/40 px-2 py-0.5 rounded">
                   {totalFoundMatches} ευρέσεις μαρκαρισμένες
                 </span>
               </div>
@@ -1412,27 +1408,23 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                         isSelected
                           ? "bg-[#c89b3c] text-black font-bold ring-2 ring-[#e6c670] shadow-lg shadow-black/50"
-                          : isComboWord
-                          ? "bg-purple-600 text-white font-black border-2 border-purple-300 ring-2 ring-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.7)] scale-105"
-                          : isTargetMatch
-                          ? "bg-[#ffe600] text-black font-black border-2 border-[#ffd700] ring-2 ring-yellow-400/80 shadow-[0_0_15px_rgba(255,230,0,0.7)] scale-105 hover:bg-yellow-300"
+                          : (isTargetMatch || isComboWord)
+                          ? "bg-purple-600 text-white font-black border-2 border-purple-300 ring-2 ring-purple-400/80 shadow-[0_0_15px_rgba(168,85,247,0.7)] scale-105 hover:bg-purple-500"
                           : "hover:bg-[#251e17] hover:text-[#f5ecd8] border border-transparent"
                       }`}
                     >
-                      <span className={isTargetMatch || isComboWord ? "font-black" : ""}>{w.rawWord}</span>
+                      <span className={isTargetMatch || isComboWord ? "text-white font-black" : ""}>{w.rawWord}</span>
                       <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
                         isSelected
                           ? "bg-black/30 text-black font-bold"
-                          : isComboWord
-                          ? "bg-purple-950 text-amber-300 font-bold"
-                          : isTargetMatch
-                          ? "bg-black text-[#ffe600] font-black shadow-sm"
+                          : (isTargetMatch || isComboWord)
+                          ? "bg-purple-950 text-white font-bold border border-purple-400/40 shadow-sm"
                           : "text-[#c89b3c] bg-[#1a1510]"
                       }`}>
                         {w.value}
                       </span>
                       {isPhraseMatch && !isComboWord && (
-                        <span className="text-[9px] font-mono bg-black/80 text-yellow-300 px-1 rounded">
+                        <span className="text-[9px] font-mono bg-purple-950 text-purple-200 border border-purple-400/40 px-1 rounded">
                           #{phrases[0]?.value}
                         </span>
                       )}
@@ -1721,7 +1713,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <mark className="text-lg font-serif font-black bg-[#ffe600] text-black px-2.5 py-0.5 rounded shadow-sm inline-block">
+                            <mark className="text-lg font-serif font-black bg-purple-600 text-white px-2.5 py-0.5 rounded shadow-sm inline-block">
                               «{wordObj.rawWord}»
                             </mark>
                             <span className="text-xs text-[#8c7e6c] font-mono ml-2">
@@ -1729,7 +1721,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-base font-serif font-black text-black bg-[#ffe600] px-2.5 py-0.5 rounded-lg border border-yellow-400 shadow-sm">
+                            <span className="text-base font-serif font-black text-white bg-purple-900 px-2.5 py-0.5 rounded-lg border border-purple-400 shadow-sm">
                               {wordObj.value}
                             </span>
                           </div>
@@ -1806,11 +1798,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div>
-                            <mark className="text-lg font-serif font-black bg-[#ffe600] text-black px-3 py-1 rounded-md shadow-sm leading-relaxed inline-block">
+                            <mark className="text-lg font-serif font-black bg-purple-600 text-white px-3 py-1 rounded-md shadow-sm leading-relaxed inline-block">
                               «{phraseObj.phrase}»
                             </mark>
                             <div className="flex items-center gap-2 mt-1.5 text-xs text-[#8c7e6c] font-mono">
-                              <span className="px-1.5 py-0.5 rounded bg-yellow-400 text-black font-bold border border-yellow-500">
+                              <span className="px-1.5 py-0.5 rounded bg-purple-900 text-purple-200 font-bold border border-purple-500/40">
                                 {phraseObj.wordCount} λέξεις
                               </span>
                               <span>•</span>
@@ -1819,7 +1811,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                           </div>
 
                           <div className="flex items-center gap-2 self-start sm:self-auto">
-                            <span className="text-lg sm:text-xl font-serif font-black text-black bg-[#ffe600] px-3 py-1 rounded-lg border border-yellow-400 shadow-sm">
+                            <span className="text-lg sm:text-xl font-serif font-black text-white bg-purple-900 px-3 py-1 rounded-lg border border-purple-400 shadow-sm">
                               {phraseObj.value}
                             </span>
                           </div>
