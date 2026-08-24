@@ -4,9 +4,21 @@ export type TabType =
   | "bridges" 
   | "anagrams" 
   | "graph" 
+  | "veloudion"
+  | "cube-apollo"
   | "stats" 
   | "archive" 
   | "guide";
+
+export type IsopsephySystemKey =
+  | "greek_standard"
+  | "greek_mult1"
+  | "greek_mult6"
+  | "greek_no_spec_6"
+  | "greek_no_spec_7"
+  | "lat_mult1"
+  | "lat_mult6"
+  | "eng_standard";
 
 export interface IonicLetter {
   char: string;

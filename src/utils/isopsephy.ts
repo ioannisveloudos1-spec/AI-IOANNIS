@@ -1217,3 +1217,259 @@ export function generatePermutations(word: string, maxCount = 60): string[] {
   return Array.from(results);
 }
 
+// -------------------------------------------------------------
+// ΠΟΛΥ-ΣΥΣΤΗΜΙΚΗ ΛΕΞΑΡΙΘΜΗΣΗ (MULTI-SYSTEM NUMEROLOGY)
+// -------------------------------------------------------------
+
+export const GREEK_STD_VALUES: Record<string, number> = {
+  'Α': 1, 'Β': 2, 'Γ': 3, 'Δ': 4, 'Ε': 5, 'Ϛ': 6, 'Ζ': 7, 'Η': 8, 'Θ': 9,
+  'Ι': 10, 'Κ': 20, 'Λ': 30, 'Μ': 40, 'Ν': 50, 'Ξ': 60, 'Ο': 70, 'Π': 80, 'Ϟ': 90,
+  'Ρ': 100, 'Σ': 200, 'Τ': 300, 'Υ': 400, 'Φ': 500, 'Χ': 600, 'Ψ': 700, 'Ω': 800, 'Ϡ': 900,
+};
+
+export const GREEK_LETTERS_FULL = [
+  'Α', 'Β', 'Γ', 'Δ', 'Ε', 'Ϛ', 'Ζ', 'Η', 'Θ', 'Ι', 'Κ', 'Λ', 'Μ', 'Ν', 'Ξ', 'Ο', 'Π', 'Ρ', 'Σ', 'Τ', 'Υ', 'Φ', 'Χ', 'Ψ', 'Ω'
+];
+
+export const GREEK_NO_SPEC_LETTERS = [
+  'Α', 'Β', 'Γ', 'Δ', 'Ε', 'Ζ', 'Η', 'Θ', 'Ι', 'Κ', 'Λ', 'Μ', 'Ν', 'Ξ', 'Ο', 'Π', 'Ρ', 'Σ', 'Τ', 'Υ', 'Φ', 'Χ', 'Ψ', 'Ω'
+]; // 24 γράμματα
+
+export const LATIN_LETTERS = [
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+];
+
+export const ENGLISH_STD_LETTERS: Record<string, number> = {
+  'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9,
+  'J': 10, 'K': 20, 'L': 30, 'M': 40, 'N': 50, 'O': 60, 'P': 70, 'Q': 80, 'R': 90,
+  'S': 100, 'T': 200, 'U': 300, 'V': 400, 'W': 500, 'X': 600, 'Y': 700, 'Z': 800
+};
+
+export const SYSTEM_META: Record<string, { name: string; shortName: string; desc: string; color: string }> = {
+  greek_standard: {
+    name: 'Ελληνικό (Μονάδες-Δεκάδες-Εκατοντάδες)',
+    shortName: 'Ιωνικό Standard',
+    desc: 'Α=1..Θ=9, Ι=10..Ϟ=90, Ρ=100..Ϡ=900',
+    color: '#eab308',
+  },
+  greek_mult1: {
+    name: 'Ελληνικό (Πολλαπλάσιο 1)',
+    shortName: 'Ελληνικό ×1',
+    desc: 'Α=1, Β=2, Γ=3 ... Ω=25 (με Ϛ)',
+    color: '#10b981',
+  },
+  greek_mult6: {
+    name: 'Ελληνικό (Πολλαπλάσιο 6)',
+    shortName: 'Ελληνικό ×6',
+    desc: 'Α=6, Β=12, Γ=18 ... Ω=150 (με Ϛ)',
+    color: '#f97316',
+  },
+  greek_no_spec_6: {
+    name: 'Ελληνικό χωρίς ειδικά (Πολλαπλάσια 6)',
+    shortName: 'Κλασικό ×6 (24γρ.)',
+    desc: 'Α=6, Β=12 ... Ω=144 (24 κλασικά γράμματα)',
+    color: '#eab308',
+  },
+  greek_no_spec_7: {
+    name: 'Ελληνικό χωρίς ειδικά (Πολλαπλάσια 7)',
+    shortName: 'Κλασικό ×7 (24γρ.)',
+    desc: 'Α=7, Β=14 ... Ω=168 (24 κλασικά γράμματα)',
+    color: '#8b5cf6',
+  },
+  lat_mult1: {
+    name: 'Λατινικό (Πολλαπλάσιο 1)',
+    shortName: 'Latin ×1',
+    desc: 'A=1, B=2 ... Z=26',
+    color: '#a855f7',
+  },
+  lat_mult6: {
+    name: 'Λατινικό (Πολλαπλάσιο 6)',
+    shortName: 'Latin ×6',
+    desc: 'A=6, B=12 ... Z=156',
+    color: '#ec4899',
+  },
+  eng_standard: {
+    name: 'Αγγλικό / Λατινικό (Standard)',
+    shortName: 'English Standard',
+    desc: 'A=1..I=9, J=10..R=90, S=100..Z=800',
+    color: '#22c55e',
+  },
+};
+
+/**
+ * Υπολογισμός αξίας ενός χαρακτήρα βάσει επιλεγμένου συστήματος
+ */
+export function getCharValueInSystem(char: string, sys = 'greek_standard'): number {
+  const c = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+
+  if (sys === 'greek_standard') {
+    return GREEK_STD_VALUES[c] || getCharIsopsephy(char);
+  } else if (sys === 'greek_mult1') {
+    const idx = GREEK_LETTERS_FULL.indexOf(c);
+    return idx !== -1 ? idx + 1 : 0;
+  } else if (sys === 'greek_mult6') {
+    const idx = GREEK_LETTERS_FULL.indexOf(c);
+    return idx !== -1 ? (idx + 1) * 6 : 0;
+  } else if (sys === 'greek_no_spec_6') {
+    const idx = GREEK_NO_SPEC_LETTERS.indexOf(c);
+    return idx !== -1 ? (idx + 1) * 6 : 0;
+  } else if (sys === 'greek_no_spec_7') {
+    const idx = GREEK_NO_SPEC_LETTERS.indexOf(c);
+    return idx !== -1 ? (idx + 1) * 7 : 0;
+  } else if (sys === 'lat_mult1') {
+    const idx = LATIN_LETTERS.indexOf(c);
+    return idx !== -1 ? idx + 1 : 0;
+  } else if (sys === 'lat_mult6') {
+    const idx = LATIN_LETTERS.indexOf(c);
+    return idx !== -1 ? (idx + 1) * 6 : 0;
+  } else if (sys === 'eng_standard') {
+    return ENGLISH_STD_LETTERS[c] || 0;
+  }
+
+  return GREEK_STD_VALUES[c] || 0;
+}
+
+/**
+ * Υπολογισμός συνολικής αξίας κειμένου σε οποιοδήποτε σύστημα
+ */
+export function calculateInSystem(text: string, sys = 'greek_standard'): number {
+  if (!text) return 0;
+  let sum = 0;
+  for (let i = 0; i < text.length; i++) {
+    sum += getCharValueInSystem(text[i], sys);
+  }
+  return sum;
+}
+
+/**
+ * Λήψη πίνακα γραμμάτων και τιμών για το υπόμνημα ενός συστήματος
+ */
+export function getSystemLegendData(sys = 'greek_standard'): { char: string; val: number }[] {
+  if (sys === 'greek_standard') {
+    return Object.entries(GREEK_STD_VALUES).map(([char, val]) => ({ char, val }));
+  } else if (sys === 'greek_mult1') {
+    return GREEK_LETTERS_FULL.map((char, i) => ({ char, val: i + 1 }));
+  } else if (sys === 'greek_mult6') {
+    return GREEK_LETTERS_FULL.map((char, i) => ({ char, val: (i + 1) * 6 }));
+  } else if (sys === 'greek_no_spec_6') {
+    return GREEK_NO_SPEC_LETTERS.map((char, i) => ({ char, val: (i + 1) * 6 }));
+  } else if (sys === 'greek_no_spec_7') {
+    return GREEK_NO_SPEC_LETTERS.map((char, i) => ({ char, val: (i + 1) * 7 }));
+  } else if (sys === 'lat_mult1') {
+    return LATIN_LETTERS.map((char, i) => ({ char, val: i + 1 }));
+  } else if (sys === 'lat_mult6') {
+    return LATIN_LETTERS.map((char, i) => ({ char, val: (i + 1) * 6 }));
+  } else if (sys === 'eng_standard') {
+    return Object.entries(ENGLISH_STD_LETTERS).map(([char, val]) => ({ char, val }));
+  }
+  return [];
+}
+
+// -------------------------------------------------------------
+// ΣΥΣΤΗΜΑ ΒΕΛΟΥΔΙΟΝ (VELOUDION CIPHER)
+// -------------------------------------------------------------
+
+export const VELOUDION_CHAR_TO_CODE: Record<string, string> = {
+  'Α': '001', 'Ά': '001',
+  'Β': '002',
+  'Γ': '003',
+  'Δ': '004',
+  'Ε': '005', 'Έ': '005',
+  '.': '006',
+  'Ζ': '007',
+  'Η': '008', 'Ή': '008',
+  'Θ': '009',
+  'Ι': '010', 'Ί': '010', 'Ϊ': '010',
+  'Κ': '020',
+  'Λ': '030',
+  'Μ': '040',
+  'Ν': '050',
+  'Ξ': '060',
+  'Ο': '070', 'Ό': '070',
+  'Π': '080',
+  ',': '090',
+  'Ρ': '100',
+  'Σ': '200', 'ς': '200',
+  'Τ': '300',
+  'Υ': '400', 'Ύ': '400', 'Ϋ': '400',
+  'Φ': '500',
+  'Χ': '600',
+  'Ψ': '700',
+  'Ω': '800', 'Ώ': '800',
+  ' ': '900',
+};
+
+export const VELOUDION_CODE_TO_CHAR: Record<string, string> = {
+  '001': 'Α',
+  '002': 'Β',
+  '003': 'Γ',
+  '004': 'Δ',
+  '005': 'Ε',
+  '006': '.',
+  '007': 'Ζ',
+  '008': 'Η',
+  '009': 'Θ',
+  '010': 'Ι',
+  '020': 'Κ',
+  '030': 'Λ',
+  '040': 'Μ',
+  '050': 'Ν',
+  '060': 'Ξ',
+  '070': 'Ο',
+  '080': 'Π',
+  '090': ',',
+  '100': 'Ρ',
+  '200': 'Σ',
+  '300': 'Τ',
+  '400': 'Υ',
+  '500': 'Φ',
+  '600': 'Χ',
+  '700': 'Ψ',
+  '800': 'Ω',
+  '900': ' ',
+};
+
+export function encodeVeloudionText(text: string): { code: string; chunks: { char: string; code: string }[] } {
+  if (!text) return { code: '', chunks: [] };
+  const upper = text.toUpperCase();
+  let code = '';
+  const chunks: { char: string; code: string }[] = [];
+
+  for (let i = 0; i < upper.length; i++) {
+    const char = upper[i];
+    const cCode = VELOUDION_CHAR_TO_CODE[char];
+    if (cCode) {
+      code += cCode;
+      chunks.push({ char, code: cCode });
+    }
+  }
+
+  return { code, chunks };
+}
+
+export function decodeVeloudionCode(codeString: string): { text: string; error?: string } {
+  const clean = codeString.replace(/\s+/g, '');
+  if (!clean) return { text: '' };
+
+  if (!/^\d+$/.test(clean)) {
+    return { text: '', error: 'Σφάλμα: Ο κωδικός πρέπει να περιέχει μόνο αριθμητικά ψηφία (0-9).' };
+  }
+
+  if (clean.length % 3 !== 0) {
+    return { text: '', error: `Σφάλμα: Το μήκος του κωδικού (${clean.length} ψηφία) δεν είναι πολλαπλάσιο του 3.` };
+  }
+
+  let text = '';
+  for (let i = 0; i < clean.length; i += 3) {
+    const triplet = clean.substring(i, i + 3);
+    const char = VELOUDION_CODE_TO_CHAR[triplet];
+    if (char !== undefined) {
+      text += char;
+    } else {
+      return { text: '', error: `Σφάλμα: Άγνωστη τριάδα ψηφίων «${triplet}».` };
+    }
+  }
+
+  return { text };
+}
+

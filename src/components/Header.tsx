@@ -15,6 +15,8 @@ import {
   Grid,
   Network,
   FileText,
+  Binary,
+  Box,
 } from "lucide-react";
 import appLogoImg from "../assets/images/ego_eimi_logo_1787417709332.jpg";
 
@@ -45,6 +47,8 @@ export const Header: React.FC<HeaderProps> = ({
     { id: "bridges" as TabType, label: "Γέφυρες", icon: GitCompare, desc: "Σύγκριση & μαθηματικές σχέσεις" },
     { id: "anagrams" as TabType, label: "Matrix 3×3", icon: Grid, desc: "Αναγραμματισμοί & Πυθαγόρειο Matrix" },
     { id: "graph" as TabType, label: "Χάρτης Σταθμών", icon: Network, desc: "Δίκτυο κόμβων & συνδέσεων" },
+    { id: "veloudion" as TabType, label: "ΒΕΛΟΥΔΙΟΝ", icon: Binary, desc: "Τριαδική κρυπτογραφία & 8 Συστήματα" },
+    { id: "cube-apollo" as TabType, label: "Κύβος 1331", icon: Box, desc: "3D Κύβος Απόλλωνος (11³)" },
     { id: "stats" as TabType, label: "Στατιστικά", icon: BarChart3, desc: "Οπτικοποίηση, γραφήματα & CSV" },
     { id: "archive" as TabType, label: "Αρχείο", icon: BookMarked, desc: "Αποθηκευμένοι λεξάριθμοι", badge: savedCount },
     { id: "guide" as TabType, label: "Οδηγός & 666", icon: BookOpen, desc: "Ιωνική αρίθμηση, 666 & κανόνες" },

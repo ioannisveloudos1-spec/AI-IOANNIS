@@ -6,6 +6,8 @@ import { SearchTab } from "./components/SearchTab";
 import { BridgesTab } from "./components/BridgesTab";
 import { AnagramsTab } from "./components/AnagramsTab";
 import { IsopsephicGraphTab } from "./components/IsopsephicGraphTab";
+import { VeloudionTab } from "./components/VeloudionTab";
+import { CubeApolloTab } from "./components/CubeApolloTab";
 import { StatsTab } from "./components/StatsTab";
 import { ArchiveTab } from "./components/ArchiveTab";
 import { GuideTab } from "./components/GuideTab";
@@ -327,6 +329,19 @@ export default function App() {
             onSaveItem={handleSaveItem}
             onOpenAiModal={handleOpenAiModal}
             onNavigateToCalculator={() => setCurrentTab("calculator")}
+          />
+        )}
+
+        {currentTab === "veloudion" && (
+          <VeloudionTab
+            onSaveItem={handleSaveItem}
+            onOpenAiModal={handleOpenAiModal}
+          />
+        )}
+
+        {currentTab === "cube-apollo" && (
+          <CubeApolloTab
+            onOpenAiModal={handleOpenAiModal}
           />
         )}
 
