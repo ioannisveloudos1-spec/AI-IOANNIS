@@ -437,37 +437,37 @@ export const GuideTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Polytonic Rules & Calculation Example */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Rules */}
-        <div className="p-5 rounded-2xl bg-[#15120f] border border-[#2d251e] space-y-3">
-          <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold">
-            Κανόνες Πολυτονικής Κανονικοποίησης
-          </h3>
-          <ul className="space-y-2 text-xs text-[#a69680] font-serif leading-relaxed">
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
-              <span><strong>Τόνοι & Πνεύματα:</strong> Οξεία, βαρεία, περισπωμένη, ψιλή, δασεία και διαλυτικά αγνοούνται και το γράμμα λαμβάνει την κανονική του αξία (π.χ. ἄ, ὰ, ᾶ, ἁ -&gt; Α = 1).</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
-              <span><strong>Υπογεγραμμένη:</strong> Χαρακτήρες με υπογεγραμμένη (ᾳ, ῃ, ῳ) υπολογίζονται ως το κύριο φωνήεν (Α=1, Η=8, Ω=800).</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
-              <span><strong>Τελικό Σίγμα (ς):</strong> Το τελικό σίγμα λαμβάνει πάντα την ίδια αξία με το αρχικό/μεσαίο σίγμα (Σ/σ/ς = 200).</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
-              <span><strong>Σημεία Στίξης:</strong> Κόμματα, τελείες, άνω τελείες και παρενθέσεις εξαιρούνται αυτόματα από τον υπολογισμό.</span>
-            </li>
-          </ul>
-        </div>
+      {/* Polytonic Rules */}
+      <div className="p-5 rounded-2xl bg-[#15120f] border border-[#2d251e] space-y-3">
+        <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold">
+          Κανόνες Πολυτονικής Κανονικοποίησης
+        </h3>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#a69680] font-serif leading-relaxed">
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
+            <span><strong>Τόνοι &amp; Πνεύματα:</strong> Οξεία, βαρεία, περισπωμένη, ψιλή, δασεία και διαλυτικά αγνοούνται και το γράμμα λαμβάνει την κανονική του αξία (π.χ. ἄ, ὰ, ᾶ, ἁ -&gt; Α = 1).</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
+            <span><strong>Υπογεγραμμένη:</strong> Χαρακτήρες με υπογεγραμμένη (ᾳ, ῃ, ῳ) υπολογίζονται ως το κύριο φωνήεν (Α=1, Η=8, Ω=800).</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
+            <span><strong>Τελικό Σίγμα (ς):</strong> Το τελικό σίγμα λαμβάνει πάντα την ίδια αξία με το αρχικό/μεσαίο σίγμα (Σ/σ/ς = 200).</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
+            <span><strong>Σημεία Στίξης:</strong> Κόμματα, τελείες, άνω τελείες και παρενθέσεις εξαιρούνται αυτόματα από τον υπολογισμό.</span>
+          </li>
+        </ul>
+      </div>
 
-        {/* Step by step calculation example */}
+      {/* Step by step calculation examples & Famous 666 Names */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Step by step calculation example: ΛΑΥΡΕΙΟΝ */}
         <div className="p-5 rounded-2xl bg-[#15120f] border border-[#2d251e] space-y-3">
           <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold">
-            Υπολογιστικό Παράδειγμα: «ΛΑΥΡΕΙΟΝ»
+            Υπολογιστικό Παράδειγμα: «ΛΑΥΡΕΙΟΝ» = 666
           </h3>
           <div className="p-3.5 rounded-xl bg-[#100e0b] border border-[#251e17] space-y-2 font-mono text-xs text-[#d6c7b2]">
             <div className="flex justify-between border-b border-[#1f1913] pb-1.5">
@@ -511,27 +511,210 @@ export const GuideTab: React.FC = () => {
             Πυθμένας (Ψηφιακή Ρίζα): 6 + 6 + 6 = 18 -&gt; 1 + 8 = <strong>9</strong>.
           </p>
         </div>
+
+        {/* 666 Names: ΙΑΝΕΥΣ & ΤΕΛΙΑΝΟΣ */}
+        <div className="p-5 rounded-2xl bg-[#15120f] border border-[#2d251e] space-y-3">
+          <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold">
+            Ισοψηφικά Ονόματα = 666: ΙΑΝΕΥΣ & ΤΕΛΙΑΝΟΣ
+          </h3>
+          <div className="space-y-3">
+            {/* ΙΑΝΕΥΣ */}
+            <div className="p-3.5 rounded-xl bg-[#100e0b] border border-[#251e17] space-y-2 font-serif text-xs">
+              <div className="flex items-center justify-between font-mono">
+                <span className="font-bold text-[#f5ecd8] text-sm">ΙΑΝΕΥΣ</span>
+                <span className="font-bold text-[#e6c670] text-sm">= 666 (χξϛ´)</span>
+              </div>
+              <div className="text-[11px] font-mono text-[#a69680]">
+                Ι(10) + Α(1) + Ν(50) + Ε(5) + Υ(400) + Σ(200) = <strong>666</strong>
+              </div>
+              <div className="p-2 rounded bg-[#181410] border border-[#2e2419] text-[11px] text-[#e6c670] leading-relaxed space-y-1">
+                <p><strong>📖 Διδακτική &amp; Ετυμολογική Ανάλυση:</strong></p>
+                <p className="text-[#d6c7b2] font-sans">
+                  • <strong>ΙΑ:</strong> Αρχαιοελληνική ρίζα για τα <em>«Βέλη»</em> (από το <em>ἰός</em> = βέλος, ἰά / ἴα = βέλη, ορμή).<br />
+                  • <strong>ΝΕΥΣ:</strong> Συνδέεται με τις ρίζες <em>Νέους / Νεότης</em>, <em>Νεύμα</em> (ένδειξη θεϊκής βούλησης) και τον <em>Νουν</em> (σκέψη, διάνοια).
+                </p>
+              </div>
+            </div>
+
+            {/* ΤΕΛΙΑΝΟΣ */}
+            <div className="p-3.5 rounded-xl bg-[#100e0b] border border-[#251e17] space-y-2 font-serif text-xs">
+              <div className="flex items-center justify-between font-mono">
+                <span className="font-bold text-[#f5ecd8] text-sm">ΤΕΛΙΑΝΟΣ</span>
+                <span className="font-bold text-[#e6c670] text-sm">= 666 (χξϛ´)</span>
+              </div>
+              <div className="text-[11px] font-mono text-[#a69680]">
+                Τ(300) + Ε(5) + Λ(30) + Ι(10) + Α(1) + Ν(50) + Ο(70) + Σ(200) = <strong>666</strong>
+              </div>
+              <div className="p-2 rounded bg-[#181410] border border-[#2e2419] text-[11px] text-[#e6c670] leading-relaxed space-y-1">
+                <p><strong>📖 Διδακτική &amp; Ετυμολογική Ανάλυση:</strong></p>
+                <p className="text-[#d6c7b2] font-sans">
+                  • <strong>ΤΕΛΕΙΟΣ ΙΑΝΟΣ:</strong> <em>Τέλειος</em> (ολοκληρωμένος, πεπληρωμένος σκοπός) + <em>Ιανός</em> (η αρχαία διπρόσωπη θεότητα των πυλών και των περασμάτων).<br />
+                  • <strong>Διαδοχή Εννοιών:</strong> Τέλειος Ιανός ➔ Ιανός ➔ Ιανέας ➔ Ιανεύς ➔ Ια Νους (Βέλη Νοός / Οξύνοια).
+                </p>
+              </div>
+            </div>
+          </div>
+          <p className="text-[11px] text-[#8c7e6c] font-serif">
+            Και τα δύο ονόματα έχουν πυθμένα 6+6+6=18 → 1+8=<strong>9</strong>.
+          </p>
+        </div>
       </div>
 
-      {/* Historical Anecdotes */}
+      {/* Historical Anecdotes & Etymological Insights */}
       <div className="p-6 rounded-2xl bg-gradient-to-b from-[#181512] to-[#12100d] border border-[#2d251e] space-y-4">
         <h3 className="text-sm uppercase tracking-wider text-[#e6c670] font-serif font-bold">
-          Ιστορικές Αναφορές στην Αρχαιότητα
+          Ιστορικές Αναφορές &amp; Ετυμολογικές Προσεγγίσεις
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-[#a69680] font-serif leading-relaxed">
-          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#261e16] space-y-1.5">
-            <strong className="text-[#f5ecd8] text-sm block">1. Το Γκράφιτι της Πομπηίας (79 μ.Χ.)</strong>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-[#a69680] font-serif leading-relaxed">
+          {/* 1. Πομπηία & Γκράφιτι */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#261e16] space-y-2">
+            <strong className="text-[#f5ecd8] text-sm block">1. Πομπηία &amp; Γκράφιτι (79 μ.Χ.)</strong>
             <p>
-              Σε τοίχο της αρχαίας Πομπηίας βρέθηκε χαραγμένη η επιγραφή: <em>«φιλῶ ἧς ἀριθμὸς φμε´»</em> (Αγαπώ εκείνη της οποίας ο λεξάριθμος είναι 545). Ο εραστής έκρυψε το όνομα της αγαπημένης του χρησιμοποιώντας τον αριθμό 545, αποδεικνύοντας ότι η ισοψηφία ήταν δημοφιλής στην καθημερινή ζωή.
+              Σε τοίχο της αρχαίας Πομπηίας βρέθηκε χαραγμένη η επιγραφή: <em>«φιλῶ ἧς ἀριθμὸς φμε´»</em> (Αγαπώ εκείνη της οποίας ο λεξάριθμος είναι 545).
             </p>
+            <div className="p-2.5 rounded-lg bg-[#0f0d0a] border border-[#2d2319] space-y-1 text-[11px] text-[#e6c670]">
+              <strong>💡 Ετυμολογία:</strong>
+              <p className="text-[#d6c7b2] font-sans">
+                <strong>ΠΟΜΠΗΙΑ</strong> = <strong>ΠΟΜΠΗ</strong> (<em>πομπή, πομπός, πέμπω, ἐκπέμπω</em>) + <strong>ΙΑ</strong> (<em>Ἴος, Βέλος, ΙΑ: Βέλη</em>). Δηλώνει την πόλη της αποστολής, εκπομπής και των βελών.
+              </p>
+            </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#261e16] space-y-1.5">
-            <strong className="text-[#f5ecd8] text-sm block">2. Σουητώνιος & Νέρων</strong>
+          {/* 2. Έφεσος */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#261e16] space-y-2">
+            <strong className="text-[#f5ecd8] text-sm block">2. Έφεσος</strong>
             <p>
-              Ο Ρωμαίος ιστορικός Σουητώνιος αναφέρει ότι στη Ρώμη κυκλοφορούσε ο στίχος <em>«Νέρων ἰδίαν μητέρα ἀπέκτεινε»</em> (1005), ο οποίος είχε το ίδιο ακριβώς λεξαριθμικό άθροισμα με τη φράση <em>«Νέρων»</em> σε συγκεκριμένη πτώση ή εναλλακτικό χαρακτηρισμό.
+              Η <strong>ΕΦΕΣΟΣ</strong> (Ιωνική πόλη της Αρτέμιδος και της σοφίας) συνδέεται ετυμολογικά με το ρήμα <em>ἐφίημι</em> (ἐπί + ἵημι: ρίχνω, στέλνω, αφήνω να εξορμήσει, επιθυμώ σφοδρά).
             </p>
+            <div className="p-2.5 rounded-lg bg-[#0f0d0a] border border-[#2d2319] text-[11px] text-[#d6c7b2] font-sans">
+              Υποδηλώνει τον τόπο όπου εκπέμπεται η θεϊκή θέληση και το φως, σε άμεση αρμονία με την τοξοφόρο Άρτεμη (εκπομπή βέλους).
+            </div>
+          </div>
+
+          {/* 3. Πέργαμος & Πάπυρος */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#261e16] space-y-2">
+            <strong className="text-[#f5ecd8] text-sm block">3. Πέργαμος &amp; Πάπυρος (Paper)</strong>
+            <p>
+              Η αντιπαραβολή των δύο κορυφαίων υλικών γραφής του αρχαίου κόσμου:
+            </p>
+            <div className="p-2.5 rounded-lg bg-[#0f0d0a] border border-[#2d2319] space-y-2 text-[11px] text-[#d6c7b2] font-sans">
+              <div>
+                <strong>• ΠΕΡΓΑΜΟΣ:</strong> Από το <em>Περί + Γάμος</em> (ένωση, ανθεκτικότητα και ιερή συνένωση γνώσης και δέρματος).
+              </div>
+              <div>
+                <strong>• ΠΑΠΥΡΟΣ:</strong> Από <em>Πατήρ + Πυρός</em> (η πατρική φλόγα/δημιουργία), ρίζα από την οποία προήλθε η διεθνής λέξη <strong>Paper</strong>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Φιλοσοφική / Αλληγορική Αφήγηση */}
+      <div className="p-6 rounded-2xl bg-[#14110d] border border-[#2d241c] space-y-4 font-serif">
+        <div className="flex items-center gap-2 text-[#e6c670]">
+          <BookOpen className="w-5 h-5 text-[#c89b3c]" />
+          <h3 className="text-sm uppercase tracking-wider font-bold">
+            Η Πύλη ονόματι ΛΑΥΡΕΙΟΝ: Το Ταξίδι του Ιανέως Τελιανού
+          </h3>
+        </div>
+
+        <div className="space-y-3 text-xs text-[#d6c7b2] leading-relaxed border-l-2 border-[#c89b3c]/40 pl-4 py-1">
+          <p>
+            Στα έγκατα της γης και στα βάθη της ανθρώπινης ψυχής, εκεί όπου το σκοτάδι συναντά το φως, υπήρχε μια πόλη με όνομα αρχαίο και βαρύ σαν πεπρωμένο: το <strong>ΛΑΥΡΕΙΟΝ</strong>. Ο ίδιος ο ήχος του έκρυβε έναν μυστικιστικό αριθμό, το <strong>666</strong>, έναν αριθμό που οι αμύητοι φοβούνταν, αλλά οι σοφοί γνώριζαν πως αποτελούσε την κρυφή γεωμετρία της καθόδου και της ανόδου.
+          </p>
+          <p>
+            Σε αυτή την πολιτεία ζούσε ο <strong>Ιανεύς Τελιανός</strong>, ένας άνθρωπος με ανήσυχο πνεύμα που ένιωθε από παιδί πως η πραγματικότητα είχε πολλαπλά επίπεδα. Οι θρύλοι του ΛΑΥΡΕΙΟΝ έλεγαν πως για να φτάσει κανείς στην αληθινή γνώση, έπρεπε πρώτα να κατέλθει στον συνειδησιακό του Άδη, στα Τάρταρα της ψυχής όπου τα πάθη ψύχονται και εξαγνίζονται. Στον αντίποδα αυτής της ψύξης στεκόταν ο Έρωτας, η φωτιά και το Πυρ, το οποίο γεννήθηκε από τον <strong>Πόρο και την Πενία (666)</strong>—δύναμη εξίσου συνυφασμένη με τον ίδιο αριθμό-μυστήριο.
+          </p>
+          <p>
+            Ο Ιανεύς Τελιανός αποφάσισε να μην μείνει στις επιφανειακές εξηγήσεις. Γνώριζε πως η πραγματική αποκάλυψη απαιτούσε θάρρος. Μια νύχτα, καθώς η πόλη κοιμόταν κάτω από έναν ουρανό γεμάτο αμείλικτα αστέρια, ο Ιανεύς κατέβηκε στα παλιά, εγκαταλελειμμένα ορυχεία του ΛΑΥΡΕΙΟΝ. Εκεί, στα έγκατα της γης, ένιωσε το κρύο να διαπερνά την ύπαρξή του. Ήταν η κάθοδος στον εσωτερικό του Άδη. Οι φόβοι, οι αμφιβολίες και οι σκιές του παρελθόντος αναδύθηκαν μπροστά του σαν φαντάσματα. Αντί όμως να τρέξει μακριά, τους κοίταξε κατάματα. Κατάλαβε πως η ψυχή, για να καθαριστεί, πρέπει να περάσει μέσα από τη δοκιμασία της ύλης.
+          </p>
+          <p>
+            Καθώς προχωρούσε πιο βαθιά στο σκοτάδι, η ψυχρή στασιμότητα άρχισε να δίνει τη θέση της σε μια εσωτερική φλόγα. Η παρουσία του Πόρου και της Πενίας φώτισε το σκοτάδι· η έλλειψη και η αναζήτηση ενώθηκαν σε μια υπέρτατη επίγνωση. Ο Ιανεύς κατάλαβε ότι το 666 δεν ήταν σημάδι καταστροφής, αλλά ο κωδικός της ισορροπίας ανάμεσα στο σκοτάδι και το φως, στη σκιά και την πνευματική ανάδυση.
+          </p>
+          <p className="text-[#e6c670] italic">
+            Όταν επέστρεψε στην επιφάνεια του ΛΑΥΡΕΙΟΝ, ο Ιανεύς Τελιανός δεν ήταν πια ο ίδιος. Το βλέμμα του ακτινοβολούσε μια βαθιά, ακλόνητη ηρεμία. Είχε διασχίσει τα Τάρταρα της δικής του συνείδησης και είχε αναδυθεί στο φως του Παντός, φέρνοντας μαζί του την αλήθεια πως το σύμπαν ολόκληρο κατοικεί μέσα στην καρδιά του καθενός μας.
+          </p>
+        </div>
+      </div>
+
+      {/* Η Γεωμετρία της Αφύπνισης και ο Μυστικός Κύκλος των Αριθμών */}
+      <div className="p-6 rounded-2xl bg-[#14110d] border border-[#2d241c] space-y-6 font-serif">
+        <div className="flex items-center gap-2 text-[#e6c670]">
+          <BookOpen className="w-5 h-5 text-[#c89b3c]" />
+          <h3 className="text-sm uppercase tracking-wider font-bold">
+            Η Γεωμετρία της Αφύπνισης και ο Μυστικός Κύκλος των Αριθμών
+          </h3>
+        </div>
+
+        {/* Εισαγωγή */}
+        <p className="text-xs text-[#d6c7b2] leading-relaxed">
+          Υπάρχουν αριθμοί που διατρέχουν τα ιερά κείμενα, την αρχιτεκτονική και την κοσμική παράδοση όχι ως απλά σύμβολα ποσότητας, αλλά ως κλειδιά μιας συμπαντικής γεωμετρίας. Ανάμεσά τους, ο αριθμός <strong>144.000</strong> κατέχει εξέχουσα θέση, συνδεδεμένος με την ιδέα των αφυπνισμένων ψυχών μέσα από την αυστηρή αρμονία των αριθμών, τη γεωμετρία του φωτός και των αρχαίων μυστηρίων.
+        </p>
+
+        {/* 4 Θεματικές Ενότητες σε κάρτες */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          {/* Βήμα 1: Ακρόπολη & Αέτωμα 144° */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d2419] space-y-2">
+            <h4 className="font-bold text-[#e6c670] flex items-center gap-1.5">
+              <span>🏛️</span> 1. Γεωμετρία Αετώματος &amp; Αριθμός 144
+            </h4>
+            <ul className="space-y-1.5 text-[#c5b59e] leading-relaxed">
+              <li>• <strong>Κορυφή Αετώματος (Παρθενών):</strong> Γωνία <strong>144°</strong> = 72° + 72° (Ο.Β. = 72).</li>
+              <li>• <strong>Βάσεις Αετώματος:</strong> Δύο γωνίες των <strong>18°</strong> (18 + 18 = 36).</li>
+              <li>• <strong>ΙΗ = 18:</strong> Ιερά γράμματα Ηλίου / Απόλλωνος (<em>«ΙΗ Παιάν»</em>, <em>ΙΗΣΟΥΣ</em>).</li>
+              <li>• <strong>36 ➔ 72 ➔ 144:</strong> Το 36 διπλασιαζόμενο δίνει 72, και το 72 διπλασιαζόμενο επιστρέφει στο 144.</li>
+              <li>• <strong>Ακολουθία Fibonacci:</strong> Το 144 είναι ο <strong>12ος (ΙΒ)</strong> όρος (10η θέση = 55, 12η = 144).</li>
+              <li>• <strong>ΡΜΔ (144):</strong> Ρέα + Μήτις (Μαρία) + Δήμητρα (Κοσμική Μητρότητα) / <em>Η ΚΑΡΔΙΑ = 144</em>.</li>
+            </ul>
+          </div>
+
+          {/* Βήμα 2: 144.000, 666 και ο Ψυχογονικός Κύβος */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d2419] space-y-2">
+            <h4 className="font-bold text-[#e6c670] flex items-center gap-1.5">
+              <span>☀️</span> 2. 144.000, 666 &amp; Ψυχογονικός Κύβος (216)
+            </h4>
+            <ul className="space-y-1.5 text-[#c5b59e] leading-relaxed">
+              <li>• <strong>Τετράγωνο του Ήλιου (6x6 = 36):</strong> Άθροισμα 1 + 2 + ... + 36 = <strong>666</strong>.</li>
+              <li>• <strong>Ψυχογονικός Κύβος:</strong> 6 × 6 × 6 = <strong>216</strong>.</li>
+              <li>• <strong>Μαθηματική Γέφυρα:</strong> 144.000 ÷ 666 = <strong>216,216216...</strong></li>
+              <li>• <strong>Αντιστροφή (216 ➔ 612):</strong> 612 = <strong>ΖΕΥΣ</strong> (Ζ:7 + Ε:5 + Υ:400 + Σ:200 = 612).</li>
+              <li>• <strong>216 - 1 (Α) = 215 = ΔΙΑΣ</strong> (Δ:4 + Ι:10 + Α:1 + Σ:200 = 215).</li>
+              <li>• <strong>Μεγάλος Πλατωνικός Ενιαυτός:</strong> 12 × 2.160 έτη = <strong>25.920 έτη</strong> (12 × 12.000 = <strong>144.000</strong>).</li>
+            </ul>
+          </div>
+
+          {/* Βήμα 3: Ο Κύβος του 8, το 512 και η Αλήθεια */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d2419] space-y-2">
+            <h4 className="font-bold text-[#e6c670] flex items-center gap-1.5">
+              <span>⚡</span> 3. Οκτάδα, Κύβος 8³ = 512 &amp; 888
+            </h4>
+            <ul className="space-y-1.5 text-[#c5b59e] leading-relaxed">
+              <li>• <strong>ΕΙΜΑΙ ΟΤΙ ΕΙΜΑΙ = 512</strong> (Κύβος του 8: 8 × 8 × 8 = 512).</li>
+              <li>• <strong>ΟΙ ΘΕΙΟΙ ΕΛΛΗΝΕΣ = ΕΣ ΑΕΙ ΠΑΙΣ = 512</strong>.</li>
+              <li>• <strong>8 × 8 = 64 = ΑΛΗΘΕΙΑ</strong> (6+4 = 10 = Ι ➔ 1+0 = 1 = Α).</li>
+              <li>• <strong>6 × 4 = 24 = ΚΔ</strong> (Σύμβολο Διός ♃).</li>
+              <li>• <strong>ΙΗΣΟΥΣ = 888</strong> (888 = ΑΛΦΑ ΒΗΤΑ ΓΑΜΑ = ΑΒΓ = 1,2,3 ➔ 123 = <strong>ΕΛΛΗΝ</strong>).</li>
+              <li>• <strong>Πολλαπλάσια του 8:</strong> 888 ÷ 8 = 111, 1480 ÷ 8 = 185, 2368 ÷ 8 = 296.</li>
+              <li>• <strong>«Εγώ ειμί η οδός και η αλήθεια και η ζωή» (2182) + «Άγιον Αίμα» (186) = 2368 = ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ</strong>.</li>
+            </ul>
+          </div>
+
+          {/* Βήμα 4: Ενοθεϊστική Θεώρηση της Μίας Οντότητας */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d2419] space-y-2">
+            <h4 className="font-bold text-[#e6c670] flex items-center gap-1.5">
+              <span>🌌</span> 4. Οι Εκφράσεις της Μίας Οντότητας (Ενοθεϊσμός)
+            </h4>
+            <p className="text-[11px] italic text-[#e6c670]">
+              «Εἷς Ζεύς, εἷς Ἀΐδης, εἷς Ἥλιος, εἷς Διόνυσος, εἷς θεὸς ἐν πάντεσσι» (Ορφικό απόσπασμα)
+            </p>
+            <ul className="space-y-1 text-[#c5b59e] leading-relaxed text-[11px]">
+              <li>• <strong>Ζευς - Δίας:</strong> Η κεντρική δημιουργική αρχή και συμπαντικός νόμος (Ζωή / Διά).</li>
+              <li>• <strong>Άδης:</strong> Ο Ίδιος στην αόρατη διάσταση, η εσωτερική πηγή και μετουσίωση.</li>
+              <li>• <strong>Ποσειδών:</strong> Η δόνηση, η κίνηση, το υγρό στοιχείο και η ρευστότητα.</li>
+              <li>• <strong>Απόλλων / Διόνυσος:</strong> Το απόλυτο Φως &amp; Αρμονία σε σύζευξη με τη ζωτική ορμή.</li>
+              <li>• <strong>Ηρακλής:</strong> Η θεία δύναμη ενσαρκωμένη στη δοκιμασία και την κάθαρση της ύπαρξης.</li>
+            </ul>
           </div>
         </div>
       </div>

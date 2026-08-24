@@ -176,14 +176,13 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-[#8c7e6c] font-serif">Δοκιμάστε:</span>
           {[
+            { label: "ΙΑΝΕΥΣ", val: "666" },
+            { label: "ΤΕΛΙΑΝΟΣ", val: "666" },
             { label: "ΙΩΑΝΝΗΣ", val: "1119" },
             { label: "ΑΓΙΑ ΘΕΟΦΑΝΕΙΑ", val: "666" },
             { label: "ΛΑΥΡΕΙΟΝ", val: "666" },
-            { label: "ΑΜΑΡΤΙΑ", val: "453" },
-            { label: "ΙΩΑΝΝΗΣ - ΑΜΑΡΤΙΑ", val: "1119 - 453" },
             { label: "ΙΗΣΟΥΣ", val: "888" },
             { label: "ΧΡΙΣΤΟΣ", val: "1480" },
-            { label: "888 + 1480", val: "2368" },
           ].map((item) => (
             <button
               key={item.label}

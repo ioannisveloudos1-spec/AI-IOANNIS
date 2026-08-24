@@ -11,12 +11,12 @@ import { ApiKeyModal } from "./components/ApiKeyModal";
 import { PortalGateIntro } from "./components/PortalGateIntro";
 import { numberToGreekNumeral } from "./utils/isopsephy";
 
-const LOCAL_STORAGE_KEY = "greek_isopsephy_saved_archive_v1";
+const LOCAL_STORAGE_KEY = "greek_isopsephy_saved_archive_v3_canonical";
 const API_KEY_STORAGE_KEY = "GEMINI_USER_API_KEY";
 
 const INITIAL_SEEDED_ITEMS: SavedIsopsephyItem[] = [
   {
-    id: "init-0",
+    id: "init-1",
     text: "ΙΩΑΝΝΗΣ",
     normalized: "ΙΩΑΝΝΗΣ",
     value: 1119,
@@ -29,46 +29,7 @@ const INITIAL_SEEDED_ITEMS: SavedIsopsephyItem[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    id: "init-0b",
-    text: "ΑΓΙΑ ΘΕΟΦΑΝΕΙΑ",
-    normalized: "ΑΓΙΑ ΘΕΟΦΑΝΕΙΑ",
-    value: 666,
-    root: 9,
-    greekNumeral: "χξϛ´",
-    isPhrase: true,
-    wordCount: 2,
-    category: "Θεολογία",
-    notes: "ΑΓΙΑ (15) + ΘΕΟΦΑΝΕΙΑ (651) = 666",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "init-0c",
-    text: "ΑΜΑΡΤΙΑ",
-    normalized: "ΑΜΑΡΤΙΑ",
-    value: 453,
-    root: 3,
-    greekNumeral: "υνγ´",
-    isPhrase: false,
-    wordCount: 1,
-    category: "Έννοιες",
-    notes: "Α(1) + Μ(40) + Α(1) + Ρ(100) + Τ(300) + Ι(10) + Α(1) = 453",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "init-0d",
-    text: "ΙΩΑΝΝΗΣ - ΑΜΑΡΤΙΑ",
-    normalized: "ΙΩΑΝΝΗΣ - ΑΜΑΡΤΙΑ",
-    value: 666,
-    root: 9,
-    greekNumeral: "χξϛ´",
-    isPhrase: true,
-    wordCount: 2,
-    category: "Πράξεις",
-    notes: "ΙΩΑΝΝΗΣ (1119) - ΑΜΑΡΤΙΑ (453) = 666",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "init-1",
+    id: "init-2",
     text: "ΙΗΣΟΥΣ",
     normalized: "ΙΗΣΟΥΣ",
     value: 888,
@@ -76,12 +37,12 @@ const INITIAL_SEEDED_ITEMS: SavedIsopsephyItem[] = [
     greekNumeral: "ωπη´",
     isPhrase: false,
     wordCount: 1,
-    category: "Κλασική Ισοψηφία",
-    notes: "Ι (10) + Η (8) + Σ (200) + Ο (70) + Υ (400) + Σ (200) = 888",
+    category: "Ονόματα",
+    notes: "Ι(10) + Η(8) + Σ(200) + Ο(70) + Υ(400) + Σ(200) = 888",
     createdAt: new Date().toISOString(),
   },
   {
-    id: "init-2",
+    id: "init-3",
     text: "ΧΡΙΣΤΟΣ",
     normalized: "ΧΡΙΣΤΟΣ",
     value: 1480,
@@ -89,34 +50,86 @@ const INITIAL_SEEDED_ITEMS: SavedIsopsephyItem[] = [
     greekNumeral: "͵αυπ´",
     isPhrase: false,
     wordCount: 1,
-    category: "Κλασική Ισοψηφία",
-    notes: "Χ (600) + Ρ (100) + Ι (10) + Σ (200) + Τ (300) + Ο (70) + Σ (200) = 1480",
+    category: "Ονόματα",
+    notes: "Χ(600) + Ρ(100) + Ι(10) + Σ(200) + Τ(300) + Ο(70) + Σ(200) = 1480",
     createdAt: new Date().toISOString(),
   },
   {
     id: "init-4",
-    text: "ΛΑΥΡΕΙΟΝ",
-    normalized: "ΛΑΥΡΕΙΟΝ",
-    value: 666,
-    root: 9,
-    greekNumeral: "χξϛ´",
+    text: "ΔΙΑΣ",
+    normalized: "ΔΙΑΣ",
+    value: 215,
+    root: 8,
+    greekNumeral: "σιε´",
     isPhrase: false,
     wordCount: 1,
-    category: "Κλασική Ισοψηφία",
-    notes: "30 + 1 + 400 + 100 + 5 + 10 + 70 + 50 = 666",
+    category: "Ονόματα",
+    notes: "Δ(4) + Ι(10) + Α(1) + Σ(200) = 215",
     createdAt: new Date().toISOString(),
   },
   {
     id: "init-5",
-    text: "ΗΛΙΟΣ",
-    normalized: "ΗΛΙΟΣ",
-    value: 318,
-    root: 3,
-    greekNumeral: "τιη´",
+    text: "ΖΕΥΣ",
+    normalized: "ΖΕΥΣ",
+    value: 612,
+    root: 9,
+    greekNumeral: "χιβ´",
     isPhrase: false,
     wordCount: 1,
-    category: "Κλασική Ισοψηφία",
-    notes: "8 + 30 + 10 + 70 + 200 = 318",
+    category: "Ονόματα",
+    notes: "Ζ(7) + Ε(5) + Υ(400) + Σ(200) = 612",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "init-6",
+    text: "ΑΠΟΛΛΩΝ",
+    normalized: "ΑΠΟΛΛΩΝ",
+    value: 1061,
+    root: 8,
+    greekNumeral: "͵αξα´",
+    isPhrase: false,
+    wordCount: 1,
+    category: "Ονόματα",
+    notes: "Α(1) + Π(80) + Ο(70) + Λ(30) + Λ(30) + Ω(800) + Ν(50) = 1061",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "init-7",
+    text: "ΑΙΑΣ",
+    normalized: "ΑΙΑΣ",
+    value: 212,
+    root: 5,
+    greekNumeral: "σιβ´",
+    isPhrase: false,
+    wordCount: 1,
+    category: "Ονόματα",
+    notes: "Α(1) + Ι(10) + Α(1) + Σ(200) = 212",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "init-8",
+    text: "Ο ΩΝ",
+    normalized: "Ο ΩΝ",
+    value: 920,
+    root: 2,
+    greekNumeral: "ϡκ´",
+    isPhrase: true,
+    wordCount: 2,
+    category: "Ονόματα",
+    notes: "Ο(70) + Ω(800) + Ν(50) = 920",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "init-9",
+    text: "ΑΙΩΝ",
+    normalized: "ΑΙΩΝ",
+    value: 861,
+    root: 6,
+    greekNumeral: "ωξα´",
+    isPhrase: false,
+    wordCount: 1,
+    category: "Ονόματα",
+    notes: "Α(1) + Ι(10) + Ω(800) + Ν(50) = 861",
     createdAt: new Date().toISOString(),
   },
 ];
@@ -135,9 +148,16 @@ export default function App() {
 
   const [savedItems, setSavedItems] = useState<SavedIsopsephyItem[]>(() => {
     try {
+      // Clean up previous localStorage keys that might have cached old items (Neron etc)
+      localStorage.removeItem("greek_isopsephy_saved_archive_v1");
+      localStorage.removeItem("greek_isopsephy_saved_archive_v2");
+      
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed: SavedIsopsephyItem[] = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
     } catch (e) {
       console.error("Failed to read from localStorage", e);
@@ -235,6 +255,16 @@ export default function App() {
     setAiModalOpen(true);
   };
 
+  const handleResetToDefault = () => {
+    setSavedItems(INITIAL_SEEDED_ITEMS);
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_SEEDED_ITEMS));
+    } catch (e) {
+      console.error(e);
+    }
+    showToast("Το Αρχείο επανήλθε στα 9 βασικά ονόματα.");
+  };
+
   return (
     <div className="min-h-screen bg-[#0d0c0a] text-[#e8dfd1] flex flex-col font-sans selection:bg-[#c89b3c]/30 selection:text-[#f4e2b7] pt-[env(safe-area-inset-top,0px)]">
       
@@ -283,6 +313,7 @@ export default function App() {
             savedItems={savedItems}
             onDeleteItem={handleDeleteItem}
             onClearAll={handleClearAll}
+            onResetToDefault={handleResetToDefault}
             onImportItems={handleImportItems}
             onSaveItem={handleSaveItem}
             onOpenAiModal={handleOpenAiModal}

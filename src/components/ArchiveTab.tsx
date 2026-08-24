@@ -11,15 +11,35 @@ interface ArchiveTabProps {
   savedItems: SavedIsopsephyItem[];
   onDeleteItem: (id: string) => void;
   onClearAll: () => void;
+  onResetToDefault?: () => void;
   onImportItems: (items: SavedIsopsephyItem[]) => void;
   onSaveItem: (item: Omit<SavedIsopsephyItem, "id" | "createdAt">) => void;
   onOpenAiModal: (text: string, number: number, words: string[]) => void;
 }
 
+// Helper to highlight matching text in yellow
+const renderHighlightedText = (text: string, query: string) => {
+  if (!query || !query.trim()) return text;
+  const q = query.trim();
+  const index = text.toLowerCase().indexOf(q.toLowerCase());
+  if (index === -1) return text;
+  const before = text.slice(0, index);
+  const match = text.slice(index, index + q.length);
+  const after = text.slice(index + q.length);
+  return (
+    <>
+      {before}
+      <mark className="bg-[#ffe600] text-black font-black px-1 rounded">{match}</mark>
+      {after}
+    </>
+  );
+};
+
 export const ArchiveTab: React.FC<ArchiveTabProps> = ({
   savedItems,
   onDeleteItem,
   onClearAll,
+  onResetToDefault,
   onImportItems,
   onSaveItem,
   onOpenAiModal,
@@ -382,6 +402,20 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                   <span>Προσθήκη Λέξης</span>
                 </button>
 
+                {onResetToDefault && (
+                  <button
+                    onClick={() => {
+                      if (confirm("Επαναφορά του Αρχείου στα 9 Βασικά Ονόματα (Ιωάννης, Ιησούς, Χριστός, Δίας, Ζευς, Απόλλων, Αίας, Ο Ων, Αιών);")) {
+                        onResetToDefault();
+                      }
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#1a1713] hover:bg-[#282119] text-[#c89b3c] hover:text-[#f5ecd8] text-xs font-serif border border-[#3d3022] transition-colors"
+                    title="Επαναφορά στα 9 κύρια ονόματα"
+                  >
+                    Επαναφορά (9 Ονόματα)
+                  </button>
+                )}
+
                 {savedItems.length > 0 && (
                   <button
                     onClick={() => {
@@ -465,7 +499,7 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-0.5">
                           <span className="text-lg font-serif font-bold text-[#f5ecd8] leading-tight block">
-                            {item.text}
+                            {renderHighlightedText(item.text, searchTerm)}
                           </span>
                           <span className="text-[10px] text-[#8c7e6c] font-mono">
                             {item.category} • {item.isPhrase ? `Φράση (${item.wordCount} λέξεις)` : "Λέξη"}
@@ -596,7 +630,7 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                           >
                             <div className="flex items-start justify-between gap-2">
                               <span className="text-base font-serif font-bold text-[#f5ecd8] leading-tight">
-                                {item.text}
+                                {renderHighlightedText(item.text, searchTerm)}
                               </span>
                               <button
                                 onClick={() => onDeleteItem(item.id)}

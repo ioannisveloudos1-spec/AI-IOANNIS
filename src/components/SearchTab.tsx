@@ -61,7 +61,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   const [maxRange, setMaxRange] = useState<string>("");
 
   // Active view tab inside search
-  const [viewMode, setViewMode] = useState<"matches" | "interactive-flow" | "interactive-list" | "lexicon">("interactive-list");
+  const [viewMode, setViewMode] = useState<"matches" | "interactive-flow" | "interactive-list" | "lexicon">("interactive-flow");
+  const [topTextViewMode, setTopTextViewMode] = useState<"edit" | "highlighted">("edit");
   const [dismissedMatchIds, setDismissedMatchIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -174,6 +175,30 @@ export const SearchTab: React.FC<SearchTabProps> = ({
 
   const totalFoundMatches = activeSingleMatches.length + activePhraseMatches.length;
 
+  // Set of word indices that match single word target or search query
+  const singleMatchIndices = useMemo(() => {
+    const indices = new Set<number>();
+    for (const w of activeSingleMatches) {
+      if (w.indexInText !== undefined) {
+        indices.add(w.indexInText);
+      }
+    }
+    return indices;
+  }, [activeSingleMatches]);
+
+  // Map of word index -> Array of matching phrases that cover this word
+  const phraseMatchWordMap = useMemo(() => {
+    const map = new Map<number, PhraseMatch[]>();
+    for (const pm of activePhraseMatches) {
+      for (let idx = pm.startIndex; idx <= pm.endIndex; idx++) {
+        const list = map.get(idx) || [];
+        list.push(pm);
+        map.set(idx, list);
+      }
+    }
+    return map;
+  }, [activePhraseMatches]);
+
   // Lexicon items array
   const lexiconList = useMemo(() => {
     const items = Array.from(analysis.uniqueWordsMap.entries()).map(([norm, data]) => ({
@@ -242,17 +267,47 @@ export const SearchTab: React.FC<SearchTabProps> = ({
         </div>
       </div>
 
-      {/* Large Textarea Area for Full Text Input */}
+      {/* Large Textarea Area for Full Text Input & Yellow Highlight Viewer */}
       <div className="rounded-2xl bg-[#161310] border border-[#2d251e] p-5 space-y-4 shadow-xl shadow-black/30">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <label htmlFor="polytonic-textarea-input" className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold flex items-center gap-1.5">
               <Type className="w-4 h-4 text-[#c89b3c]" />
-              <span>Πεδίο Κειμένου προς Ανάλυση & Αναζήτηση</span>
+              <span>Κείμενο προς Ανάλυση & Αναζήτηση</span>
             </label>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-[#231d16] text-[#a69680] font-sans border border-[#332a20]">
-              Αυθεντικό Πολυτονικό / Μονοτονικό
-            </span>
+
+            {/* Mode Switcher: Edit vs Yellow Highlight View */}
+            <div className="flex items-center bg-[#0d0c0a] p-1 rounded-lg border border-[#2d241a] ml-1">
+              <button
+                type="button"
+                onClick={() => setTopTextViewMode("edit")}
+                className={`px-2.5 py-1 rounded text-xs font-serif transition-all ${
+                  topTextViewMode === "edit"
+                    ? "bg-[#282015] text-[#f5ecd8] font-bold border border-[#4a3924]"
+                    : "text-[#8c7e6c] hover:text-[#e8dfd1]"
+                }`}
+              >
+                ✍️ Επεξεργασία
+              </button>
+              <button
+                type="button"
+                onClick={() => setTopTextViewMode("highlighted")}
+                className={`px-2.5 py-1 rounded text-xs font-serif transition-all flex items-center gap-1.5 ${
+                  topTextViewMode === "highlighted"
+                    ? "bg-[#ffe600] text-black font-extrabold shadow-md shadow-yellow-500/30"
+                    : "text-[#e6c670] hover:text-white"
+                }`}
+              >
+                <span>🟡 Κίτρινο Μαρκάρισμα</span>
+                {totalFoundMatches > 0 && (
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                    topTextViewMode === "highlighted" ? "bg-black text-[#ffe600]" : "bg-[#ffe600] text-black"
+                  }`}>
+                    {totalFoundMatches}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-mono text-[#8c7e6c]">
@@ -282,20 +337,83 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           </div>
         </div>
 
-        {/* Large Text Area */}
-        <div className="relative">
-          <textarea
-            id="polytonic-textarea-input"
-            value={inputText}
-            onChange={(e) => setInputText(cleanAndNormalizePolytonic(e.target.value))}
-            rows={isExpandedTextarea ? 18 : 8}
-            placeholder="Επικολλήστε ή πληκτρολογήστε ολόκληρο αρχαίο ή νεότερο ελληνικό κείμενο, κεφάλαια, ψαλμούς ή παραγράφους..."
-            className="w-full p-4 sm:p-5 bg-[#0e0c0a] border border-[#382d20] focus:border-[#c89b3c] focus:ring-1 focus:ring-[#c89b3c]/25 rounded-xl text-sm sm:text-base font-serif text-[#f5ecd8] placeholder-[#5c5144] resize-y outline-none transition-all leading-relaxed gold-scrollbar"
-          />
-          <div className="absolute bottom-3 right-3 text-[10px] font-sans text-[#706251] bg-[#14120e]/80 px-2 py-0.5 rounded border border-[#2d2419] pointer-events-none">
-            Σύρετε τη δεξιά κάτω γωνία για αυξομείωση ύψους
+        {/* Text Viewer or Textarea */}
+        {topTextViewMode === "edit" ? (
+          <div className="relative">
+            <textarea
+              id="polytonic-textarea-input"
+              value={inputText}
+              onChange={(e) => setInputText(cleanAndNormalizePolytonic(e.target.value))}
+              rows={isExpandedTextarea ? 18 : 8}
+              placeholder="Επικολλήστε ή πληκτρολογήστε ολόκληρο αρχαίο ή νεότερο ελληνικό κείμενο, κεφάλαια, ψαλμούς ή παραγράφους..."
+              className="w-full p-4 sm:p-5 bg-[#0e0c0a] border border-[#382d20] focus:border-[#c89b3c] focus:ring-1 focus:ring-[#c89b3c]/25 rounded-xl text-sm sm:text-base font-serif text-[#f5ecd8] placeholder-[#5c5144] resize-y outline-none transition-all leading-relaxed gold-scrollbar"
+            />
+            <div className="absolute bottom-3 right-3 text-[10px] font-sans text-[#706251] bg-[#14120e]/80 px-2 py-0.5 rounded border border-[#2d2419] pointer-events-none">
+              Σύρετε τη δεξιά κάτω γωνία για αυξομείωση ύψους
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Yellow Highlighted Full Text Box */
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-serif px-1 text-[#d6c7b2]">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#ffe600] animate-pulse"></span>
+                <span>
+                  <strong>Κίτρινο Μαρκάρισμα Στόχων:</strong>{" "}
+                  {wordQuery && <span className="text-[#ffe600]">Λέξη «{wordQuery}» • </span>}
+                  {singleWordTarget && <span className="text-[#ffe600]">Στόχος Λέξης = {singleWordTarget} • </span>}
+                  {phraseTarget && <span className="text-[#ffe600]">Στόχος Φράσης = {phraseTarget} ({phraseLengthMin}-{phraseLengthMax}λ)</span>}
+                  {!wordQuery && !singleWordTarget && !phraseTarget && "Ορίστε στόχους παρακάτω για αυτόματο μαρκάρισμα"}
+                </span>
+              </div>
+              <span className="font-mono text-[#ffe600] font-bold">
+                {totalFoundMatches} ευρέσεις
+              </span>
+            </div>
+
+            <div className={`p-4 sm:p-5 bg-[#0e0c0a] rounded-xl border border-[#382d20] leading-loose text-base sm:text-lg font-serif text-[#e8dfd1] overflow-y-auto gold-scrollbar ${
+              isExpandedTextarea ? "max-h-[500px]" : "max-h-[260px]"
+            }`}>
+              {analysis.words.length > 0 ? (
+                <div className="flex flex-wrap gap-x-2 gap-y-2.5">
+                  {analysis.words.map((w, idx) => {
+                    const isSingleMatch = singleMatchIndices.has(w.indexInText!);
+                    const phrases = phraseMatchWordMap.get(w.indexInText!) || [];
+                    const isPhraseMatch = phrases.length > 0;
+                    const isTargetMatch = isSingleMatch || isPhraseMatch;
+                    const isSelected = selectedWordObj?.indexInText === w.indexInText;
+
+                    return (
+                      <span
+                        key={idx}
+                        onClick={() => setSelectedWordObj(w)}
+                        className={`cursor-pointer transition-all inline-flex items-center gap-1 rounded ${
+                          isTargetMatch
+                            ? "bg-[#ffe600] text-black font-black px-2 py-0.5 rounded shadow-[0_0_12px_rgba(255,230,0,0.65)] ring-2 ring-yellow-400 scale-105"
+                            : isSelected
+                            ? "bg-[#c89b3c] text-black font-bold px-1.5 py-0.5 rounded"
+                            : "hover:bg-[#251e17] hover:text-[#f5ecd8] px-1 py-0.5"
+                        }`}
+                        title={`Λέξη #${idx + 1}: ${w.rawWord} (Ισοψηφία: ${w.value}, Πυθμένας: ${w.root})${
+                          isSingleMatch ? " - ΣΤΟΧΟΣ ΛΕΞΗΣ" : ""
+                        }${isPhraseMatch ? ` - ΜΕΡΟΣ ΣΥΝΔΥΑΣΜΟΥ ΦΡΑΣΗΣ (${phrases[0].value})` : ""}`}
+                      >
+                        <span className={isTargetMatch ? "text-black font-black" : ""}>{w.rawWord}</span>
+                        {isTargetMatch && (
+                          <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-black text-[#ffe600] font-bold">
+                            {w.value}
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-[#8c7e6c] italic">Δεν υπάρχει κείμενο προς προβολή.</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* =========================================================================
             ΕΠΕΞΗΓΗΣΗ ΛΕΞΑΡΙΘΜΟΥ & ΣΥΝΟΛΙΚΟ ΑΘΡΟΙΣΜΑ 27 ΓΡΑΜΜΑΤΩΝ (4995)
@@ -830,7 +948,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           <div className="space-y-4">
             <div className="p-4 rounded-xl bg-[#14120e] border border-[#2d251e] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="text-xs font-serif text-[#a69680]">
-                📋 <strong>Κάθετη Προβολή:</strong> Εμφάνιση κάθε λέξης σε ξεχωριστή σειρά με τον ισοψηφικό λεξάριθμο, τα γράμματα και τον πυθμένα της. Οι λέξεις που ικανοποιούν τον στόχο ({singleTargetNum || wordQuery || "επιλεγμένο"}) μαρκάρονται με χρυσό πλαίσιο.
+                📋 <strong>Κάθετη Προβολή:</strong> Εμφάνιση κάθε λέξης σε ξεχωριστή σειρά με τον ισοψηφικό λεξάριθμο, τα γράμματα και τον πυθμένα της. Οι λέξεις που ικανοποιούν στόχο λέξης ({singleTargetNum || wordQuery || "-"}) ή αποτελούν μέρος στόχου φράσης ({phraseTarget || "-"}) μαρκάρονται αυτόματα με <span className="bg-[#ffe600] text-black font-bold px-1.5 py-0.5 rounded">κίτρινο χρώμα</span>.
               </div>
               <div className="text-xs font-mono text-[#8c7e6c] whitespace-nowrap">
                 Σύνολο: {analysis.words.length} σειρές λέξεων
@@ -840,11 +958,10 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             {/* Word List Table / Rows */}
             <div className="space-y-2 max-h-[650px] overflow-y-auto gold-scrollbar pr-1">
               {analysis.words.map((w, idx) => {
-                const isTargetMatch =
-                  (singleTargetNum !== undefined && w.value === singleTargetNum) ||
-                  (wordQuery &&
-                    (w.rawWord.toLowerCase().includes(wordQuery.toLowerCase()) ||
-                      w.normalizedWord.includes(wordQuery.toUpperCase())));
+                const isSingleMatch = singleMatchIndices.has(w.indexInText!);
+                const phrases = phraseMatchWordMap.get(w.indexInText!) || [];
+                const isPhraseMatch = phrases.length > 0;
+                const isTargetMatch = isSingleMatch || isPhraseMatch;
                 const isSelected = selectedWordObj?.indexInText === w.indexInText;
                 const isSaved = savedItems.some(
                   (item) => item.text.trim().toUpperCase() === w.rawWord.toUpperCase() && item.value === w.value
@@ -858,7 +975,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       isSelected
                         ? "bg-[#251e16] border-[#e6c670] ring-1 ring-[#e6c670] shadow-lg shadow-black/40"
                         : isTargetMatch
-                        ? "bg-[#231b12] border-[#c89b3c] shadow-md shadow-[#c89b3c]/20 ring-1 ring-[#c89b3c]/60"
+                        ? "bg-[#28220f] border-yellow-500/80 shadow-md shadow-yellow-500/20 ring-1 ring-yellow-400/50"
                         : "bg-[#14110e] border-[#261f18] hover:border-[#3e3223]"
                     }`}
                   >
@@ -868,17 +985,30 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                         #{idx + 1}
                       </span>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg font-serif font-bold text-[#f5ecd8]">
-                            {w.rawWord}
-                          </span>
-                          {isTargetMatch && (
-                            <span className="px-2 py-0.5 rounded bg-[#c89b3c] text-black text-[10px] font-mono font-black uppercase tracking-wider animate-pulse">
-                              Στόχος!
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {isTargetMatch ? (
+                            <mark className="text-lg font-serif font-black bg-[#ffe600] text-black px-2 py-0.5 rounded shadow-sm">
+                              {w.rawWord}
+                            </mark>
+                          ) : (
+                            <span className="text-lg font-serif font-bold text-[#f5ecd8]">
+                              {w.rawWord}
+                            </span>
+                          )}
+
+                          {isSingleMatch && (
+                            <span className="px-2 py-0.5 rounded bg-[#ffe600] text-black text-[10px] font-mono font-black uppercase tracking-wider shadow-sm animate-pulse">
+                              🎯 Στόχος Λέξης {w.value}
+                            </span>
+                          )}
+
+                          {isPhraseMatch && (
+                            <span className="px-2 py-0.5 rounded bg-yellow-400 text-black text-[10px] font-mono font-black uppercase tracking-wider shadow-sm">
+                              🎯 Μέρος Φράσης ({phrases.map((p) => `${p.wordCount}λ=${p.value}`).join(", ")})
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] font-mono text-[#8c7e6c]">
+                        <div className="text-[11px] font-mono text-[#8c7e6c] mt-0.5">
                           {w.letters.map((l) => `${l.char}(${l.value})`).join(" + ")}
                         </div>
                       </div>
@@ -887,7 +1017,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     {/* Right: Value, Pythmen, Actions */}
                     <div className="flex items-center gap-2.5 self-end sm:self-auto">
                       <div className="text-right">
-                        <div className="text-lg font-serif font-bold text-[#e6c670] bg-[#1c1610] px-3 py-0.5 rounded-lg border border-[#3e3122]">
+                        <div className={`text-lg font-serif font-bold px-3 py-0.5 rounded-lg border ${
+                          isTargetMatch
+                            ? "bg-[#ffe600] text-black font-black border-yellow-400 shadow-sm"
+                            : "text-[#e6c670] bg-[#1c1610] border-[#3e3122]"
+                        }`}>
                           {w.value}
                         </div>
                         <div className="text-[10px] font-mono text-[#8c7e6c]">
@@ -941,41 +1075,54 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           </div>
         )}
 
-        {/* 2. INTERACTIVE CONTINUOUS FLOW TEXT WITH GLOWING TARGET HIGHLIGHTING */}
+        {/* 2. INTERACTIVE CONTINUOUS FLOW TEXT WITH GLOWING YELLOW TARGET HIGHLIGHTING */}
         {viewMode === "interactive-flow" && (
           <div className="space-y-4">
             <div className="p-4 rounded-xl bg-[#14120e] border border-[#2d251e] space-y-2">
-              <span className="text-xs font-serif text-[#8c7e6c]">
-                💡 <strong>Ροή Κειμένου:</strong> Κάντε κλικ σε οποιαδήποτε λέξη του κειμένου για να δείτε άμεσα την ισοψηφία και τα γράμματά της. Οι λέξεις που ικανοποιούν τον στόχο ({singleTargetNum || wordQuery || "στόχος"}) εμφανίζονται μαρκαρισμένες με χρυσό φόντο.
-              </span>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-serif text-[#a69680]">
+                <span>
+                  💡 <strong>Ροή Κειμένου & Κίτρινο Μαρκάρισμα:</strong> Κάντε κλικ σε οποιαδήποτε λέξη για να δείτε τα γράμματα και την ισοψηφία της. Όλες οι ευρέσεις στόχων λέξεων ή συνδυασμών φράσεων εμφανίζονται με <span className="bg-[#ffe600] text-black font-bold px-1.5 py-0.5 rounded">κίτρινο μαρκάρισμα</span>.
+                </span>
+                <span className="font-mono text-[#ffe600] font-bold">
+                  {totalFoundMatches} ευρέσεις μαρκαρισμένες
+                </span>
+              </div>
               
               <div className="p-5 bg-[#0f0e0c] rounded-xl border border-[#211b15] leading-loose text-base sm:text-lg font-serif text-[#e8dfd1] flex flex-wrap gap-x-2.5 gap-y-3.5 max-h-[550px] overflow-y-auto gold-scrollbar">
                 {analysis.words.map((w, idx) => {
-                  const isMatch =
-                    (singleTargetNum !== undefined && w.value === singleTargetNum) ||
-                    (wordQuery &&
-                      (w.rawWord.toLowerCase().includes(wordQuery.toLowerCase()) ||
-                        w.normalizedWord.includes(wordQuery.toUpperCase())));
+                  const isSingleMatch = singleMatchIndices.has(w.indexInText!);
+                  const phrases = phraseMatchWordMap.get(w.indexInText!) || [];
+                  const isPhraseMatch = phrases.length > 0;
+                  const isTargetMatch = isSingleMatch || isPhraseMatch;
                   const isSelected = selectedWordObj?.indexInText === w.indexInText;
 
                   return (
                     <button
                       key={idx}
                       onClick={() => setSelectedWordObj(w)}
-                      className={`px-2 py-1 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                         isSelected
                           ? "bg-[#c89b3c] text-black font-bold ring-2 ring-[#e6c670] shadow-lg shadow-black/50"
-                          : isMatch
-                          ? "bg-[#3e2e1a] text-[#f5ecd8] border-2 border-[#e6c670] font-bold shadow-md shadow-[#c89b3c]/30 scale-105"
+                          : isTargetMatch
+                          ? "bg-[#ffe600] text-black font-black border-2 border-[#ffd700] ring-2 ring-yellow-400/80 shadow-[0_0_15px_rgba(255,230,0,0.7)] scale-105 hover:bg-yellow-300"
                           : "hover:bg-[#251e17] hover:text-[#f5ecd8] border border-transparent"
                       }`}
                     >
-                      <span>{w.rawWord}</span>
-                      <span className={`text-[10px] font-mono px-1 py-0.2 rounded ${
-                        isSelected ? "bg-black/30 text-black font-bold" : isMatch ? "bg-[#c89b3c] text-black font-bold" : "text-[#c89b3c] bg-[#1a1510]"
+                      <span className={isTargetMatch ? "text-black font-black" : ""}>{w.rawWord}</span>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
+                        isSelected
+                          ? "bg-black/30 text-black font-bold"
+                          : isTargetMatch
+                          ? "bg-black text-[#ffe600] font-black shadow-sm"
+                          : "text-[#c89b3c] bg-[#1a1510]"
                       }`}>
                         {w.value}
                       </span>
+                      {isPhraseMatch && (
+                        <span className="text-[9px] font-mono bg-black/80 text-yellow-300 px-1 rounded">
+                          #{phrases[0]?.value}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -1086,15 +1233,15 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <span className="text-lg font-serif font-bold text-[#f5ecd8]">
-                              {wordObj.rawWord}
-                            </span>
+                            <mark className="text-lg font-serif font-black bg-[#ffe600] text-black px-2.5 py-0.5 rounded shadow-sm inline-block">
+                              «{wordObj.rawWord}»
+                            </mark>
                             <span className="text-xs text-[#8c7e6c] font-mono ml-2">
                               (Θέση #{wordObj.indexInText! + 1})
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-base font-serif font-bold text-[#e6c670] bg-[#221b14] px-2.5 py-0.5 rounded-lg border border-[#3e3223]">
+                            <span className="text-base font-serif font-black text-black bg-[#ffe600] px-2.5 py-0.5 rounded-lg border border-yellow-400 shadow-sm">
                               {wordObj.value}
                             </span>
                           </div>
@@ -1171,11 +1318,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div>
-                            <span className="text-lg font-serif font-bold text-[#f5ecd8]">
+                            <mark className="text-lg font-serif font-black bg-[#ffe600] text-black px-3 py-1 rounded-md shadow-sm leading-relaxed inline-block">
                               «{phraseObj.phrase}»
-                            </span>
-                            <div className="flex items-center gap-2 mt-1 text-xs text-[#8c7e6c] font-mono">
-                              <span className="px-1.5 py-0.5 rounded bg-[#201a14] border border-[#30261c] text-[#e6c670]">
+                            </mark>
+                            <div className="flex items-center gap-2 mt-1.5 text-xs text-[#8c7e6c] font-mono">
+                              <span className="px-1.5 py-0.5 rounded bg-yellow-400 text-black font-bold border border-yellow-500">
                                 {phraseObj.wordCount} λέξεις
                               </span>
                               <span>•</span>
@@ -1184,7 +1331,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                           </div>
 
                           <div className="flex items-center gap-2 self-start sm:self-auto">
-                            <span className="text-lg sm:text-xl font-serif font-bold text-[#e6c670] bg-[#221b14] px-3 py-1 rounded-lg border border-[#3e3223]">
+                            <span className="text-lg sm:text-xl font-serif font-black text-black bg-[#ffe600] px-3 py-1 rounded-lg border border-yellow-400 shadow-sm">
                               {phraseObj.value}
                             </span>
                           </div>
@@ -1297,30 +1444,48 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-[600px] overflow-y-auto gold-scrollbar p-1">
-              {lexiconList.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 rounded-lg bg-[#14110e] border border-[#261f18] hover:border-[#3d3021] flex items-center justify-between transition-colors"
-                >
-                  <div>
-                    <span className="text-sm font-serif font-bold text-[#f5ecd8]">
-                      {item.raw}
-                    </span>
-                    <div className="text-[10px] font-mono text-[#8c7e6c]">
-                      Συχνότητα: {item.count} {item.count === 1 ? "φορά" : "φορές"}
-                    </div>
-                  </div>
+              {lexiconList.map((item, idx) => {
+                const isMatch =
+                  (singleTargetNum !== undefined && item.value === singleTargetNum) ||
+                  (wordQuery &&
+                    (item.raw.toLowerCase().includes(wordQuery.toLowerCase()) ||
+                      item.normalized.includes(wordQuery.toUpperCase())));
 
-                  <div className="text-right">
-                    <span className="text-sm font-serif font-bold text-[#e6c670]">
-                      {item.value}
-                    </span>
-                    <div className="text-[10px] font-mono text-[#7a6c5a]">
-                      Πυθμένας: {item.root}
+                return (
+                  <div
+                    key={idx}
+                    className={`p-3 rounded-lg border flex items-center justify-between transition-colors ${
+                      isMatch
+                        ? "bg-[#28220f] border-yellow-500/80 ring-1 ring-yellow-400/50"
+                        : "bg-[#14110e] border-[#261f18] hover:border-[#3d3021]"
+                    }`}
+                  >
+                    <div>
+                      {isMatch ? (
+                        <mark className="text-sm font-serif font-black bg-[#ffe600] text-black px-1.5 py-0.5 rounded shadow-sm inline-block">
+                          {item.raw}
+                        </mark>
+                      ) : (
+                        <span className="text-sm font-serif font-bold text-[#f5ecd8]">
+                          {item.raw}
+                        </span>
+                      )}
+                      <div className="text-[10px] font-mono text-[#8c7e6c] mt-0.5">
+                        Συχνότητα: {item.count} {item.count === 1 ? "φορά" : "φορές"}
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <span className={`text-sm font-serif font-bold ${isMatch ? "text-[#ffe600] font-black" : "text-[#e6c670]"}`}>
+                        {item.value}
+                      </span>
+                      <div className="text-[10px] font-mono text-[#7a6c5a]">
+                        Πυθμένας: {item.root}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
