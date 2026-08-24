@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 import { IONIC_ALPHABET } from "../utils/isopsephy";
-import { BookOpen, Sparkles, Hash, Layers, CheckCircle2, Sun, Calculator, ChevronRight } from "lucide-react";
+import { BookOpen, Sparkles, Hash, Layers, CheckCircle2, Sun, Calculator, ChevronRight, Compass } from "lucide-react";
+import { LavreionStoryView } from "./LavreionStoryView";
+
+type GuideSubTab = "all" | "lavreion" | "ionian" | "awakening" | "orphic";
 
 export const GuideTab: React.FC = () => {
+  const [activeGuideTab, setActiveGuideTab] = useState<GuideSubTab>("all");
   const [selectedLetterChar, setSelectedLetterChar] = useState<string>("Α");
   const [activeSquareRow, setActiveSquareRow] = useState<number | null>(null);
 
@@ -26,17 +30,87 @@ export const GuideTab: React.FC = () => {
     <div className="space-y-8 max-w-6xl mx-auto">
       
       {/* Top Introduction Banner */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-[#181512] border border-[#2d251e] space-y-2">
-        <h2 className="text-lg sm:text-xl font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-[#c89b3c]" />
-          <span>Οδηγός Ιωνικής Αρίθμησης & Ελληνικής Ισοψηφίας</span>
-        </h2>
-        <p className="text-xs sm:text-sm text-[#a69680] font-serif leading-relaxed">
-          Η <strong>Ισοψηφία</strong> (γνωστή και ως υπολογισμός λεξαρίθμων) είναι η αρχαία ελληνική επιστημονική και φιλοσοφική πρακτική της άθροισης των αριθμητικών αξιών των γραμμάτων μιας λέξης ή φράσης, σύμφωνα με το αλφαβητικό σύστημα της <strong>Ιωνικής Αρίθμησης</strong> (27 ψηφία).
-        </p>
+      <div className="p-4 sm:p-6 rounded-2xl bg-[#181512] border border-[#2d251e] space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg sm:text-xl font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-[#c89b3c]" />
+              <span>Οδηγός Ιωνικής Αρίθμησης & Ελληνικής Ισοψηφίας</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-[#a69680] font-serif leading-relaxed mt-1">
+              Η <strong>Ισοψηφία</strong> (υπολογισμός λεξαρίθμων) σύμφωνα με το <strong>27ψήφιο Ιωνικό Σύστημα</strong>, τα γεωμετρικά μυστήρια του 666 και η πορεία της ψυχής.
+            </p>
+          </div>
+        </div>
+
+        {/* Sub-Tab Navigation Bar */}
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-[#292017]">
+          <button
+            onClick={() => setActiveGuideTab("all")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "all"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>📜 Πλήρης Οδηγός</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGuideTab("lavreion")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "lavreion"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>🏛️ Η Πύλη ΛΑΥΡΕΙΟΝ (Ιανεύς Τελιανός)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGuideTab("ionian")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "ionian"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <Sun className="w-3.5 h-3.5" />
+            <span>☀️ Ιωνική Αρίθμηση &amp; 666</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGuideTab("awakening")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "awakening"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>📐 Γεωμετρία 144.000</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGuideTab("orphic")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "orphic"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>🌌 Ορφική Ενότητα</span>
+          </button>
+        </div>
       </div>
 
-      {/* SPECIAL SECTION: Ο ΑΡΙΘΜΟΣ 666, ΤΡΙΓΩΝΟΙ ΑΡΙΘΜΟΙ & ΜΑΓΙΚΟ ΤΕΤΡΑΓΩΝΟ ΤΟΥ ΗΛΙΟΥ */}
+      {/* 1. ΙΩΝΙΚΗ ΑΡΙΘΜΗΣΗ & 666 SECTION */}
+      {(activeGuideTab === "all" || activeGuideTab === "ionian") && (
+        <>
+          {/* SPECIAL SECTION: Ο ΑΡΙΘΜΟΣ 666, ΤΡΙΓΩΝΟΙ ΑΡΙΘΜΟΙ & ΜΑΓΙΚΟ ΤΕΤΡΑΓΩΝΟ ΤΟΥ ΗΛΙΟΥ */}
       <div className="p-5 sm:p-7 rounded-2xl bg-[#14120f] border-2 border-[#c89b3c]/40 shadow-2xl shadow-black/50 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2d2419] pb-4">
           <div className="flex items-center gap-3">
@@ -609,36 +683,16 @@ export const GuideTab: React.FC = () => {
           </div>
         </div>
       </div>
+      </>
+      )}
 
-      {/* Φιλοσοφική / Αλληγορική Αφήγηση */}
-      <div className="p-6 rounded-2xl bg-[#14110d] border border-[#2d241c] space-y-4 font-serif">
-        <div className="flex items-center gap-2 text-[#e6c670]">
-          <BookOpen className="w-5 h-5 text-[#c89b3c]" />
-          <h3 className="text-sm uppercase tracking-wider font-bold">
-            Η Πύλη ονόματι ΛΑΥΡΕΙΟΝ: Το Ταξίδι του Ιανέως Τελιανού
-          </h3>
-        </div>
+      {/* 2. Η ΠΥΛΗ ΛΑΥΡΕΙΟΝ SECTION */}
+      {(activeGuideTab === "all" || activeGuideTab === "lavreion") && (
+        <LavreionStoryView />
+      )}
 
-        <div className="space-y-3 text-xs text-[#d6c7b2] leading-relaxed border-l-2 border-[#c89b3c]/40 pl-4 py-1">
-          <p>
-            Στα έγκατα της γης και στα βάθη της ανθρώπινης ψυχής, εκεί όπου το σκοτάδι συναντά το φως, υπήρχε μια πόλη με όνομα αρχαίο και βαρύ σαν πεπρωμένο: το <strong>ΛΑΥΡΕΙΟΝ</strong>. Ο ίδιος ο ήχος του έκρυβε έναν μυστικιστικό αριθμό, το <strong>666</strong>, έναν αριθμό που οι αμύητοι φοβούνταν, αλλά οι σοφοί γνώριζαν πως αποτελούσε την κρυφή γεωμετρία της καθόδου και της ανόδου.
-          </p>
-          <p>
-            Σε αυτή την πολιτεία ζούσε ο <strong>Ιανεύς Τελιανός</strong>, ένας άνθρωπος με ανήσυχο πνεύμα που ένιωθε από παιδί πως η πραγματικότητα είχε πολλαπλά επίπεδα. Οι θρύλοι του ΛΑΥΡΕΙΟΝ έλεγαν πως για να φτάσει κανείς στην αληθινή γνώση, έπρεπε πρώτα να κατέλθει στον συνειδησιακό του Άδη, στα Τάρταρα της ψυχής όπου τα πάθη ψύχονται και εξαγνίζονται. Στον αντίποδα αυτής της ψύξης στεκόταν ο Έρωτας, η φωτιά και το Πυρ, το οποίο γεννήθηκε από τον <strong>Πόρο και την Πενία (666)</strong>—δύναμη εξίσου συνυφασμένη με τον ίδιο αριθμό-μυστήριο.
-          </p>
-          <p>
-            Ο Ιανεύς Τελιανός αποφάσισε να μην μείνει στις επιφανειακές εξηγήσεις. Γνώριζε πως η πραγματική αποκάλυψη απαιτούσε θάρρος. Μια νύχτα, καθώς η πόλη κοιμόταν κάτω από έναν ουρανό γεμάτο αμείλικτα αστέρια, ο Ιανεύς κατέβηκε στα παλιά, εγκαταλελειμμένα ορυχεία του ΛΑΥΡΕΙΟΝ. Εκεί, στα έγκατα της γης, ένιωσε το κρύο να διαπερνά την ύπαρξή του. Ήταν η κάθοδος στον εσωτερικό του Άδη. Οι φόβοι, οι αμφιβολίες και οι σκιές του παρελθόντος αναδύθηκαν μπροστά του σαν φαντάσματα. Αντί όμως να τρέξει μακριά, τους κοίταξε κατάματα. Κατάλαβε πως η ψυχή, για να καθαριστεί, πρέπει να περάσει μέσα από τη δοκιμασία της ύλης.
-          </p>
-          <p>
-            Καθώς προχωρούσε πιο βαθιά στο σκοτάδι, η ψυχρή στασιμότητα άρχισε να δίνει τη θέση της σε μια εσωτερική φλόγα. Η παρουσία του Πόρου και της Πενίας φώτισε το σκοτάδι· η έλλειψη και η αναζήτηση ενώθηκαν σε μια υπέρτατη επίγνωση. Ο Ιανεύς κατάλαβε ότι το 666 δεν ήταν σημάδι καταστροφής, αλλά ο κωδικός της ισορροπίας ανάμεσα στο σκοτάδι και το φως, στη σκιά και την πνευματική ανάδυση.
-          </p>
-          <p className="text-[#e6c670] italic">
-            Όταν επέστρεψε στην επιφάνεια του ΛΑΥΡΕΙΟΝ, ο Ιανεύς Τελιανός δεν ήταν πια ο ίδιος. Το βλέμμα του ακτινοβολούσε μια βαθιά, ακλόνητη ηρεμία. Είχε διασχίσει τα Τάρταρα της δικής του συνείδησης και είχε αναδυθεί στο φως του Παντός, φέρνοντας μαζί του την αλήθεια πως το σύμπαν ολόκληρο κατοικεί μέσα στην καρδιά του καθενός μας.
-          </p>
-        </div>
-      </div>
-
-      {/* Η Γεωμετρία της Αφύπνισης και ο Μυστικός Κύκλος των Αριθμών */}
+      {/* 3. Η Γεωμετρία της Αφύπνισης και ο Μυστικός Κύκλος των Αριθμών */}
+      {(activeGuideTab === "all" || activeGuideTab === "awakening") && (
       <div className="p-6 rounded-2xl bg-[#14110d] border border-[#2d241c] space-y-6 font-serif">
         <div className="flex items-center gap-2 text-[#e6c670]">
           <BookOpen className="w-5 h-5 text-[#c89b3c]" />
@@ -703,21 +757,129 @@ export const GuideTab: React.FC = () => {
           {/* Βήμα 4: Ενοθεϊστική Θεώρηση της Μίας Οντότητας */}
           <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d2419] space-y-2">
             <h4 className="font-bold text-[#e6c670] flex items-center gap-1.5">
-              <span>🌌</span> 4. Οι Εκφράσεις της Μίας Οντότητας (Ενοθεϊσμός)
+              <span>🌌</span> 4. Ενοθεϊστική Σύγκλιση
             </h4>
-            <p className="text-[11px] italic text-[#e6c670]">
-              «Εἷς Ζεύς, εἷς Ἀΐδης, εἷς Ἥλιος, εἷς Διόνυσος, εἷς θεὸς ἐν πάντεσσι» (Ορφικό απόσπασμα)
-            </p>
-            <ul className="space-y-1 text-[#c5b59e] leading-relaxed text-[11px]">
-              <li>• <strong>Ζευς - Δίας:</strong> Η κεντρική δημιουργική αρχή και συμπαντικός νόμος (Ζωή / Διά).</li>
-              <li>• <strong>Άδης:</strong> Ο Ίδιος στην αόρατη διάσταση, η εσωτερική πηγή και μετουσίωση.</li>
-              <li>• <strong>Ποσειδών:</strong> Η δόνηση, η κίνηση, το υγρό στοιχείο και η ρευστότητα.</li>
-              <li>• <strong>Απόλλων / Διόνυσος:</strong> Το απόλυτο Φως &amp; Αρμονία σε σύζευξη με τη ζωτική ορμή.</li>
-              <li>• <strong>Ηρακλής:</strong> Η θεία δύναμη ενσαρκωμένη στη δοκιμασία και την κάθαρση της ύπαρξης.</li>
+            <ul className="space-y-1.5 text-[#c5b59e] leading-relaxed text-[11px]">
+              <li>• <strong>Ενοθεϊσμός:</strong> Η πολλαπλότητα των ονομάτων ως εκδήλωση της Μίας Αδιαίρετης Αρχής.</li>
+              <li>• <strong>Συμπαντική Συμμετρία:</strong> Ο Λόγος, η Γεωμετρία και οι Αριθμοί συγκλίνουν σε ενιαία τάξη.</li>
+              <li>• <strong>Αφύπνιση:</strong> Το πέρασμα από τη διαίρεση της ύλης στη συνειδησιακή ενότητα.</li>
             </ul>
           </div>
         </div>
       </div>
+      )}
+
+      {/* 4. Ορφική Ενότητα: Οι Εκφράσεις της Μίας Οντότητας */}
+      {(activeGuideTab === "all" || activeGuideTab === "orphic") && (
+      <div className="p-6 rounded-2xl bg-gradient-to-b from-[#17130f] via-[#120f0c] to-[#0d0a08] border border-[#382b1e] space-y-6 font-serif shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#2d2217] pb-4">
+          <div className="flex items-center gap-2.5 text-[#e6c670]">
+            <BookOpen className="w-5 h-5 text-[#c89b3c]" />
+            <h3 className="text-base uppercase tracking-wider font-bold">
+              Ορφική Ενότητα: Οι Εκφράσεις της Μίας Οντότητας
+            </h3>
+          </div>
+          <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#241c14] border border-[#3d2e1f] text-[#d4af37] font-mono">
+            Ενοθεϊσμός &amp; Αρχέτυπα
+          </span>
+        </div>
+
+        {/* Το Κεντρικό Ορφικό Απόσπασμα */}
+        <div className="p-4 rounded-xl bg-[#1d1712] border-l-4 border-[#c89b3c] border border-[#33261a] space-y-2 shadow-inner">
+          <p className="text-sm font-semibold text-[#f5ecd8] tracking-wide italic">
+            «Εἷς Ζεύς, εἷς Ἀΐδης, εἷς Ἥλιος, εἷς Διόνυσος, εἷς θεὸς ἐν πάντεσσι»
+          </p>
+          <p className="text-xs text-[#a8967e]">
+            <em>(«Ένας είναι ο Ζεύς, ένας ο Άδης, ένας ο Ήλιος, ένας ο Διόνυσος, ένας θεός μέσα σε όλα»)</em> — <strong>Ορφικό Απόσπασμα</strong>
+          </p>
+          <p className="text-xs text-[#d6c7b2] leading-relaxed pt-1 border-t border-[#291f15]">
+            Στην ορφική και νεοπλατωνική θεώρηση, οι διαφορετικές θεότητες δεν νοούνται ως ξεχωριστά ανεξάρτητα πρόσωπα, αλλά ως <strong>επιμέρους ιδιότητες, δυνάμεις και προσωπεία</strong> μίας και μοναδικής, παγκόσμιας Οντότητας. Η πολλαπλότητα είναι η εμφάνιση, αλλά η Μονάδα είναι η αλήθεια.
+          </p>
+        </div>
+
+        {/* Τα Αρχέτυπα σε Κομψό Πλέγμα */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 text-xs">
+          {/* 1. ΖΕΥΣ - ΔΙΑΣ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">1. ΖΕΥΣ - ΔΙΑΣ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Η Αρχή της Ζωής</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Η κεντρική δημιουργική αρχή, η καθαρή ύπαρξη και ο συμπαντικός νόμος που οργανώνει το Σύμπαν. Το όνομα <em>Δίας</em> συνδέεται ετυμολογικά με τη <em>Ζωή</em> και το <em>«Διά»</em> (η ενέργεια που διαπερνά τα πάντα).
+            </p>
+          </div>
+
+          {/* 2. ΑΔΗΣ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">2. ΑΔΗΣ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Η Αόρατη Πηγή</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Ο <em>Ίδιος</em> στην «κρυφή» και αόρατη διάσταση. Η ιδιότητα της εσωστρέφειας, του βάθους της ψυχής και της μετουσίωσης, όπου η ζωή προετοιμάζεται και ανακυκλώνεται μακριά από τα επιφανειακά βλέμματα.
+            </p>
+          </div>
+
+          {/* 3. ΠΟΣΕΙΔΩΝ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">3. ΠΟΣΕΙΔΩΝ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Η Δόνηση &amp; Ροή</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Η εκδήλωση της ενιαίας αρχής στο υγρό στοιχείο, στα συναισθήματα και στη δυναμική κίνηση. Η δύναμη που μορφοποιεί την ύλη και δονεί τα θεμέλια του εκδηλωμένου κόσμου.
+            </p>
+          </div>
+
+          {/* 4. ΑΠΟΛΛΩΝ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">4. ΑΠΟΛΛΩΝ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Φως &amp; Αρμονία</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Ο Δίας ως καθαρό Ηλιακό Φως, Μουσική, Αρμονία, Μέτρο και Προφητεία. Η ακτινοβολούσα νόηση που διαλύει το σκοτάδι της αγνοίας και αποκαλύπτει τη γεωμετρία του σύμπαντος.
+            </p>
+          </div>
+
+          {/* 5. ΔΙΟΝΥΣΟΣ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">5. ΔΙΟΝΥΣΟΣ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Ζωτική Ορμή &amp; Έκσταση</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Η ζωτική ορμή, ο ιερός ενθουσιασμός και η αναγέννηση της φύσης. Συχνά θεωρείται ο «νέος Δίας» ή ο Δίας σε κατάσταση μυστηριακής έκστασης και αέναης αναδημιουργίας.
+            </p>
+          </div>
+
+          {/* 6. ΗΡΑΚΛΗΣ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">6. ΗΡΑΚΛΗΣ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Η Ενσάρκωση &amp; Άθλοι</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Η ενσάρκωση της θείας δύναμης στο πεδίο της δοκιμασίας. Μέσω των 12 άθλων (των δοκιμασιών της ψυχής), καθαίρει την ύπαρξη από τα «τέρατα» της ύλης και επιστρέφει στη θεία κατοικία του Ολύμπου.
+            </p>
+          </div>
+        </div>
+
+        {/* Συμπέρασμα: Το Κλειδί της Ενότητας */}
+        <div className="p-4 rounded-xl bg-[#16120e] border border-[#2b2116] text-xs text-[#d6c7b2] leading-relaxed space-y-2">
+          <h4 className="font-bold text-[#e6c670] text-xs uppercase tracking-wider">
+            🏛️ Το Κλειδί της Ενότητας (Ο Ίδιος)
+          </h4>
+          <p>
+            Ο <strong>Ζευς Δίας</strong> λειτουργεί ως η συνεκτική ουσία πίσω από κάθε όψη: είναι ο «Ορατός» που δίνει νόημα στον «Αόρατο» Άδη, η δόνηση του Ποσειδώνος, το Φως του Απόλλωνος, η έκσταση του Διονύσου και η συνείδηση που καθοδηγεί τον Ηρακλή. 
+          </p>
+          <p className="text-[#e6c670] italic">
+            Είναι ο <strong>Ίδιος</strong>, που ως <em>Δίας</em> δίνει πνοή και ζωή, ως <em>Άδης</em> προσφέρει εσωτερική ανάπαυση και ως <em>Ηρακλής</em> τελεί το έργο της επιστροφής στο Αιώνιο Φως.
+          </p>
+        </div>
+      </div>
+      )}
 
     </div>
   );

@@ -56,6 +56,17 @@ export interface SavedIsopsephyItem {
   createdAt: string;
 }
 
+export interface WordCombinationMatch {
+  id: string;
+  words: WordIsopsephy[];
+  phrase: string;
+  value: number;
+  root: number;
+  wordCount: number;
+  indices: number[];
+  isUniqueMode?: boolean;
+}
+
 export interface TextAnalysisStats {
   totalChars: number;
   totalGreekChars: number;

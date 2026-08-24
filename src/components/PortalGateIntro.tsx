@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import portalImage from "../assets/images/lavrion_oudos_gate_1787492688641.jpg";
+import portalImage from "../assets/images/lavrion_mine_portal_1787601965868.jpg";
 import { ArrowRight } from "lucide-react";
 import { playPortalSound } from "../utils/portalAudio";
 

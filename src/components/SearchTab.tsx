@@ -6,9 +6,10 @@ import {
   getAlphabetAndTextLetterBreakdown,
   calculateWordIsopsephy,
   getMathematicalProperties,
+  findAnywhereWordCombinations,
 } from "../utils/isopsephy";
 import { PRESET_TEXTS } from "../data/presets";
-import { SavedIsopsephyItem, WordIsopsephy, PhraseMatch } from "../types";
+import { SavedIsopsephyItem, WordIsopsephy, PhraseMatch, WordCombinationMatch } from "../types";
 import {
   Search,
   Sparkles,
@@ -33,6 +34,10 @@ import {
   Table,
   AlignLeft,
   GraduationCap,
+  Boxes,
+  CheckSquare,
+  ArrowRight,
+  Flame,
 } from "lucide-react";
 
 interface SearchTabProps {
@@ -60,8 +65,15 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   const [minRange, setMinRange] = useState<string>("");
   const [maxRange, setMaxRange] = useState<string>("");
 
+  // Arbitrary word combinations anywhere in text (2, 3, 4, 5, 6 words)
+  const [comboTarget, setComboTarget] = useState<string>("2368");
+  const [comboWordCounts, setComboWordCounts] = useState<number[]>([2, 3, 4, 5, 6]);
+  const [comboMode, setComboMode] = useState<"uniqueWords" | "allOccurrences">("uniqueWords");
+  const [selectedAnywhereCombo, setSelectedAnywhereCombo] = useState<WordCombinationMatch | null>(null);
+  const [comboFilterLength, setComboFilterLength] = useState<number | "all">("all");
+
   // Active view tab inside search
-  const [viewMode, setViewMode] = useState<"matches" | "interactive-flow" | "interactive-list" | "lexicon">("interactive-flow");
+  const [viewMode, setViewMode] = useState<"matches" | "interactive-flow" | "interactive-list" | "anywhere-combos" | "lexicon">("interactive-flow");
   const [topTextViewMode, setTopTextViewMode] = useState<"edit" | "highlighted">("edit");
   const [dismissedMatchIds, setDismissedMatchIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -174,6 +186,71 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   );
 
   const totalFoundMatches = activeSingleMatches.length + activePhraseMatches.length;
+
+  // Arbitrary Word Combinations Anywhere in Text (2-6 words)
+  const comboTargetNum = comboTarget ? parseInt(comboTarget, 10) : 0;
+
+  const anywhereCombos = useMemo(() => {
+    if (!comboTargetNum || comboTargetNum <= 0 || !analysis.words.length) return [];
+    return findAnywhereWordCombinations(analysis.words, comboTargetNum, {
+      wordCounts: comboWordCounts,
+      mode: comboMode,
+      maxResults: 200,
+    });
+  }, [analysis.words, comboTargetNum, comboWordCounts, comboMode]);
+
+  const filteredAnywhereCombos = useMemo(() => {
+    if (comboFilterLength === "all") return anywhereCombos;
+    return anywhereCombos.filter((c) => c.wordCount === comboFilterLength);
+  }, [anywhereCombos, comboFilterLength]);
+
+  const handleToggleWordCount = (count: number) => {
+    setComboWordCounts((prev) => {
+      if (prev.includes(count)) {
+        const next = prev.filter((c) => c !== count);
+        return next.length > 0 ? next : [count]; // Keep at least one
+      } else {
+        return [...prev, count].sort((a, b) => a - b);
+      }
+    });
+  };
+
+  const handleSetExactComboLength = (count: number) => {
+    setComboWordCounts([count]);
+    setComboFilterLength(count);
+  };
+
+  const handleSetAllComboLengths = () => {
+    setComboWordCounts([2, 3, 4, 5, 6]);
+    setComboFilterLength("all");
+  };
+
+  const handleSaveAnywhereCombo = (comboObj: WordCombinationMatch) => {
+    const greekNum = numberToGreekNumeral(comboObj.value);
+    onSaveItem({
+      text: comboObj.phrase,
+      normalized: comboObj.phrase.toUpperCase(),
+      value: comboObj.value,
+      root: comboObj.root,
+      greekNumeral: greekNum || `${comboObj.value}`,
+      isPhrase: true,
+      wordCount: comboObj.wordCount,
+      sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
+      notes: `Ελεύθερος συνδυασμός ${comboObj.wordCount} λέξεων (${comboObj.isUniqueMode ? "Μοναδικές" : "Κείμενο"}): ${comboObj.words.map((w) => `${w.rawWord}(${w.value})`).join(" + ")} = ${comboObj.value}`,
+      category: "Συνδυασμός Λέξεων Κειμένου",
+    });
+  };
+
+  // Set of indices for selected combination
+  const selectedComboIndices = useMemo(() => {
+    if (!selectedAnywhereCombo) return new Set<number>();
+    return new Set<number>(selectedAnywhereCombo.indices);
+  }, [selectedAnywhereCombo]);
+
+  const selectedComboNormalizedSet = useMemo(() => {
+    if (!selectedAnywhereCombo) return new Set<string>();
+    return new Set<string>(selectedAnywhereCombo.words.map((w) => w.normalizedWord));
+  }, [selectedAnywhereCombo]);
 
   // Set of word indices that match single word target or search query
   const singleMatchIndices = useMemo(() => {
@@ -828,6 +905,165 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             )}
           </div>
 
+          {/* =========================================================================
+              DEDICATED ANYWHERE WORD COMBINATIONS PANEL (2, 3, 4, 5, 6 WORDS)
+             ========================================================================= */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-[#17130f] via-[#1c1611] to-[#17130f] border border-[#c89b3c]/50 space-y-3.5 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-[#c89b3c]/20 text-[#e6c670]">
+                  <Boxes className="w-4 h-4 text-[#e6c670]" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
+                    <span>Ελεύθεροι Συνδυασμοί 2, 3, 4, 5 ή 6 Λέξεων (Ανεξαρτήτως Θέσης)</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#c89b3c] text-black font-black">
+                      {anywhereCombos.length} Βρέθηκαν
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-[#8c7e6c] font-sans">
+                    Εντοπίζει συνδυασμούς λέξεων από οποιοδήποτε σημείο του κειμένου που αθροίζουν στον επιλεγμένο λεξαριθμικό στόχο.
+                  </p>
+                </div>
+              </div>
+
+              {anywhereCombos.length > 0 && (
+                <button
+                  onClick={() => setViewMode("anywhere-combos")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#c89b3c] hover:bg-[#dfb24e] text-black font-serif text-xs font-bold transition-all shadow-md"
+                >
+                  <span>Προβολή {anywhereCombos.length} Συνδυασμών</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+              {/* Target Input */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-serif font-bold text-[#e6c670] flex items-center justify-between">
+                  <span>Στόχος Λεξαρίθμου Συνδυασμού</span>
+                  {comboTarget && (
+                    <span className="text-[11px] font-serif text-[#c89b3c]">
+                      {numberToGreekNumeral(comboTargetNum)}
+                    </span>
+                  )}
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={comboTarget}
+                    onChange={(e) => setComboTarget(e.target.value)}
+                    placeholder="π.χ. 2368, 888, 666..."
+                    className="w-full px-3 py-2 bg-[#12100d] border border-[#3a2f22] focus:border-[#c89b3c] rounded-lg text-sm font-mono text-[#f5ecd8] outline-none"
+                  />
+                </div>
+                {/* Quick Target Preset Chips */}
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {[
+                    { label: "2368", desc: "ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ" },
+                    { label: "888", desc: "ΙΗΣΟΥΣ" },
+                    { label: "1480", desc: "ΧΡΙΣΤΟΣ" },
+                    { label: "666", desc: "ΛΑΥΡΕΙΟΝ" },
+                    { label: "3168", desc: "ΚΥΡΙΟΣ ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ" },
+                    { label: "1332", desc: "ΙΑΝΕΥΣ + ΤΕΛΙΑΝΟΣ" },
+                    { label: "999", desc: "999" },
+                  ].map((chip) => (
+                    <button
+                      key={chip.label}
+                      type="button"
+                      onClick={() => setComboTarget(chip.label)}
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono transition-all ${
+                        comboTarget === chip.label
+                          ? "bg-[#e6c670] text-black font-bold"
+                          : "bg-[#1f1a14] hover:bg-[#2b241c] text-[#a69680] border border-[#33281c]"
+                      }`}
+                      title={chip.desc}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Word Count Selection (2, 3, 4, 5, 6 words) */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-serif font-bold text-[#e6c670] flex items-center justify-between">
+                  <span>Αριθμός Λέξεων Συνδυασμού</span>
+                  <span className="text-[10px] font-mono text-[#8c7e6c]">
+                    {comboWordCounts.sort((a,b)=>a-b).join(", ")} λέξεις
+                  </span>
+                </label>
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  {[2, 3, 4, 5, 6].map((num) => {
+                    const isSelected = comboWordCounts.includes(num);
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => handleToggleWordCount(num)}
+                        className={`flex-1 min-w-[45px] py-1.5 rounded-lg text-xs font-mono font-bold transition-all text-center ${
+                          isSelected
+                            ? "bg-[#c89b3c] text-black shadow-sm"
+                            : "bg-[#181410] hover:bg-[#251e17] text-[#9c8b77] border border-[#2d2419]"
+                        }`}
+                        title={`Ενεργοποίηση συνδυασμών ${num} λέξεων`}
+                      >
+                        {num}λ
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-between pt-1 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={handleSetAllComboLengths}
+                    className="text-[#c89b3c] hover:underline"
+                  >
+                    Όλοι οι συνδυασμοί (2-6)
+                  </button>
+                  <span className="text-[#6b5f4f]">Επιλέξτε 2, 3, 4, 5 ή 6 λέξεις</span>
+                </div>
+              </div>
+
+              {/* Mode selection (Unique words vs All text occurrences) */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-serif font-bold text-[#e6c670]">
+                  Τρόπος Επεξεργασίας Λέξεων
+                </label>
+                <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setComboMode("uniqueWords")}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-serif transition-all text-center ${
+                      comboMode === "uniqueWords"
+                        ? "bg-[#2b2216] text-[#e6c670] border border-[#c89b3c]/60 font-bold shadow-sm"
+                        : "bg-[#14110e] text-[#8c7e6c] border border-[#261f18] hover:text-[#d6c7b2]"
+                    }`}
+                  >
+                    Μοναδικές Λέξεις
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setComboMode("allOccurrences")}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-serif transition-all text-center ${
+                      comboMode === "allOccurrences"
+                        ? "bg-[#2b2216] text-[#e6c670] border border-[#c89b3c]/60 font-bold shadow-sm"
+                        : "bg-[#14110e] text-[#8c7e6c] border border-[#261f18] hover:text-[#d6c7b2]"
+                    }`}
+                  >
+                    Όλες οι Θέσεις
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#857766] font-sans leading-tight pt-0.5">
+                  {comboMode === "uniqueWords"
+                    ? "Συνδυάζει το διακριτό λεξιλόγιο του κειμένου."
+                    : "Συνδυάζει κάθε λέξη στη θέση της μέσα στο κείμενο."}
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -916,6 +1152,19 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             </button>
 
             <button
+              onClick={() => setViewMode("anywhere-combos")}
+              id="tab-view-anywhere-combos"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-serif font-semibold transition-all ${
+                viewMode === "anywhere-combos"
+                  ? "bg-[#2b2114] text-[#e6c670] border border-[#c89b3c]/60 shadow-md ring-1 ring-[#c89b3c]/40"
+                  : "text-[#8c7e6c] hover:text-[#e8dfd1]"
+              }`}
+            >
+              <Boxes className="w-3.5 h-3.5 text-[#c89b3c]" />
+              <span>🧩 Συνδυασμοί 2-6 Λέξεων ({anywhereCombos.length})</span>
+            </button>
+
+            <button
               onClick={() => setViewMode("matches")}
               id="tab-view-matches"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-serif font-semibold transition-all ${
@@ -943,6 +1192,44 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           </div>
         </div>
 
+        {/* Active Selected Anywhere Combination Banner if present */}
+        {selectedAnywhereCombo && (
+          <div className="p-3.5 rounded-xl bg-[#211728] border border-purple-500/50 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-2.5">
+              <span className="p-1.5 rounded-lg bg-purple-900/60 text-purple-200">
+                <Boxes className="w-4 h-4" />
+              </span>
+              <div>
+                <div className="text-xs font-serif font-bold text-purple-200 flex items-center gap-2">
+                  <span>Επιλεγμένος Συνδυασμός {selectedAnywhereCombo.wordCount} Λέξεων:</span>
+                  <span className="text-amber-300 font-mono">
+                    {selectedAnywhereCombo.words.map((w) => `${w.rawWord}(${w.value})`).join(" + ")} = {selectedAnywhereCombo.value}
+                  </span>
+                </div>
+                <div className="text-[11px] text-purple-300/80">
+                  Οι επιμέρους λέξεις επισημαίνονται στο κείμενο με μοβ/χρυσό περίγραμμα.
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setViewMode("anywhere-combos")}
+                className="px-2.5 py-1 rounded bg-purple-800/80 hover:bg-purple-700 text-xs font-serif text-white transition-colors"
+              >
+                Όλοι οι Συνδυασμοί
+              </button>
+              <button
+                onClick={() => setSelectedAnywhereCombo(null)}
+                className="p-1 rounded text-purple-300 hover:text-white"
+                title="Καθαρισμός επιλογής συνδυασμού"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* 1. VERTICAL WORD-BY-WORD LIST VIEW (ONE WORD PER LINE WITH ISOPSEPHY) */}
         {viewMode === "interactive-list" && (
           <div className="space-y-4">
@@ -962,6 +1249,10 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                 const phrases = phraseMatchWordMap.get(w.indexInText!) || [];
                 const isPhraseMatch = phrases.length > 0;
                 const isTargetMatch = isSingleMatch || isPhraseMatch;
+                const isComboWord = selectedAnywhereCombo && (
+                  selectedComboIndices.has(w.indexInText!) ||
+                  (selectedAnywhereCombo.isUniqueMode && selectedComboNormalizedSet.has(w.normalizedWord))
+                );
                 const isSelected = selectedWordObj?.indexInText === w.indexInText;
                 const isSaved = savedItems.some(
                   (item) => item.text.trim().toUpperCase() === w.rawWord.toUpperCase() && item.value === w.value
@@ -974,6 +1265,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                       isSelected
                         ? "bg-[#251e16] border-[#e6c670] ring-1 ring-[#e6c670] shadow-lg shadow-black/40"
+                        : isComboWord
+                        ? "bg-[#2b1736] border-purple-400 ring-2 ring-purple-400/80 shadow-md shadow-purple-500/30"
                         : isTargetMatch
                         ? "bg-[#28220f] border-yellow-500/80 shadow-md shadow-yellow-500/20 ring-1 ring-yellow-400/50"
                         : "bg-[#14110e] border-[#261f18] hover:border-[#3e3223]"
@@ -986,13 +1279,23 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       </span>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          {isTargetMatch ? (
+                          {isComboWord ? (
+                            <mark className="text-lg font-serif font-black bg-purple-300 text-purple-950 px-2 py-0.5 rounded shadow-sm">
+                              {w.rawWord}
+                            </mark>
+                          ) : isTargetMatch ? (
                             <mark className="text-lg font-serif font-black bg-[#ffe600] text-black px-2 py-0.5 rounded shadow-sm">
                               {w.rawWord}
                             </mark>
                           ) : (
                             <span className="text-lg font-serif font-bold text-[#f5ecd8]">
                               {w.rawWord}
+                            </span>
+                          )}
+
+                          {isComboWord && (
+                            <span className="px-2 py-0.5 rounded bg-purple-500 text-white text-[10px] font-mono font-black uppercase tracking-wider shadow-sm animate-pulse">
+                              🧩 Μέρος Συνδυασμού ({selectedAnywhereCombo?.value})
                             </span>
                           )}
 
@@ -1018,7 +1321,9 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     <div className="flex items-center gap-2.5 self-end sm:self-auto">
                       <div className="text-right">
                         <div className={`text-lg font-serif font-bold px-3 py-0.5 rounded-lg border ${
-                          isTargetMatch
+                          isComboWord
+                            ? "bg-purple-900 text-amber-300 font-black border-purple-400 shadow-sm"
+                            : isTargetMatch
                             ? "bg-[#ffe600] text-black font-black border-yellow-400 shadow-sm"
                             : "text-[#e6c670] bg-[#1c1610] border-[#3e3122]"
                         }`}>
@@ -1075,13 +1380,13 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           </div>
         )}
 
-        {/* 2. INTERACTIVE CONTINUOUS FLOW TEXT WITH GLOWING YELLOW TARGET HIGHLIGHTING */}
+        {/* 2. INTERACTIVE CONTINUOUS FLOW TEXT WITH GLOWING TARGET HIGHLIGHTING */}
         {viewMode === "interactive-flow" && (
           <div className="space-y-4">
             <div className="p-4 rounded-xl bg-[#14120e] border border-[#2d251e] space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-serif text-[#a69680]">
                 <span>
-                  💡 <strong>Ροή Κειμένου & Κίτρινο Μαρκάρισμα:</strong> Κάντε κλικ σε οποιαδήποτε λέξη για να δείτε τα γράμματα και την ισοψηφία της. Όλες οι ευρέσεις στόχων λέξεων ή συνδυασμών φράσεων εμφανίζονται με <span className="bg-[#ffe600] text-black font-bold px-1.5 py-0.5 rounded">κίτρινο μαρκάρισμα</span>.
+                  💡 <strong>Ροή Κειμένου & Μαρκάρισμα:</strong> Κάντε κλικ σε οποιαδήποτε λέξη για να δείτε τα γράμματα και την ισοψηφία της. Όλες οι ευρέσεις στόχων λέξεων ή συνδυασμών φράσεων εμφανίζονται με <span className="bg-[#ffe600] text-black font-bold px-1.5 py-0.5 rounded">κίτρινο μαρκάρισμα</span>, και οι επιλεγμένοι συνδυασμοί με <span className="bg-purple-500 text-white font-bold px-1.5 py-0.5 rounded">μοβ μαρκάρισμα</span>.
                 </span>
                 <span className="font-mono text-[#ffe600] font-bold">
                   {totalFoundMatches} ευρέσεις μαρκαρισμένες
@@ -1094,6 +1399,10 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                   const phrases = phraseMatchWordMap.get(w.indexInText!) || [];
                   const isPhraseMatch = phrases.length > 0;
                   const isTargetMatch = isSingleMatch || isPhraseMatch;
+                  const isComboWord = selectedAnywhereCombo && (
+                    selectedComboIndices.has(w.indexInText!) ||
+                    (selectedAnywhereCombo.isUniqueMode && selectedComboNormalizedSet.has(w.normalizedWord))
+                  );
                   const isSelected = selectedWordObj?.indexInText === w.indexInText;
 
                   return (
@@ -1103,22 +1412,26 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                         isSelected
                           ? "bg-[#c89b3c] text-black font-bold ring-2 ring-[#e6c670] shadow-lg shadow-black/50"
+                          : isComboWord
+                          ? "bg-purple-600 text-white font-black border-2 border-purple-300 ring-2 ring-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.7)] scale-105"
                           : isTargetMatch
                           ? "bg-[#ffe600] text-black font-black border-2 border-[#ffd700] ring-2 ring-yellow-400/80 shadow-[0_0_15px_rgba(255,230,0,0.7)] scale-105 hover:bg-yellow-300"
                           : "hover:bg-[#251e17] hover:text-[#f5ecd8] border border-transparent"
                       }`}
                     >
-                      <span className={isTargetMatch ? "text-black font-black" : ""}>{w.rawWord}</span>
+                      <span className={isTargetMatch || isComboWord ? "font-black" : ""}>{w.rawWord}</span>
                       <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
                         isSelected
                           ? "bg-black/30 text-black font-bold"
+                          : isComboWord
+                          ? "bg-purple-950 text-amber-300 font-bold"
                           : isTargetMatch
                           ? "bg-black text-[#ffe600] font-black shadow-sm"
                           : "text-[#c89b3c] bg-[#1a1510]"
                       }`}>
                         {w.value}
                       </span>
-                      {isPhraseMatch && (
+                      {isPhraseMatch && !isComboWord && (
                         <span className="text-[9px] font-mono bg-black/80 text-yellow-300 px-1 rounded">
                           #{phrases[0]?.value}
                         </span>
@@ -1198,7 +1511,182 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           </div>
         )}
 
-        {/* 3. MATCHES VIEW (Found words & N-gram phrases) */}
+        {/* 3. ANYWHERE WORD COMBINATIONS (2, 3, 4, 5, 6 WORDS) VIEW */}
+        {viewMode === "anywhere-combos" && (
+          <div className="space-y-4">
+            
+            {/* Header / Filter Toolbar */}
+            <div className="p-4 rounded-xl bg-[#14120e] border border-[#2d251e] flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
+                  <span>Ελεύθεροι Συνδυασμοί Λέξεων Κειμένου</span>
+                  <span className="px-2 py-0.5 rounded-full bg-[#c89b3c] text-black text-xs font-mono font-bold">
+                    Στόχος: {comboTarget} ({numberToGreekNumeral(comboTargetNum)})
+                  </span>
+                </h3>
+                <p className="text-xs text-[#8c7e6c] font-sans mt-0.5">
+                  Εμφάνιση συνδυασμών {comboWordCounts.sort((a, b) => a - b).join(", ")} λέξεων από οπουδήποτε στο κείμενο με συνολικό άθροισμα = {comboTarget}.
+                </p>
+              </div>
+
+              {/* Filter by word count pills */}
+              <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
+                <button
+                  type="button"
+                  onClick={() => setComboFilterLength("all")}
+                  className={`px-2.5 py-1 rounded-lg transition-all ${
+                    comboFilterLength === "all"
+                      ? "bg-[#c89b3c] text-black font-bold"
+                      : "bg-[#1b1712] text-[#a69680] border border-[#2e251a] hover:text-[#f5ecd8]"
+                  }`}
+                >
+                  Όλοι ({anywhereCombos.length})
+                </button>
+                {[2, 3, 4, 5, 6].map((len) => {
+                  const countForLen = anywhereCombos.filter((c) => c.wordCount === len).length;
+                  if (countForLen === 0 && !comboWordCounts.includes(len)) return null;
+                  return (
+                    <button
+                      key={len}
+                      type="button"
+                      onClick={() => setComboFilterLength(len)}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        comboFilterLength === len
+                          ? "bg-[#c89b3c] text-black font-bold"
+                          : "bg-[#1b1712] text-[#a69680] border border-[#2e251a] hover:text-[#f5ecd8]"
+                      }`}
+                    >
+                      {len} λέξεις ({countForLen})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Results Grid */}
+            {filteredAnywhereCombos.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[700px] overflow-y-auto gold-scrollbar p-1">
+                {filteredAnywhereCombos.map((comboObj) => {
+                  const isSaved = savedItems.some(
+                    (item) => item.text.trim().toUpperCase() === comboObj.phrase.toUpperCase() && item.value === comboObj.value
+                  );
+                  const isSelected = selectedAnywhereCombo?.id === comboObj.id;
+
+                  return (
+                    <div
+                      key={comboObj.id}
+                      className={`p-4 rounded-xl border transition-all space-y-3 ${
+                        isSelected
+                          ? "bg-[#251733] border-purple-400 ring-2 ring-purple-400/80 shadow-lg shadow-purple-900/30"
+                          : "bg-[#14120f] border-[#2d251e] hover:border-[#4a3a28]"
+                      }`}
+                    >
+                      {/* Top Header */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded bg-purple-900/60 border border-purple-500/40 text-purple-200 text-xs font-mono font-bold">
+                            {comboObj.wordCount} λέξεις
+                          </span>
+                          <span className="text-[11px] font-mono text-[#8c7e6c]">
+                            Πυθμένας: {comboObj.root}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base font-serif font-black text-amber-300 bg-[#241a10] border border-[#4a3620] px-2.5 py-0.5 rounded-lg">
+                            = {comboObj.value}
+                          </span>
+                          <span className="text-xs font-serif text-[#c89b3c]">
+                            ({numberToGreekNumeral(comboObj.value)})
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Words Formula Breakdown */}
+                      <div className="p-3 bg-[#0d0c0a] rounded-lg border border-[#211b15] flex flex-wrap items-center gap-1.5 text-sm font-serif">
+                        {comboObj.words.map((w, wIdx) => (
+                          <React.Fragment key={wIdx}>
+                            <span className="px-2 py-0.5 rounded bg-[#1e1812] border border-[#382b1d] text-[#f5ecd8] font-bold">
+                              {w.rawWord} <span className="text-[#c89b3c] font-mono text-xs font-normal">({w.value})</span>
+                            </span>
+                            {wIdx < comboObj.words.length - 1 && (
+                              <span className="text-[#8c7e6c] font-mono font-bold">+</span>
+                            )}
+                          </React.Fragment>
+                        ))}
+                        <span className="text-[#c89b3c] font-mono font-bold ml-1">=</span>
+                        <strong className="text-amber-300 font-mono text-base font-black">{comboObj.value}</strong>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                        <div className="flex items-center gap-1.5">
+                          {/* Highlight / Locate in text button */}
+                          <button
+                            onClick={() => {
+                              setSelectedAnywhereCombo(comboObj);
+                              setViewMode("interactive-flow");
+                            }}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-serif transition-colors ${
+                              isSelected
+                                ? "bg-purple-600 text-white font-bold"
+                                : "bg-[#22182b] hover:bg-[#342145] text-purple-200 border border-purple-500/30"
+                            }`}
+                            title="Επισήμανση όλων των λέξεων του συνδυασμού στο κείμενο"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Εντοπισμός στο Κείμενο</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleSaveAnywhereCombo(comboObj)}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                              isSaved
+                                ? "bg-emerald-900/40 text-emerald-300 border border-emerald-500/40"
+                                : "bg-[#251e17] hover:bg-[#33281d] text-[#e6c670] border border-[#3e3223]"
+                            }`}
+                          >
+                            {isSaved ? <Check className="w-3 h-3 text-emerald-400" /> : <Bookmark className="w-3 h-3" />}
+                            <span>{isSaved ? "Αποθηκεύτηκε" : "Αποθήκευση"}</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleCopyText(`${comboObj.phrase} = ${comboObj.value}`, comboObj.id)}
+                            className="p-1.5 rounded-lg bg-[#1f1a14] hover:bg-[#2c231a] text-[#8c7e6c] hover:text-[#d6c7b2] border border-[#2d2419] transition-colors"
+                            title="Αντιγραφή εξίσωσης"
+                          >
+                            {copiedId === comboObj.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => onOpenAiModal(comboObj.phrase, comboObj.value, comboObj.words.map((w) => w.rawWord))}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#271e14] hover:bg-[#382b1c] text-[#f5ecd8] border border-[#c89b3c]/30 text-xs transition-colors"
+                        >
+                          <Sparkles className="w-3 h-3 text-[#e6c670]" />
+                          <span>AI Ερμηνεία</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-12 text-center space-y-3 bg-[#13110e] rounded-xl border border-[#261f18] p-6">
+                <Boxes className="w-8 h-8 text-[#5c4f3e] mx-auto" />
+                <p className="text-sm font-serif text-[#a69680]">
+                  Δεν βρέθηκαν συνδυασμοί {comboWordCounts.sort((a, b) => a - b).join(", ")} λέξεων με άθροισμα <strong>{comboTarget}</strong> στο συγκεκριμένο κείμενο.
+                </p>
+                <p className="text-xs text-[#736655] max-w-md mx-auto">
+                  Δοκιμάστε να αλλάξετε τον στόχο λεξαρίθμου (π.χ. 888, 1480, 2368, 666), να επιλέξετε περισσότερα μεγέθη λέξεων (2, 3, 4, 5, 6) ή να αλλάξετε λειτουργία σε «Όλες οι Θέσεις».
+                </p>
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* 4. MATCHES VIEW (Found words & N-gram phrases) */}
         {viewMode === "matches" && (
           <div className="space-y-6">
             

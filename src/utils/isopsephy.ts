@@ -1,4 +1,4 @@
-import { IonicLetter, LetterBreakdown, WordIsopsephy, PhraseMatch, TextAnalysisStats, TextAnalysisResult, UniqueWordStat } from "../types";
+import { IonicLetter, LetterBreakdown, WordIsopsephy, PhraseMatch, TextAnalysisStats, TextAnalysisResult, UniqueWordStat, WordCombinationMatch } from "../types";
 
 /**
  * Πλήρης πίνακας της Ιωνικής Αρίθμησης (27 γράμματα: 9 μονάδες, 9 δεκάδες, 9 εκατοντάδες)
@@ -787,4 +787,193 @@ export function getAlphabetAndTextLetterBreakdown(text: string): AlphabetAndText
     dekadesPresentSum,
     ekatontadesPresentSum,
   };
+}
+
+export interface FindCombinationsOptions {
+  wordCounts: number[]; // e.g. [2], [3], [4], [5], [6]
+  mode?: "uniqueWords" | "allOccurrences";
+  maxResults?: number;
+}
+
+/**
+ * Εντοπισμός συνδυασμών λέξεων από ολόκληρο το κείμενο (ανεξαρτήτως θέσης)
+ * που δίνουν συγκεκριμένο λεξαριθμικό στόχο (π.χ. 2368, 666, 888) για 2, 3, 4, 5 ή 6 λέξεις.
+ */
+export function findAnywhereWordCombinations(
+  words: WordIsopsephy[],
+  targetSum: number,
+  options: FindCombinationsOptions
+): WordCombinationMatch[] {
+  if (!words || words.length === 0 || !targetSum || targetSum <= 0) {
+    return [];
+  }
+
+  const {
+    wordCounts = [2, 3, 4],
+    mode = "uniqueWords",
+    maxResults = 150,
+  } = options;
+
+  const validCounts = wordCounts.filter((c) => c >= 2 && c <= 6);
+  if (validCounts.length === 0) return [];
+
+  // Filter words whose value < targetSum
+  let candidateWords: WordIsopsephy[] = [];
+  if (mode === "uniqueWords") {
+    const seenMap = new Map<string, WordIsopsephy>();
+    for (const w of words) {
+      const key = w.normalizedWord || w.rawWord.toUpperCase();
+      if (w.value < targetSum && !seenMap.has(key)) {
+        seenMap.set(key, w);
+      }
+    }
+    candidateWords = Array.from(seenMap.values());
+  } else {
+    candidateWords = words.filter((w) => w.value < targetSum);
+  }
+
+  // Sort ascending by value
+  candidateWords.sort((a, b) => a.value - b.value);
+  const n = candidateWords.length;
+  const minK = Math.min(...validCounts);
+  if (n < minK) return [];
+
+  // Precompute suffix sums for fast branch-and-bound pruning
+  const suffixSum = new Array(n + 1).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    suffixSum[i] = suffixSum[i + 1] + candidateWords[i].value;
+  }
+
+  const results: WordCombinationMatch[] = [];
+  const seenCombos = new Set<string>();
+
+  // Process for each requested combination size k (2, 3, 4, 5, 6)
+  for (const k of validCounts.sort((a, b) => a - b)) {
+    if (results.length >= maxResults) break;
+    if (n < k) continue;
+
+    // Fast path for k = 2
+    if (k === 2) {
+      let left = 0;
+      let right = n - 1;
+      while (left < right && results.length < maxResults) {
+        const sum = candidateWords[left].value + candidateWords[right].value;
+        if (sum === targetSum) {
+          const combo = [candidateWords[left], candidateWords[right]];
+          const key = combo.map((w) => w.normalizedWord).sort().join("|");
+          if (!seenCombos.has(key)) {
+            seenCombos.add(key);
+            results.push({
+              id: `combo-2-${combo.map((w) => w.indexInText ?? 0).join("-")}-${results.length}`,
+              words: combo,
+              phrase: combo.map((w) => w.rawWord).join(" + "),
+              value: targetSum,
+              root: calculatePythmen(targetSum),
+              wordCount: 2,
+              indices: combo.map((w) => w.indexInText ?? 0),
+              isUniqueMode: mode === "uniqueWords",
+            });
+          }
+          left++;
+          right--;
+        } else if (sum < targetSum) {
+          left++;
+        } else {
+          right--;
+        }
+      }
+      continue;
+    }
+
+    // Fast path for k = 3
+    if (k === 3) {
+      for (let i = 0; i < n - 2; i++) {
+        if (results.length >= maxResults) break;
+        const v1 = candidateWords[i].value;
+        if (v1 * 3 > targetSum) break;
+
+        let left = i + 1;
+        let right = n - 1;
+        while (left < right && results.length < maxResults) {
+          const sum = v1 + candidateWords[left].value + candidateWords[right].value;
+          if (sum === targetSum) {
+            const combo = [candidateWords[i], candidateWords[left], candidateWords[right]];
+            const key = combo.map((w) => w.normalizedWord).sort().join("|");
+            if (!seenCombos.has(key)) {
+              seenCombos.add(key);
+              results.push({
+                id: `combo-3-${combo.map((w) => w.indexInText ?? 0).join("-")}-${results.length}`,
+                words: combo,
+                phrase: combo.map((w) => w.rawWord).join(" + "),
+                value: targetSum,
+                root: calculatePythmen(targetSum),
+                wordCount: 3,
+                indices: combo.map((w) => w.indexInText ?? 0),
+                isUniqueMode: mode === "uniqueWords",
+              });
+            }
+            left++;
+            right--;
+          } else if (sum < targetSum) {
+            left++;
+          } else {
+            right--;
+          }
+        }
+      }
+      continue;
+    }
+
+    // General recursive branch-and-bound for k = 4, 5, 6
+    function backtrack(startIndex: number, currentCombo: WordIsopsephy[], currentSum: number) {
+      if (results.length >= maxResults) return;
+
+      const remainingK = k - currentCombo.length;
+      if (remainingK === 0) {
+        if (currentSum === targetSum) {
+          const key = currentCombo.map((w) => w.normalizedWord).sort().join("|");
+          if (!seenCombos.has(key)) {
+            seenCombos.add(key);
+            results.push({
+              id: `combo-${k}-${currentCombo.map((w) => w.indexInText ?? 0).join("-")}-${results.length}`,
+              words: [...currentCombo],
+              phrase: currentCombo.map((w) => w.rawWord).join(" + "),
+              value: targetSum,
+              root: calculatePythmen(targetSum),
+              wordCount: k,
+              indices: currentCombo.map((w) => w.indexInText ?? 0),
+              isUniqueMode: mode === "uniqueWords",
+            });
+          }
+        }
+        return;
+      }
+
+      for (let i = startIndex; i <= n - remainingK; i++) {
+        if (results.length >= maxResults) break;
+
+        const val = candidateWords[i].value;
+        const newSum = currentSum + val;
+
+        // Pruning 1: Even smallest remaining elements would exceed target
+        if (i + 1 < n && newSum + (remainingK - 1) * candidateWords[i + 1].value > targetSum) {
+          break;
+        }
+
+        // Pruning 2: Even largest remaining elements cannot reach target
+        const maxPossibleRemaining = suffixSum[n - (remainingK - 1)];
+        if (newSum + maxPossibleRemaining < targetSum) {
+          continue;
+        }
+
+        currentCombo.push(candidateWords[i]);
+        backtrack(i + 1, currentCombo, newSum);
+        currentCombo.pop();
+      }
+    }
+
+    backtrack(0, [], 0);
+  }
+
+  return results;
 }
