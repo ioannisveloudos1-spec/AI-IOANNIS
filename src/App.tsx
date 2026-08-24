@@ -3,11 +3,15 @@ import { TabType, SavedIsopsephyItem } from "./types";
 import { Header } from "./components/Header";
 import { CalculatorTab } from "./components/CalculatorTab";
 import { SearchTab } from "./components/SearchTab";
+import { BridgesTab } from "./components/BridgesTab";
+import { AnagramsTab } from "./components/AnagramsTab";
+import { IsopsephicGraphTab } from "./components/IsopsephicGraphTab";
 import { StatsTab } from "./components/StatsTab";
 import { ArchiveTab } from "./components/ArchiveTab";
 import { GuideTab } from "./components/GuideTab";
 import { AiAnalysisModal } from "./components/AiAnalysisModal";
 import { ApiKeyModal } from "./components/ApiKeyModal";
+import { ExportReportModal } from "./components/ExportReportModal";
 import { PortalGateIntro } from "./components/PortalGateIntro";
 import { numberToGreekNumeral } from "./utils/isopsephy";
 
@@ -174,6 +178,9 @@ export default function App() {
   const [aiNumber, setAiNumber] = useState<number>(888);
   const [aiWords, setAiWords] = useState<string[]>(["ΙΗΣΟΥΣ"]);
 
+  // Export Report Modal state
+  const [exportReportOpen, setExportReportOpen] = useState<boolean>(false);
+
   // Portal Gate Intro state (always shows on launch/refresh)
   const [showPortalGate, setShowPortalGate] = useState<boolean>(true);
 
@@ -276,6 +283,7 @@ export default function App() {
         hasCustomApiKey={!!customApiKey}
         onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
         onOpenPortalGate={() => setShowPortalGate(true)}
+        onOpenExportReport={() => setExportReportOpen(true)}
         onOpenAiAssistant={() => handleOpenAiModal("ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ", 2368, ["ΙΗΣΟΥΣ", "ΧΡΙΣΤΟΣ"])}
       />
 
@@ -294,6 +302,31 @@ export default function App() {
             onSaveItem={handleSaveItem}
             onOpenAiModal={handleOpenAiModal}
             savedItems={savedItems}
+          />
+        )}
+
+        {currentTab === "bridges" && (
+          <BridgesTab
+            savedItems={savedItems}
+            onSaveItem={handleSaveItem}
+            onOpenAiModal={handleOpenAiModal}
+          />
+        )}
+
+        {currentTab === "anagrams" && (
+          <AnagramsTab
+            savedItems={savedItems}
+            onSaveItem={handleSaveItem}
+            onOpenAiModal={handleOpenAiModal}
+          />
+        )}
+
+        {currentTab === "graph" && (
+          <IsopsephicGraphTab
+            savedItems={savedItems}
+            onSaveItem={handleSaveItem}
+            onOpenAiModal={handleOpenAiModal}
+            onNavigateToCalculator={() => setCurrentTab("calculator")}
           />
         )}
 
@@ -356,6 +389,13 @@ export default function App() {
         onClose={() => setApiKeyModalOpen(false)}
         onSaveKey={handleSaveApiKey}
         currentKey={customApiKey}
+      />
+
+      {/* Export Report Research Modal */}
+      <ExportReportModal
+        isOpen={exportReportOpen}
+        onClose={() => setExportReportOpen(false)}
+        savedItems={savedItems}
       />
 
       {/* Mystical Portal Gate Intro (Lavreion / Velos + Oudos) */}

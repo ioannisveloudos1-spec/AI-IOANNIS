@@ -1,6 +1,21 @@
 import React, { useRef, useState, useEffect } from "react";
 import { TabType } from "../types";
-import { Calculator, Search, BarChart3, BookMarked, BookOpen, Sparkles, Key, ChevronLeft, ChevronRight, Compass } from "lucide-react";
+import {
+  Calculator,
+  Search,
+  BarChart3,
+  BookMarked,
+  BookOpen,
+  Sparkles,
+  Key,
+  ChevronLeft,
+  ChevronRight,
+  Compass,
+  GitCompare,
+  Grid,
+  Network,
+  FileText,
+} from "lucide-react";
 import appLogoImg from "../assets/images/ego_eimi_logo_1787417709332.jpg";
 
 interface HeaderProps {
@@ -10,6 +25,7 @@ interface HeaderProps {
   onOpenAiAssistant: () => void;
   onOpenApiKeyModal: () => void;
   onOpenPortalGate?: () => void;
+  onOpenExportReport?: () => void;
   hasCustomApiKey?: boolean;
 }
 
@@ -20,11 +36,15 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAiAssistant,
   onOpenApiKeyModal,
   onOpenPortalGate,
+  onOpenExportReport,
   hasCustomApiKey = false,
 }) => {
   const tabs = [
     { id: "calculator" as TabType, label: "Υπολογισμός", icon: Calculator, desc: "Μεμονωμένες λέξεις & πράξεις" },
     { id: "search" as TabType, label: "Αναζήτηση", icon: Search, desc: "Ανάλυση κειμένου & συνδυασμοί" },
+    { id: "bridges" as TabType, label: "Γέφυρες", icon: GitCompare, desc: "Σύγκριση & μαθηματικές σχέσεις" },
+    { id: "anagrams" as TabType, label: "Matrix 3×3", icon: Grid, desc: "Αναγραμματισμοί & Πυθαγόρειο Matrix" },
+    { id: "graph" as TabType, label: "Χάρτης Σταθμών", icon: Network, desc: "Δίκτυο κόμβων & συνδέσεων" },
     { id: "stats" as TabType, label: "Στατιστικά", icon: BarChart3, desc: "Οπτικοποίηση, γραφήματα & CSV" },
     { id: "archive" as TabType, label: "Αρχείο", icon: BookMarked, desc: "Αποθηκευμένοι λεξάριθμοι", badge: savedCount },
     { id: "guide" as TabType, label: "Οδηγός & 666", icon: BookOpen, desc: "Ιωνική αρίθμηση, 666 & κανόνες" },
@@ -90,8 +110,20 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons (API Key & AI Assistant & Portal Gate) - Clearly visible on all screens */}
+            {/* Action Buttons (API Key & AI Assistant & Portal Gate & Report) - Clearly visible on all screens */}
             <div className="flex items-center gap-1.5 shrink-0">
+              {onOpenExportReport && (
+                <button
+                  onClick={onOpenExportReport}
+                  id="header-export-report-btn"
+                  className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-lg bg-[#1a1510] hover:bg-[#281f15] border border-[#3e3020] hover:border-[#c89b3c] text-xs font-serif text-[#d6c7b2] hover:text-[#e6c670] transition-all shadow-sm shrink-0 cursor-pointer"
+                  title="Εξαγωγή Αναλυτικής Αναφοράς / PDF"
+                >
+                  <FileText className="w-3.5 h-3.5 text-[#c89b3c]" />
+                  <span className="text-[11px] font-sans font-medium hidden sm:inline">Έκθεση</span>
+                </button>
+              )}
+
               {onOpenPortalGate && (
                 <button
                   onClick={onOpenPortalGate}

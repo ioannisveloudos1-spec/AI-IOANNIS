@@ -334,6 +334,38 @@ export function calculateWordIsopsephy(word: string, indexInText = 0): WordIsops
 }
 
 /**
+ * Υπολογισμός συνολικής ισοψηφίας ενός κειμένου/λέξης
+ */
+export function calculateIsopsephy(text: string): number {
+  if (!text) return 0;
+  let sum = 0;
+  for (let i = 0; i < text.length; i++) {
+    sum += getCharIsopsephy(text[i]);
+  }
+  return sum;
+}
+
+/**
+ * Επιστροφή αναλυτικής λίστας γραμμάτων και τιμών για ένα κείμενο/λέξη
+ */
+export function getWordLettersBreakdown(text: string): LetterBreakdown[] {
+  if (!text) return [];
+  const letters: LetterBreakdown[] = [];
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const val = getCharIsopsephy(char);
+    if (val > 0) {
+      letters.push({
+        char: char.toUpperCase(),
+        originalChar: char,
+        value: val,
+      });
+    }
+  }
+  return letters;
+}
+
+/**
  * Αξιολόγηση αριθμητικής έκφρασης με ελληνικές λέξεις ή αριθμούς
  * π.χ. "ΙΩΑΝΝΗΣ - ΑΜΑΡΤΙΑ" => 1119 - 453 = 666
  * π.χ. "888 + 1480" => 2368
@@ -977,3 +1009,211 @@ export function findAnywhereWordCombinations(
 
   return results;
 }
+
+/**
+ * Μέγιστος Κοινός Διαιρέτης (ΜΚΔ / GCD)
+ */
+export function calculateGCD(a: number, b: number): number {
+  a = Math.abs(a);
+  b = Math.abs(b);
+  while (b) {
+    const t = b;
+    b = a % b;
+    a = t;
+  }
+  return a;
+}
+
+/**
+ * Ελάχιστο Κοινό Πολλαπλάσιο (ΕΚΠ / LCM)
+ */
+export function calculateLCM(a: number, b: number): number {
+  if (a === 0 || b === 0) return 0;
+  return Math.abs(a * b) / calculateGCD(a, b);
+}
+
+/**
+ * Πρωτογενείς Παράγοντες (Prime Factorization)
+ */
+export function getPrimeFactorization(n: number): { factor: number; power: number }[] {
+  if (n <= 1) return [];
+  const factors: { factor: number; power: number }[] = [];
+  let temp = n;
+
+  // Check 2
+  if (temp % 2 === 0) {
+    let power = 0;
+    while (temp % 2 === 0) {
+      power++;
+      temp /= 2;
+    }
+    factors.push({ factor: 2, power });
+  }
+
+  // Check odd factors
+  for (let d = 3; d * d <= temp; d += 2) {
+    if (temp % d === 0) {
+      let power = 0;
+      while (temp % d === 0) {
+        power++;
+        temp /= d;
+      }
+      factors.push({ factor: d, power });
+    }
+  }
+
+  if (temp > 1) {
+    factors.push({ factor: temp, power: 1 });
+  }
+
+  return factors;
+}
+
+/**
+ * Πυθαγόρειο Matrix 3x3 Κατανομής Γραμμάτων
+ * 1: Μονάδες (1-9) | 2: Δεκάδες (10-90) | 3: Εκατοντάδες (100-900)
+ */
+export interface PythagoreanMatrixCell {
+  category: "monas" | "dekas" | "ekatontas";
+  element: "Γη" | "Ύδωρ" | "Αήρ" | "Πυρ";
+  elementColor: string;
+  rangeLabel: string;
+  letters: { char: string; value: number }[];
+  sum: number;
+  count: number;
+  percentage: number;
+}
+
+export interface PythagoreanMatrixData {
+  monades: PythagoreanMatrixCell;
+  dekades: PythagoreanMatrixCell;
+  ekatontades: PythagoreanMatrixCell;
+  totalLetters: number;
+  totalSum: number;
+  vowelsCount: number;
+  consonantsCount: number;
+  vowelHarmonicRatio: number;
+  elementalSummary: Record<string, { count: number; sum: number; percentage: number }>;
+}
+
+export function calculatePythagoreanMatrix(word: string): PythagoreanMatrixData {
+  const breakdown = getWordLettersBreakdown(word);
+  const totalLetters = breakdown.length;
+  const totalSum = calculateIsopsephy(word);
+
+  const monadesLetters: { char: string; value: number }[] = [];
+  const dekadesLetters: { char: string; value: number }[] = [];
+  const ekatontadesLetters: { char: string; value: number }[] = [];
+
+  const vowels = new Set(["Α", "Ε", "Η", "Ι", "Ο", "Υ", "Ω"]);
+  let vowelsCount = 0;
+  let consonantsCount = 0;
+
+  for (const item of breakdown) {
+    const upperChar = item.char.toUpperCase();
+    if (vowels.has(upperChar)) {
+      vowelsCount++;
+    } else if (upperChar >= "Α" && upperChar <= "Ω") {
+      consonantsCount++;
+    }
+
+    if (item.value >= 1 && item.value <= 9) {
+      monadesLetters.push({ char: item.char, value: item.value });
+    } else if (item.value >= 10 && item.value <= 90) {
+      dekadesLetters.push({ char: item.char, value: item.value });
+    } else if (item.value >= 100) {
+      ekatontadesLetters.push({ char: item.char, value: item.value });
+    }
+  }
+
+  const monadesSum = monadesLetters.reduce((acc, l) => acc + l.value, 0);
+  const dekadesSum = dekadesLetters.reduce((acc, l) => acc + l.value, 0);
+  const ekatontadesSum = ekatontadesLetters.reduce((acc, l) => acc + l.value, 0);
+
+  const elementalSummary = {
+    "Γη (Μονάδες)": {
+      count: monadesLetters.length,
+      sum: monadesSum,
+      percentage: totalSum > 0 ? (monadesSum / totalSum) * 100 : 0,
+    },
+    "Ύδωρ / Αήρ (Δεκάδες)": {
+      count: dekadesLetters.length,
+      sum: dekadesSum,
+      percentage: totalSum > 0 ? (dekadesSum / totalSum) * 100 : 0,
+    },
+    "Πυρ / Αιθήρ (Εκατοντάδες)": {
+      count: ekatontadesLetters.length,
+      sum: ekatontadesSum,
+      percentage: totalSum > 0 ? (ekatontadesSum / totalSum) * 100 : 0,
+    },
+  };
+
+  return {
+    monades: {
+      category: "monas",
+      element: "Γη",
+      elementColor: "#10b981",
+      rangeLabel: "1 - 9 (Μονάδες)",
+      letters: monadesLetters,
+      sum: monadesSum,
+      count: monadesLetters.length,
+      percentage: totalSum > 0 ? (monadesSum / totalSum) * 100 : 0,
+    },
+    dekades: {
+      category: "dekas",
+      element: "Ύδωρ",
+      elementColor: "#38bdf8",
+      rangeLabel: "10 - 90 (Δεκάδες)",
+      letters: dekadesLetters,
+      sum: dekadesSum,
+      count: dekadesLetters.length,
+      percentage: totalSum > 0 ? (dekadesSum / totalSum) * 100 : 0,
+    },
+    ekatontades: {
+      category: "ekatontas",
+      element: "Πυρ",
+      elementColor: "#f59e0b",
+      rangeLabel: "100 - 900 (Εκατοντάδες)",
+      letters: ekatontadesLetters,
+      sum: ekatontadesSum,
+      count: ekatontadesLetters.length,
+      percentage: totalSum > 0 ? (ekatontadesSum / totalSum) * 100 : 0,
+    },
+    totalLetters,
+    totalSum,
+    vowelsCount,
+    consonantsCount,
+    vowelHarmonicRatio: consonantsCount > 0 ? Number((vowelsCount / consonantsCount).toFixed(3)) : vowelsCount,
+    elementalSummary,
+  };
+}
+
+/**
+ * Παραγωγή Αναγραμματισμών μιας λέξης
+ */
+export function generatePermutations(word: string, maxCount = 60): string[] {
+  const clean = word.replace(/[^Α-Ωα-ωά-ώΆ-ΏϛϞϠ]/g, "").toUpperCase();
+  if (clean.length === 0) return [];
+  if (clean.length === 1) return [clean];
+
+  const results = new Set<string>();
+  const letters = clean.split("");
+
+  function permute(arr: string[], m: string[] = []) {
+    if (results.size >= maxCount) return;
+    if (arr.length === 0) {
+      results.add(m.join(""));
+      return;
+    }
+    for (let i = 0; i < arr.length; i++) {
+      if (results.size >= maxCount) break;
+      const curr = arr.slice();
+      const next = curr.splice(i, 1);
+      permute(curr.slice(), m.concat(next));
+    }
+  }
+
+  permute(letters);
+  return Array.from(results);
+}
+

@@ -1,4 +1,12 @@
-export type TabType = "calculator" | "search" | "stats" | "archive" | "guide";
+export type TabType = 
+  | "calculator" 
+  | "search" 
+  | "bridges" 
+  | "anagrams" 
+  | "graph" 
+  | "stats" 
+  | "archive" 
+  | "guide";
 
 export interface IonicLetter {
   char: string;

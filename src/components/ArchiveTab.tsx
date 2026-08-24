@@ -17,7 +17,7 @@ interface ArchiveTabProps {
   onOpenAiModal: (text: string, number: number, words: string[]) => void;
 }
 
-// Helper to highlight matching text in yellow
+// Helper to highlight matching text in purple
 const renderHighlightedText = (text: string, query: string) => {
   if (!query || !query.trim()) return text;
   const q = query.trim();
@@ -29,7 +29,7 @@ const renderHighlightedText = (text: string, query: string) => {
   return (
     <>
       {before}
-      <mark className="bg-[#ffe600] text-black font-black px-1 rounded">{match}</mark>
+      <mark className="bg-purple-600 text-white font-bold px-1 rounded shadow-sm">{match}</mark>
       {after}
     </>
   );
