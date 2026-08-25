@@ -16,6 +16,7 @@ import {
   AlertCircle,
   FileText,
   Copy,
+  HelpCircle,
 } from "lucide-react";
 import {
   calculateIsopsephy,
@@ -77,10 +78,10 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
   onSaveItem,
   onOpenAiModal,
 }) => {
-  const [activeMode, setActiveMode] = useState<"target" | "url">("target");
+  const [activeMode, setActiveMode] = useState<"target" | "url" | "batchText">("target");
 
   // Mode 1: Target Number Search
-  const [targetNumber, setTargetNumber] = useState<string>("1119");
+  const [targetNumber, setTargetNumber] = useState<string>("666");
   const [isSearchingTarget, setIsSearchingTarget] = useState(false);
   const [targetResults, setTargetResults] = useState<OnlineResultItem[]>([]);
   const [targetCombinations, setTargetCombinations] = useState<OnlineCombinationItem[]>([]);
@@ -90,13 +91,22 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
   const [batchSaveStatus, setBatchSaveStatus] = useState<string | null>(null);
 
   // Mode 2: Web URL Reader
-  const [targetUrl, setTargetUrl] = useState<string>("");
-  const [filterTargetFromUrl, setFilterTargetFromUrl] = useState<string>("1119");
+  const [targetUrl, setTargetUrl] = useState<string>("http://www.arithmosofia.com/ResultsByValue.aspx?value=666");
+  const [filterTargetFromUrl, setFilterTargetFromUrl] = useState<string>("666");
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [urlFetchError, setUrlFetchError] = useState<string | null>(null);
+  const [urlDetectedPages, setUrlDetectedPages] = useState<number | null>(null);
+  const [isAspnetPagingDetected, setIsAspnetPagingDetected] = useState<boolean>(false);
   const [extractedRawText, setExtractedRawText] = useState<string | null>(null);
   const [urlScannedMatches, setUrlScannedMatches] = useState<
     Array<{ text: string; value: number; count: number; meaning?: string }>
+  >([]);
+
+  // Mode 3: Batch Text / Multi-Page Paste Scanner
+  const [batchInputText, setBatchInputText] = useState<string>("");
+  const [batchTargetFilter, setBatchTargetFilter] = useState<string>("666");
+  const [batchMatches, setBatchMatches] = useState<
+    Array<{ text: string; value: number; count: number }>
   >([]);
 
   // Function to search target number via AI and Web corpus
@@ -187,6 +197,8 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
 
       const text = data.extractedText || "";
       setExtractedRawText(text);
+      setUrlDetectedPages(data.totalPagesDetected || null);
+      setIsAspnetPagingDetected(Boolean(data.isAspnetPaging));
 
       // Scan words in text
       const targetFilterNum = parseInt(filterTargetFromUrl);
@@ -221,7 +233,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
         }
       });
 
-      // Also scan 2-word and 3-word phrases if filtering by specific target
+      // Also scan 2-word, 3-word, and 4-word phrases if filtering by specific target
       if (!isNaN(targetFilterNum) && targetFilterNum > 0) {
         for (let i = 0; i < words.length - 1; i++) {
           const phrase2 = `${words[i]} ${words[i + 1]}`.toUpperCase();
@@ -239,6 +251,16 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
               const prev = wordFreqMap.get(phrase3);
               if (prev) prev.count += 1;
               else wordFreqMap.set(phrase3, { value: val3, count: 1 });
+            }
+          }
+
+          if (i < words.length - 3) {
+            const phrase4 = `${words[i]} ${words[i + 1]} ${words[i + 2]} ${words[i + 3]}`.toUpperCase();
+            const val4 = calculateIsopsephy(phrase4);
+            if (val4 === targetFilterNum) {
+              const prev = wordFreqMap.get(phrase4);
+              if (prev) prev.count += 1;
+              else wordFreqMap.set(phrase4, { value: val4, count: 1 });
             }
           }
         }
@@ -259,6 +281,100 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
     } finally {
       setIsFetchingUrl(false);
     }
+  };
+
+  // Function to scan pasted batch text
+  const handleScanBatchText = () => {
+    if (!batchInputText.trim()) return;
+
+    const targetFilterNum = parseInt(batchTargetFilter);
+    
+    // Split text into words and phrases
+    // First, split lines and words
+    const lines = batchInputText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const wordFreqMap = new Map<string, { value: number; count: number }>();
+
+    // 1. Process line by line (great for tables like Arithmosofia)
+    lines.forEach((line) => {
+      // Remove any trailing description if separated by tab or double space
+      const parts = line.split(/\t+|\s{2,}/);
+      parts.forEach((part) => {
+        const cleanGreek = part.replace(/[^\u0370-\u03FF\u1F00-\u1FFF\s]/g, " ").trim();
+        if (cleanGreek.length >= 2) {
+          const upper = cleanGreek.toUpperCase();
+          const val = calculateIsopsephy(upper);
+          if (val > 0) {
+            if (!isNaN(targetFilterNum) && targetFilterNum > 0) {
+              if (val === targetFilterNum) {
+                const prev = wordFreqMap.get(upper);
+                if (prev) prev.count += 1;
+                else wordFreqMap.set(upper, { value: val, count: 1 });
+              }
+            } else {
+              const prev = wordFreqMap.get(upper);
+              if (prev) prev.count += 1;
+              else wordFreqMap.set(upper, { value: val, count: 1 });
+            }
+          }
+        }
+      });
+    });
+
+    // 2. Also process individual words and n-grams
+    const rawWords = batchInputText
+      .replace(/[^\u0370-\u03FF\u1F00-\u1FFF\s]/g, " ")
+      .split(/\s+/)
+      .filter((w: string) => w.length >= 2);
+
+    rawWords.forEach((w: string) => {
+      const upper = w.toUpperCase();
+      const val = calculateIsopsephy(upper);
+      if (val > 0) {
+        if (!isNaN(targetFilterNum) && targetFilterNum > 0) {
+          if (val === targetFilterNum) {
+            const prev = wordFreqMap.get(upper);
+            if (prev) prev.count += 1;
+            else wordFreqMap.set(upper, { value: val, count: 1 });
+          }
+        } else {
+          const prev = wordFreqMap.get(upper);
+          if (prev) prev.count += 1;
+          else wordFreqMap.set(upper, { value: val, count: 1 });
+        }
+      }
+    });
+
+    if (!isNaN(targetFilterNum) && targetFilterNum > 0) {
+      for (let i = 0; i < rawWords.length - 1; i++) {
+        const phrase2 = `${rawWords[i]} ${rawWords[i + 1]}`.toUpperCase();
+        const val2 = calculateIsopsephy(phrase2);
+        if (val2 === targetFilterNum) {
+          const prev = wordFreqMap.get(phrase2);
+          if (prev) prev.count += 1;
+          else wordFreqMap.set(phrase2, { value: val2, count: 1 });
+        }
+
+        if (i < rawWords.length - 2) {
+          const phrase3 = `${rawWords[i]} ${rawWords[i + 1]} ${rawWords[i + 2]}`.toUpperCase();
+          const val3 = calculateIsopsephy(phrase3);
+          if (val3 === targetFilterNum) {
+            const prev = wordFreqMap.get(phrase3);
+            if (prev) prev.count += 1;
+            else wordFreqMap.set(phrase3, { value: val3, count: 1 });
+          }
+        }
+      }
+    }
+
+    const matches = Array.from(wordFreqMap.entries())
+      .map(([txt, info]) => ({
+        text: txt,
+        value: info.value,
+        count: info.count,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    setBatchMatches(matches);
   };
 
   // Helper to save an item to Archive
@@ -288,7 +404,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
     }, 2500);
   };
 
-  // Batch save all results
+  // Batch save all results from Target Search
   const handleBatchSaveAll = () => {
     if (!onSaveItem || targetResults.length === 0) return;
     let count = 0;
@@ -311,12 +427,35 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
     setTimeout(() => setBatchSaveStatus(null), 3000);
   };
 
+  // Batch save all from pasted text matches
+  const handleBatchSaveFromText = () => {
+    if (!onSaveItem || batchMatches.length === 0) return;
+    let count = 0;
+    batchMatches.forEach((m) => {
+      onSaveItem({
+        text: m.text.trim().toUpperCase(),
+        normalized: m.text.trim().toUpperCase(),
+        value: m.value,
+        root: calculatePythmen(m.value),
+        greekNumeral: numberToGreekNumeral(m.value),
+        isPhrase: m.text.includes(" "),
+        wordCount: m.text.split(/\s+/).length,
+        category: "ΜΑΖΙΚΗ ΕΙΣΑΓΩΓΗ ΚΕΙΜΕΝΟΥ",
+        notes: `Εμφανίσεις στο κείμενο: ${m.count}`,
+      });
+      count++;
+    });
+
+    setBatchSaveStatus(`Αποθηκεύτηκαν επιτυχώς ${count} λέξεις στο Αρχείο!`);
+    setTimeout(() => setBatchSaveStatus(null), 3000);
+  };
+
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Header Banner */}
       <div className="p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[#1a1612] via-[#241c14] to-[#120f0c] border border-[#c89b3c]/30 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#c89b3c]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c89b3c]/15 border border-[#c89b3c]/40 text-[#e6c670] text-xs font-serif tracking-wider uppercase">
               <Globe className="w-3.5 h-3.5" />
@@ -327,33 +466,44 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
             </h2>
             <p className="text-sm text-[#d4c5b0] max-w-2xl leading-relaxed">
               Αναζητήστε λέξεις και φράσεις από όλη την αρχαία ελληνική, πλατωνική,
-              βιβλική και φιλοσοφική γραμματεία που παράγουν έναν επιθυμητό λεξάριθμο (π.χ. <span className="text-[#e6c670] font-semibold">1119</span>), ή αντλήστε και σαρώστε οποιαδήποτε ιστοσελίδα.
+              βιβλική και φιλοσοφική γραμματεία που παράγουν έναν επιθυμητό λεξάριθμο (π.χ. <span className="text-[#e6c670] font-semibold">666</span>, <span className="text-[#e6c670] font-semibold">1119</span>), αντλήστε ιστοσελίδες ή επικολλήστε μαζικά σελίδες κειμένου.
             </p>
           </div>
 
           {/* Mode Selector */}
-          <div className="flex bg-[#120f0c] p-1.5 rounded-xl border border-[#c89b3c]/30 shrink-0">
+          <div className="flex flex-wrap bg-[#120f0c] p-1.5 rounded-xl border border-[#c89b3c]/30 shrink-0 gap-1">
             <button
               onClick={() => setActiveMode("target")}
-              className={`px-4 py-2.5 rounded-lg text-xs md:text-sm font-serif font-semibold transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-lg text-xs md:text-sm font-serif font-semibold transition-all flex items-center gap-2 ${
                 activeMode === "target"
                   ? "bg-[#c89b3c] text-[#120f0c] shadow-lg"
                   : "text-[#d4c5b0] hover:text-[#f5ebd7]"
               }`}
             >
               <Search className="w-4 h-4" />
-              <span>Αντίστροφη Εύρεση Λεξαρίθμου</span>
+              <span>Αντίστροφη Εύρεση ({targetNumber})</span>
             </button>
             <button
               onClick={() => setActiveMode("url")}
-              className={`px-4 py-2.5 rounded-lg text-xs md:text-sm font-serif font-semibold transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-lg text-xs md:text-sm font-serif font-semibold transition-all flex items-center gap-2 ${
                 activeMode === "url"
                   ? "bg-[#c89b3c] text-[#120f0c] shadow-lg"
                   : "text-[#d4c5b0] hover:text-[#f5ebd7]"
               }`}
             >
               <ExternalLink className="w-4 h-4" />
-              <span>Σάρωση Ιστοσελίδας / URL</span>
+              <span>Σάρωση URL</span>
+            </button>
+            <button
+              onClick={() => setActiveMode("batchText")}
+              className={`px-3.5 py-2 rounded-lg text-xs md:text-sm font-serif font-semibold transition-all flex items-center gap-2 ${
+                activeMode === "batchText"
+                  ? "bg-[#c89b3c] text-[#120f0c] shadow-lg"
+                  : "text-[#d4c5b0] hover:text-[#f5ebd7]"
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>Επικόλληση Σελίδων</span>
             </button>
           </div>
         </div>
@@ -367,7 +517,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
             <div className="flex flex-col md:flex-row gap-4 items-stretch">
               <div className="flex-1 relative">
                 <label className="block text-xs font-serif text-[#a89984] mb-2 uppercase tracking-wider">
-                  Εισαγωγή Αριθμού-Στόχου (π.χ. 1119 για ΙΩΑΝΝΗΣ)
+                  Εισαγωγή Αριθμού-Στόχου (π.χ. 666, 888, 1119 για ΙΩΑΝΝΗΣ)
                 </label>
                 <div className="relative">
                   <input
@@ -375,7 +525,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                     value={targetNumber}
                     onChange={(e) => setTargetNumber(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearchTarget()}
-                    placeholder="π.χ. 1119, 666, 888, 1332..."
+                    placeholder="π.χ. 666, 888, 1119, 1332, 1480, 2368..."
                     className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-[#120f0c] border border-[#c89b3c]/40 text-[#f5ebd7] text-lg font-serif placeholder-[#5a4e40] focus:border-[#c89b3c] focus:ring-1 focus:ring-[#c89b3c] outline-none transition-all"
                   />
                   <Search className="w-5 h-5 text-[#c89b3c] absolute left-4 top-1/2 -translate-y-1/2" />
@@ -452,7 +602,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                       Ευρήματα για τον Λεξάριθμο {targetNumber} ({numberToGreekNumeral(parseInt(targetNumber))})
                     </h3>
                     <p className="text-xs text-[#a89984]">
-                      Πηγή: {targetSourceType} | Πυθμένας: {calculatePythmen(parseInt(targetNumber))}
+                      Πηγή: {targetSourceType} | Πυθμένας: {calculatePythmen(parseInt(targetNumber))} | Συγκεντρωμένα από όλες τις σελίδες
                     </p>
                   </div>
                 </div>
@@ -495,7 +645,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                                 = {item.calculatedSum}
                               </span>
                               <span className="text-[11px] text-[#a89984] font-serif">
-                                Πηγή: {item.source}
+                                {item.source}
                               </span>
                             </div>
                           </div>
@@ -601,6 +751,21 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
       {activeMode === "url" && (
         <div className="space-y-6">
           <div className="p-6 md:p-8 rounded-2xl bg-[#1a1612]/90 border border-[#c89b3c]/20 shadow-xl space-y-6">
+            
+            {/* Informational Banner for ASP.NET URLs */}
+            <div className="p-4 rounded-xl bg-[#241a10] border border-[#c89b3c]/35 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs font-serif font-bold text-[#e6c670]">
+                  <HelpCircle className="w-4 h-4 text-[#c89b3c]" />
+                  <span>Πληροφορία για Πολυσέλιδες Ιστοσελίδες (π.χ. Arithmosofia 1 2 3 4 5 6 7)</span>
+                </div>
+                <p className="text-xs text-[#d4c5b0] leading-relaxed">
+                  Σε ιστοσελίδες ASP.NET (όπως το arithmosofia.com), όλες οι 7 σελίδες έχουν την <strong>ίδια ακριβώς διεύθυνση URL</strong> επειδή η αλλαγή σελίδας γίνεται με εσωτερικό PostBack. 
+                  Για να πάρετε όλες τις λέξεις και των 7 σελίδων, μπορείτε να χρησιμοποιήσετε την <button onClick={() => setActiveMode("target")} className="text-[#e6c670] underline font-bold">Αντίστροφη Εύρεση ({filterTargetFromUrl || 666})</button> που περιέχει ήδη όλες τις σελίδες, ή την <button onClick={() => setActiveMode("batchText")} className="text-[#e6c670] underline font-bold">Επικόλληση Σελίδων</button>!
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-serif text-[#a89984] mb-2 uppercase tracking-wider">
@@ -611,7 +776,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                     type="url"
                     value={targetUrl}
                     onChange={(e) => setTargetUrl(e.target.value)}
-                    placeholder="https://el.wikipedia.org/... ή https://..."
+                    placeholder="http://www.arithmosofia.com/ResultsByValue.aspx?value=666 ή https://..."
                     className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-[#120f0c] border border-[#c89b3c]/40 text-[#f5ebd7] text-sm font-sans placeholder-[#5a4e40] focus:border-[#c89b3c] focus:ring-1 focus:ring-[#c89b3c] outline-none transition-all"
                   />
                   <Globe className="w-5 h-5 text-[#c89b3c] absolute left-4 top-1/2 -translate-y-1/2" />
@@ -621,7 +786,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
               <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
                 <div className="flex-1">
                   <label className="block text-xs font-serif text-[#a89984] mb-2 uppercase tracking-wider">
-                    Φίλτρο Ειδικού Λεξαρίθμου (Προαιρετικό, π.χ. 1119)
+                    Φίλτρο Ειδικού Λεξαρίθμου (Προαιρετικό, π.χ. 666 ή 1119)
                   </label>
                   <input
                     type="number"
@@ -696,11 +861,18 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                   <h3 className="text-sm font-serif font-bold text-[#f5ebd7]">
                     Βρέθηκαν {urlScannedMatches.length} Ισόψηφα Στοιχεία στην Ιστοσελίδα
                   </h3>
-                  {filterTargetFromUrl && (
-                    <p className="text-xs text-[#a89984]">
-                      Φιλτραρισμένα με ακριβή λεξάριθμο: {filterTargetFromUrl}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {filterTargetFromUrl && (
+                      <span className="text-xs text-[#e6c670]">
+                        Στόχος: {filterTargetFromUrl}
+                      </span>
+                    )}
+                    {urlDetectedPages && urlDetectedPages > 1 && (
+                      <span className="text-xs text-[#a89984] bg-[#2a1e12] px-2 py-0.5 rounded border border-[#c89b3c]/30">
+                        Εντοπίστηκαν {urlDetectedPages} σελίδες στην πηγή
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <button
@@ -764,6 +936,135 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                             item.value,
                             targetUrl,
                             `Εμφανίσεις στο κείμενο: ${item.count}`
+                          )
+                        }
+                        className={`p-2 rounded-lg border transition-all cursor-pointer ${
+                          isSaved
+                            ? "bg-green-900/40 border-green-600 text-green-300"
+                            : "bg-[#1f1a14] border-[#c89b3c]/30 text-[#d4c5b0] hover:text-[#e6c670]"
+                        }`}
+                      >
+                        {isSaved ? (
+                          <Check className="w-3.5 h-3.5 text-green-400" />
+                        ) : (
+                          <BookmarkPlus className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODE 3: Batch Text / Multi-page Paste Scanner */}
+      {activeMode === "batchText" && (
+        <div className="space-y-6">
+          <div className="p-6 md:p-8 rounded-2xl bg-[#1a1612]/90 border border-[#c89b3c]/20 shadow-xl space-y-6">
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-serif text-[#a89984] uppercase tracking-wider">
+                    Επικόλληση Κειμένου / Πινάκων από Σελίδες 1, 2, 3, 4, 5, 6, 7
+                  </label>
+                  <span className="text-[11px] text-[#c89b3c]">
+                    Αντιγράψτε οποιαδήποτε σελίδα ή πίνακα και επικολλήστε εδώ
+                  </span>
+                </div>
+                <textarea
+                  rows={6}
+                  value={batchInputText}
+                  onChange={(e) => setBatchInputText(e.target.value)}
+                  placeholder="Επικολλήστε εδώ τις λέξεις ή τους πίνακες (π.χ. ΛΑΥΡΕΙΟΝ, ΠΟΛΙΣ ΑΘΗΝΗΣ, ΓΥΝΑΙΚΕΙΑ ΑΝΑΛΟΓΙΑ, ΑΓΙΑ ΘΕΟΦΑΝΕΙΑ, Η ΑΓΑΠΗ ΕΣΤΙΝ, Ο ΝΙΚΗΤΗΣ κ.ά.)..."
+                  className="w-full p-4 rounded-xl bg-[#120f0c] border border-[#c89b3c]/40 text-[#f5ebd7] text-sm font-sans placeholder-[#8c7b69] focus:border-[#c89b3c] focus:ring-1 focus:ring-[#c89b3c] outline-none transition-all resize-y"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
+                <div className="flex-1">
+                  <label className="block text-xs font-serif text-[#a89984] mb-2 uppercase tracking-wider">
+                    Φίλτρο Ειδικού Λεξαρίθμου-Στόχου (π.χ. 666)
+                  </label>
+                  <input
+                    type="number"
+                    value={batchTargetFilter}
+                    onChange={(e) => setBatchTargetFilter(e.target.value)}
+                    placeholder="π.χ. 666"
+                    className="w-full px-4 py-3 rounded-xl bg-[#120f0c] border border-[#c89b3c]/30 text-[#f5ebd7] text-sm font-serif placeholder-[#5a4e40] focus:border-[#c89b3c] outline-none"
+                  />
+                </div>
+
+                <button
+                  onClick={handleScanBatchText}
+                  disabled={!batchInputText.trim()}
+                  className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#c89b3c] to-[#e6c670] hover:from-[#d8ab4c] hover:to-[#f0d080] text-[#120f0c] font-serif font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Σάρωση & Εξαγωγή Ισοψηφιών ({batchTargetFilter || "Όλων"})</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Batch Matches Output */}
+          {batchMatches.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#1a1612] border border-[#c89b3c]/20">
+                <div>
+                  <h3 className="text-sm font-serif font-bold text-[#f5ebd7]">
+                    Εντοπίστηκαν {batchMatches.length} Ισόψηφα Στοιχεία στο Επικολλημένο Κείμενο
+                  </h3>
+                  {batchTargetFilter && (
+                    <p className="text-xs text-[#e6c670]">
+                      Φιλτραρισμένα με ακριβή λεξάριθμο στόχο: {batchTargetFilter}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleBatchSaveFromText}
+                  className="px-4 py-2 rounded-lg bg-[#281f15] hover:bg-[#382b1d] border border-[#c89b3c]/50 text-[#e6c670] text-xs font-serif font-semibold flex items-center gap-2 hover:border-[#c89b3c] transition-all cursor-pointer"
+                >
+                  <BookmarkPlus className="w-4 h-4 text-[#c89b3c]" />
+                  <span>Μαζική Αποθήκευση Όλων ({batchMatches.length})</span>
+                </button>
+              </div>
+
+              {batchSaveStatus && (
+                <div className="p-3.5 rounded-xl bg-[#1e2a1b] border border-green-700/50 text-green-300 text-xs font-serif flex items-center gap-2 animate-fadeIn">
+                  <Check className="w-4 h-4" />
+                  <span>{batchSaveStatus}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {batchMatches.map((item, idx) => {
+                  const isSaved = savedSuccessMap[item.text];
+                  return (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl bg-[#15120f] border border-[#c89b3c]/20 hover:border-[#c89b3c]/50 transition-all flex items-center justify-between gap-3"
+                    >
+                      <div>
+                        <div className="text-base font-serif font-bold text-[#e6c670]">
+                          {item.text}
+                        </div>
+                        <div className="text-xs text-[#a89984] flex items-center gap-2 mt-0.5 font-mono">
+                          <span>Αξία: {item.value}</span>
+                          <span>•</span>
+                          <span>{item.count}x εμφάνιση</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          handleSaveIndividualItem(
+                            item.text,
+                            item.value,
+                            "Μαζική Εισαγωγή Κειμένου",
+                            `Εμφανίσεις: ${item.count}`
                           )
                         }
                         className={`p-2 rounded-lg border transition-all cursor-pointer ${

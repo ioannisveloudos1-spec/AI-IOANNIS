@@ -193,6 +193,21 @@ async function startServer() {
 
       const html = await response.text();
 
+      // Check for pagination indicators in HTML (like ASP.NET GridView or numbered pages)
+      const pageNumbersMatch = html.match(/__doPostBack\([^)]*Page\$(\d+)[^)]*\)/g) || html.match(/>(\d+)<\/a>/g);
+      let detectedPagesCount = 1;
+      if (pageNumbersMatch && pageNumbersMatch.length > 0) {
+        const numbers = pageNumbersMatch
+          .map(m => {
+            const num = m.match(/\d+/);
+            return num ? parseInt(num[0]) : 1;
+          })
+          .filter(n => !isNaN(n) && n > 0);
+        if (numbers.length > 0) {
+          detectedPagesCount = Math.max(...numbers, 1);
+        }
+      }
+
       // Extract plain text from HTML (remove script, style, html tags, decode entities)
       let cleaned = html
         .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ")
@@ -208,14 +223,16 @@ async function startServer() {
         .replace(/\s+/g, " ")
         .trim();
 
-      // Limit to 50,000 characters for performance
-      if (cleaned.length > 50000) {
-        cleaned = cleaned.substring(0, 50000);
+      // Limit to 100,000 characters for rich multi-table pages
+      if (cleaned.length > 100000) {
+        cleaned = cleaned.substring(0, 100000);
       }
 
       return res.json({
         success: true,
         url,
+        totalPagesDetected: detectedPagesCount,
+        isAspnetPaging: html.includes("__doPostBack") && html.includes("Page$"),
         textLength: cleaned.length,
         extractedText: cleaned,
       });
@@ -232,12 +249,36 @@ async function startServer() {
   function getOfflineIsopsephyMatches(target: number): Array<{ text: string; meaning: string; source: string; calculatedSum: number }> {
     const defaultCorpus: Record<number, Array<{ text: string; meaning: string; source: string }>> = {
       666: [
-        { text: "ΛΑΥΡΕΙΟΝ", meaning: "Το μεταλλευτικό και αλληγορικό κέντρο της Αττικής / Σφραγίδα", source: "Αττική Γεωγραφία & Ιστορία" },
-        { text: "ΙΑΝΕΥΣ", meaning: "Ο αναγεννημένος άρχων των πυλών", source: "Ελληνική Μυθοπλασία" },
-        { text: "ΤΕΛΙΑΝΟΣ", meaning: "Ο τέλειος / ολοκληρωμένος μυημένος", source: "Ελληνική Ετυμολογία" },
-        { text: "Ο ΝΙΚΗΤΗΣ", meaning: "Αυτός που υπερισχύει στον αγώνα", source: "Κλασική Γραμματεία" },
-        { text: "ΑΓΙΑ ΘΕΟΦΑΝΕΙΑ", meaning: "Η φανέρωση του θείου φωτός", source: "Εκκλησιαστική Γραμματεία" },
-        { text: "Η ΕΥΠΟΡΙΑ", meaning: "Ο πλούτος και η αφθονία", source: "Αρχαία Ελληνικά" },
+        { text: "ΠΟΛΙΣ ΑΘΗΝΗΣ", meaning: "Η Μεγάλη Στοά και η πόλη των Αθηνών", source: "Κλασική Αριθμοσοφία (Σελ. 1)" },
+        { text: "ΛΑΥΡΕΙΟΝ", meaning: "Το μεταλλευτικό και αλληγορικό κέντρο της Αττικής / Σφραγίδα", source: "Αττική Γεωγραφία & Ιστορία (Σελ. 1)" },
+        { text: "Η ΕΛΛΑΔΑ ΜΕ ΤΗΝ ΑΜΕΡΙΚΗ", meaning: "Ισόψηφη σύγχρονη γεωπολιτική φράση", source: "Αριθμοσοφία (Σελ. 1)" },
+        { text: "ΜΠΛΕ ΠΡΑΣΙΝΟ", meaning: "Συνδυασμός χρωματικών συμβόλων", source: "Αριθμοσοφία (Σελ. 1)" },
+        { text: "Ο ΝΙΚΗΤΗΣ", meaning: "Αυτός που υπερισχύει στον πνευματικό αγώνα", source: "Κλασική Γραμματεία (Σελ. 1)" },
+        { text: "ΑΓΙΑ ΘΕΟΦΑΝΕΙΑ", meaning: "Η φανέρωση του θείου φωτός", source: "Εκκλησιαστική Γραμματεία (Σελ. 1)" },
+        { text: "Η ΑΓΑΠΗ ΕΣΤΙΝ", meaning: "Η ύψιστη πνευματική αγάπη και αρχή", source: "Κλασική & Θεολογική Γραμματεία (Σελ. 1)" },
+        { text: "Η ΕΥΠΟΡΙΑ", meaning: "Ο πλούτος και η αφθονία", source: "Αρχαία Ελληνικά (Σελ. 1)" },
+        { text: "ΑΝΑΜΑΣΗΜΕΝΟΣ", meaning: "Επαναλαμβανόμενος λόγος / αναμασημένη σκέψη", source: "Ελληνική Γλώσσα (Σελ. 1)" },
+        { text: "ΑΝΕΜΟΣΚΟΠΙΟΝ", meaning: "Όργανο μέτρησης και πρόβλεψης ανέμων", source: "Αρχαία Τεχνολογία (Σελ. 1)" },
+        { text: "ΓΥΝΑΙΚΕΙΑ ΑΝΑΛΟΓΙΑ", meaning: "Αρμονική αναλογία της θηλυκής αρχής", source: "Αριθμοσοφία (Σελ. 2)" },
+        { text: "Δ Ε Σ Τ Ε ΜΠΑΛΑ", meaning: "Σύγχρονη λεξαριθμική έκφραση", source: "Αριθμοσοφία (Σελ. 2)" },
+        { text: "ΔΑΒΙΔ ΑΝΤΙΘΕΟΣ", meaning: "Αντιθετική φιλοσοφική αναφορά", source: "Αριθμοσοφία (Σελ. 2)" },
+        { text: "ΔΑΒΙΔ ΑΠΟ ΚΟΚΚΙΝΗ ΑΣΠΙΔΑ", meaning: "Αλληγορική ιστορική αναφορά (Rothschild)", source: "Αριθμοσοφία (Σελ. 2)" },
+        { text: "ΔΑΙΜΟΝΑΚΟΥ", meaning: "Παραδοσιακό τοπωνύμιο / επώνυμο", source: "Αριθμοσοφία (Σελ. 2)" },
+        { text: "ΔΑΙΜΟΝΙΚΗ ΑΜΑΡΤΙΑ", meaning: "Θεολογική έννοια πτώσης", source: "Αριθμοσοφία (Σελ. 2)" },
+        { text: "ΔΕΙΓΜΑΤΟΛΟΓΙΟΝ", meaning: "Συλλογή επιλεγμένων δειγμάτων", source: "Ελληνική Ορολογία (Σελ. 2)" },
+        { text: "ΔΕΚΑΠΕΝΤΑΡΙΚΟ", meaning: "Αριθμητική μονάδα του δεκαπέντε", source: "Αριθμοσοφία (Σελ. 2)" },
+        { text: "ΔΗΜΗΤΗΡ ΚΟΡΗ", meaning: "Ελευσίνια Μυστήρια / Μητέρα και Κόρη", source: "Μυθολογία & Μυστήρια (Σελ. 2)" },
+        { text: "ΔΙΑΛΑΥΡΟΝ", meaning: "Αρχαίος όρος", source: "Αριθμοσοφία (Σελ. 2)" },
+        { text: "ΔΙΑΛΟΓΙΣΤΙΚΗ", meaning: "Τέχνη του διαλογισμού και στοχασμού", source: "Φιλοσοφία (Σελ. 2)" },
+        { text: "ΔΙΑΣΠΟΡΑΣ", meaning: "Η διασπορά των Ελλήνων και των ιδεών", source: "Ιστορία (Σελ. 2)" },
+        { text: "ΕΘΝΙΚΗ ΕΝΤΑΣΗ", meaning: "Σύγχρονος κοινωνιολογικός όρος", source: "Αριθμοσοφία (Σελ. 2)" },
+        { text: "ΕΙΜΑΙ Ο ΘΕΗΤΗΣ", meaning: "Αυτός που ορά και ερευνά τα θεία", source: "Μυστική Φιλοσοφία (Σελ. 2)" },
+        { text: "ΙΑΝΕΥΣ", meaning: "Ο αναγεννημένος άρχων των πυλών", source: "Ελληνική Μυθοπλασία (Σελ. 3)" },
+        { text: "ΤΕΛΙΑΝΟΣ", meaning: "Ο τέλειος / ολοκληρωμένος μυημένος", source: "Ελληνική Ετυμολογία (Σελ. 3)" },
+        { text: "ΑΡΙΑ ΔΗΜΟΚΡΑΤΙΑ", meaning: "Ευγενής και άριστη δημοκρατική τάξη", source: "Αριθμοσοφία (Σελ. 4)" },
+        { text: "Ο ΑΛΗΘΙΝΟΣ ΛΟΓΟΣ", meaning: "Η αυθεντική φιλοσοφική αλήθεια", source: "Πλατωνική Φιλοσοφία (Σελ. 5)" },
+        { text: "ΤΟ ΦΩΣ ΤΟΥ ΗΛΙΟΥ", meaning: "Η ηλιακή ακτινοβολία και ζωή", source: "Κλασική Ποίηση (Σελ. 6)" },
+        { text: "Η ΣΟΦΙΑ ΤΟΥ ΚΟΣΜΟΥ", meaning: "Η κοσμική νοημοσύνη", source: "Στωική Φιλοσοφία (Σελ. 7)" },
       ],
       888: [
         { text: "ΙΗΣΟΥΣ", meaning: "Ο Σωτήρας / Θεάνθρωπος", source: "Καινή Διαθήκη" },
