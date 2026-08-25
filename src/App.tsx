@@ -3,6 +3,7 @@ import { TabType, SavedIsopsephyItem } from "./types";
 import { Header } from "./components/Header";
 import { CalculatorTab } from "./components/CalculatorTab";
 import { SearchTab } from "./components/SearchTab";
+import { OnlineFinderTab } from "./components/OnlineFinderTab";
 import { BridgesTab } from "./components/BridgesTab";
 import { AnagramsTab } from "./components/AnagramsTab";
 import { IsopsephicGraphTab } from "./components/IsopsephicGraphTab";
@@ -304,6 +305,13 @@ export default function App() {
             onSaveItem={handleSaveItem}
             onOpenAiModal={handleOpenAiModal}
             savedItems={savedItems}
+          />
+        )}
+
+        {currentTab === "online-finder" && (
+          <OnlineFinderTab
+            onSaveItem={handleSaveItem}
+            onOpenAiModal={handleOpenAiModal}
           />
         )}
 

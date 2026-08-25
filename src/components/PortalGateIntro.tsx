@@ -15,6 +15,11 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({
   // Animation phases: 'idle' | 'pressed' | 'metamorphosis' | 'dissolving'
   const [phase, setPhase] = useState<"idle" | "pressed" | "metamorphosis" | "dissolving">("idle");
 
+  const handleInstantEnter = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    onEnter();
+  };
+
   const handleEnterClick = () => {
     if (phase !== "idle") return;
 
@@ -32,12 +37,12 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({
     // 4. Soft ethereal dissolving into the main application
     setTimeout(() => {
       setPhase("dissolving");
-    }, 2400);
+    }, 1800);
 
     // 5. Final transition complete
     setTimeout(() => {
       onEnter();
-    }, 3100);
+    }, 2400);
   };
 
   const isTransitioning = phase !== "idle";
@@ -49,6 +54,14 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({
         phase === "dissolving" ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
+      {/* Top Direct Skip / Instant Entry Button */}
+      <button
+        onClick={handleInstantEnter}
+        type="button"
+        className="absolute top-4 right-4 z-30 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/90 border border-[#c89b3c]/40 hover:border-[#c89b3c] text-[#e6c670] text-xs font-serif tracking-wider transition-all cursor-pointer shadow-lg backdrop-blur-sm"
+      >
+        Άμεση Είσοδος ➔
+      </button>
       {/* Background Fullscreen 9:16 Tunnel with Dynamic Dreamlike Metamorphosis Zoom */}
       <div 
         className={`absolute inset-0 w-full h-full flex items-center justify-center bg-black transition-all ${

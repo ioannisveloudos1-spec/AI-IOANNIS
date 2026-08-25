@@ -1,6 +1,7 @@
 export type TabType = 
   | "calculator" 
   | "search" 
+  | "online-finder"
   | "bridges" 
   | "anagrams" 
   | "graph" 

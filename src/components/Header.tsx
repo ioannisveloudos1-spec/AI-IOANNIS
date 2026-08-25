@@ -17,6 +17,7 @@ import {
   FileText,
   Binary,
   Box,
+  Globe,
 } from "lucide-react";
 import appLogoImg from "../assets/images/ego_eimi_logo_1787417709332.jpg";
 
@@ -44,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   const tabs = [
     { id: "calculator" as TabType, label: "Υπολογισμός", icon: Calculator, desc: "Μεμονωμένες λέξεις & πράξεις" },
     { id: "search" as TabType, label: "Αναζήτηση", icon: Search, desc: "Ανάλυση κειμένου & συνδυασμοί" },
+    { id: "online-finder" as TabType, label: "Ανιχνευτής Web", icon: Globe, desc: "Online λεξικά, URL & 1119" },
     { id: "bridges" as TabType, label: "Γέφυρες", icon: GitCompare, desc: "Σύγκριση & μαθηματικές σχέσεις" },
     { id: "anagrams" as TabType, label: "Matrix 3×3", icon: Grid, desc: "Αναγραμματισμοί & Πυθαγόρειο Matrix" },
     { id: "graph" as TabType, label: "Χάρτης Σταθμών", icon: Network, desc: "Δίκτυο κόμβων & συνδέσεων" },

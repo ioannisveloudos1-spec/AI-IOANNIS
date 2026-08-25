@@ -241,6 +241,98 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     });
   };
 
+  const [savedToastMessage, setSavedToastMessage] = useState<string | null>(null);
+
+  // Bulk save handlers
+  const handleSaveAllAnywhereCombos = () => {
+    if (filteredAnywhereCombos.length === 0) return;
+    let newSavedCount = 0;
+    filteredAnywhereCombos.forEach((comboObj) => {
+      const isSaved = savedItems.some(
+        (item) => item.text.trim().toUpperCase() === comboObj.phrase.toUpperCase() && item.value === comboObj.value
+      );
+      if (!isSaved) {
+        handleSaveAnywhereCombo(comboObj);
+        newSavedCount++;
+      }
+    });
+    setSavedToastMessage(
+      newSavedCount > 0
+        ? `Αποθηκεύτηκαν επιτυχώς ${newSavedCount} νέοι συνδυασμοί στο Αρχείο!`
+        : `Όλοι οι ${filteredAnywhereCombos.length} συνδυασμοί είναι ήδη αποθηκευμένοι στο Αρχείο.`
+    );
+    setTimeout(() => setSavedToastMessage(null), 3500);
+  };
+
+  const handleSaveAllSingleMatches = () => {
+    if (activeSingleMatches.length === 0) return;
+    let newSavedCount = 0;
+    activeSingleMatches.forEach((wordObj) => {
+      const isSaved = savedItems.some(
+        (item) => item.text.trim().toUpperCase() === wordObj.rawWord.toUpperCase() && item.value === wordObj.value
+      );
+      if (!isSaved) {
+        handleSaveWordMatch(wordObj);
+        newSavedCount++;
+      }
+    });
+    setSavedToastMessage(
+      newSavedCount > 0
+        ? `Αποθηκεύτηκαν επιτυχώς ${newSavedCount} νέες λέξεις στο Αρχείο!`
+        : `Όλες οι λέξεις είναι ήδη αποθηκευμένες στο Αρχείο.`
+    );
+    setTimeout(() => setSavedToastMessage(null), 3500);
+  };
+
+  const handleSaveAllPhraseMatches = () => {
+    if (activePhraseMatches.length === 0) return;
+    let newSavedCount = 0;
+    activePhraseMatches.forEach((phraseObj) => {
+      const isSaved = savedItems.some(
+        (item) => item.text.trim().toUpperCase() === phraseObj.phrase.toUpperCase() && item.value === phraseObj.value
+      );
+      if (!isSaved) {
+        handleSavePhraseMatch(phraseObj);
+        newSavedCount++;
+      }
+    });
+    setSavedToastMessage(
+      newSavedCount > 0
+        ? `Αποθηκεύτηκαν επιτυχώς ${newSavedCount} νέοι συνδυασμοί φράσεων στο Αρχείο!`
+        : `Όλοι οι συνδυασμοί φράσεων είναι ήδη αποθηκευμένοι στο Αρχείο.`
+    );
+    setTimeout(() => setSavedToastMessage(null), 3500);
+  };
+
+  const handleSaveAllTotalMatches = () => {
+    if (totalFoundMatches === 0) return;
+    let newSavedCount = 0;
+    activeSingleMatches.forEach((wordObj) => {
+      const isSaved = savedItems.some(
+        (item) => item.text.trim().toUpperCase() === wordObj.rawWord.toUpperCase() && item.value === wordObj.value
+      );
+      if (!isSaved) {
+        handleSaveWordMatch(wordObj);
+        newSavedCount++;
+      }
+    });
+    activePhraseMatches.forEach((phraseObj) => {
+      const isSaved = savedItems.some(
+        (item) => item.text.trim().toUpperCase() === phraseObj.phrase.toUpperCase() && item.value === phraseObj.value
+      );
+      if (!isSaved) {
+        handleSavePhraseMatch(phraseObj);
+        newSavedCount++;
+      }
+    });
+    setSavedToastMessage(
+      newSavedCount > 0
+        ? `Αποθηκεύτηκαν επιτυχώς ${newSavedCount} νέα ευρήματα (λέξεις & φράσεις) στο Αρχείο!`
+        : `Όλα τα ${totalFoundMatches} ευρήματα είναι ήδη αποθηκευμένα στο Αρχείο.`
+    );
+    setTimeout(() => setSavedToastMessage(null), 3500);
+  };
+
   // Set of indices for selected combination
   const selectedComboIndices = useMemo(() => {
     if (!selectedAnywhereCombo) return new Set<number>();
@@ -1555,6 +1647,28 @@ export const SearchTab: React.FC<SearchTabProps> = ({
               </div>
             </div>
 
+            {/* Bulk Save Bar for Anywhere Combos */}
+            {filteredAnywhereCombos.length > 0 && (
+              <div className="p-3 bg-[#181410] rounded-xl border border-[#33281c] flex flex-wrap items-center justify-between gap-2.5 shadow-sm">
+                <div className="flex items-center gap-2 text-xs font-serif text-[#d6c7b2]">
+                  <Boxes className="w-4 h-4 text-[#c89b3c]" />
+                  <span>
+                    Βρέθηκαν <strong>{filteredAnywhereCombos.length}</strong> συνδυασμοί με άθροισμα <strong>{comboTarget}</strong>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveAllAnywhereCombos}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#271d11] hover:bg-[#3d2b15] text-[#f5ecd8] border border-[#c89b3c]/60 text-xs font-serif font-bold transition-all shadow-sm cursor-pointer"
+                  >
+                    <Bookmark className="w-3.5 h-3.5 text-[#e6c670]" />
+                    <span>📥 Αποθήκευση Όλων των Συνδυασμών ({filteredAnywhereCombos.length})</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Results Grid */}
             {filteredAnywhereCombos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[700px] overflow-y-auto gold-scrollbar p-1">
@@ -1682,10 +1796,32 @@ export const SearchTab: React.FC<SearchTabProps> = ({
         {viewMode === "matches" && (
           <div className="space-y-6">
             
+            {/* Global Bulk Save Bar for Found Targets */}
+            {totalFoundMatches > 0 && (
+              <div className="p-3.5 bg-[#181410] rounded-xl border border-[#33281c] flex flex-wrap items-center justify-between gap-3 shadow-md">
+                <div className="flex items-center gap-2.5 text-xs font-serif text-[#d6c7b2]">
+                  <Search className="w-4 h-4 text-purple-400" />
+                  <span>
+                    Σύνολο Ευρημάτων Στόχου: <strong>{totalFoundMatches}</strong> ({activeSingleMatches.length} λέξεις & {activePhraseMatches.length} φράσεις)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveAllTotalMatches}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-purple-900/70 hover:bg-purple-800 text-purple-100 border border-purple-400/50 text-xs font-serif font-bold transition-all shadow-sm cursor-pointer"
+                  >
+                    <Bookmark className="w-3.5 h-3.5" />
+                    <span>📥 Αποθήκευση Όλων των Ευρημάτων ({totalFoundMatches})</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Single Word Matches Section */}
             {activeSingleMatches.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold flex items-center gap-2">
                     <span>
                       {wordQuery 
@@ -1697,6 +1833,15 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       {activeSingleMatches.length}
                     </span>
                   </h3>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveAllSingleMatches}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#251e17] hover:bg-[#382b1c] text-[#e6c670] border border-[#3e3223] text-xs font-serif transition-all"
+                  >
+                    <Bookmark className="w-3 h-3 text-[#e6c670]" />
+                    <span>Αποθήκευση Όλων των Λέξεων ({activeSingleMatches.length})</span>
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1774,7 +1919,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             {/* Phrase Matches Section (N-grams) */}
             {activePhraseMatches.length > 0 && (
               <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold flex items-center gap-2">
                     <span>
                       Συνδυασμοί {phraseLengthMin === phraseLengthMax ? `${phraseLengthMin}` : `${phraseLengthMin}-${phraseLengthMax}`} Λέξεων με Στόχο = {phraseTarget}
@@ -1783,6 +1928,15 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       {activePhraseMatches.length}
                     </span>
                   </h3>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveAllPhraseMatches}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#251e17] hover:bg-[#382b1c] text-[#e6c670] border border-[#3e3223] text-xs font-serif transition-all"
+                  >
+                    <Bookmark className="w-3 h-3 text-[#e6c670]" />
+                    <span>Αποθήκευση Όλων των Φράσεων ({activePhraseMatches.length})</span>
+                  </button>
                 </div>
 
                 <div className="space-y-3">
@@ -1971,6 +2125,14 @@ export const SearchTab: React.FC<SearchTabProps> = ({
         )}
 
       </div>
+
+      {/* Floating Toast Notification for bulk / individual saves */}
+      {savedToastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 p-3.5 px-4 rounded-xl bg-[#1c1813] border border-[#c89b3c] shadow-2xl text-[#f5ecd8] text-xs font-serif flex items-center gap-2.5 animate-fadeIn">
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{savedToastMessage}</span>
+        </div>
+      )}
 
     </div>
   );
