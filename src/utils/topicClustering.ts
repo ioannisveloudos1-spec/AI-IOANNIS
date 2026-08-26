@@ -156,7 +156,7 @@ export function categorizeTerm(text: string, translation?: string): TopicCategor
 }
 
 /**
- * Common noisy or meaningless phrases in public Gematria databases
+ * Common noisy, gibberish or meaningless phrases in public Gematria databases and scraped HTML
  */
 export const JUNK_PATTERNS = [
   /^HTTPS?:\/\//i,
@@ -165,8 +165,52 @@ export const JUNK_PATTERNS = [
   /^PAGE\s+[0-9]+/i,
   /^TOTAL\s+RESULTS/i,
   /^GEMATRIA\s+VALUE/i,
+  /^RESULTS?\s+FOR/i,
+  /^SEARCH\s+RESULTS?/i,
+  /^PREV(IOUS)?/i,
+  /^NEXT/i,
+  /^CLICK\s+HERE/i,
+  /^POWERED\s+BY/i,
+  /^COPYRIGHT/i,
+  /^ALL\s+RIGHTS\s+RESERVED/i,
+  /^VIEW\s+MORE/i,
+  /^LOAD\s+MORE/i,
   /^\s*$/,
 ];
+
+/**
+ * Checks if a phrase is garbage, random keyboard mashing, or contains unreadable artifacts
+ */
+export function isMeaninglessJunk(text: string): boolean {
+  const t = text.trim();
+  if (!t || t.length < 2) return true;
+
+  // If matches any known junk phrase pattern
+  if (JUNK_PATTERNS.some((p) => p.test(t))) return true;
+
+  // Pure digits or digits with punctuation
+  if (/^[\d\s.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(t)) return true;
+
+  // Too high ratio of special characters or punctuation (e.g. "@#$!%*&")
+  const lettersOnly = t.replace(/[^a-zA-Z\u0370-\u03FF\u1F00-\u1FFF]/g, "");
+  if (lettersOnly.length < 2) return true;
+  if (lettersOnly.length / t.length < 0.6) return true;
+
+  // Too many consecutive non-vowels / consonants (e.g. "sdfghjkl", "bcdfgh", "ψξθχ")
+  if (/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]{6,}/i.test(t)) return true;
+  if (/[\u0392\u0393\u0394\u0396\u0398\u039A\u039B\u039E\u03A0\u03A1\u03A3\u03A4\u03A6\u03A7\u03A8\u03B2\u03B3\u03B4\u03B6\u03B8\u03BA\u03BB\u03BE\u03C0\u03C1\u03C3\u03C2\u03C4\u03C6\u03C7\u03C8]{6,}/.test(t)) return true;
+
+  // Repeated same character 4+ times (e.g. "aaaaa", "zzzzz", "ααααα")
+  if (/(.)\1{3,}/.test(t)) return true;
+
+  // HTML entity leftovers like "&amp;", "&#39;", "quot;"
+  if (/&(?:amp|quot|lt|gt|#\d+|#x[a-f\d]+);/i.test(t)) return true;
+
+  // Unclosed tags or HTML leftovers
+  if (/<[^>]*>/.test(t) || /<\/?\w+/.test(t)) return true;
+
+  return false;
+}
 
 export interface QualityFilterOptions {
   minWords?: number;
@@ -175,10 +219,11 @@ export interface QualityFilterOptions {
   removePureNumbers?: boolean;
   removeSingleLetters?: boolean;
   filterDuplicatePhrases?: boolean;
+  strictLanguageOnly?: boolean;
 }
 
 /**
- * Filter and clean scanned matches
+ * Filter and clean scanned matches with high precision
  */
 export function cleanScannedMatches<T extends { text: string; value: number }>(
   items: T[],
@@ -191,6 +236,7 @@ export function cleanScannedMatches<T extends { text: string; value: number }>(
     removePureNumbers = true,
     removeSingleLetters = true,
     filterDuplicatePhrases = true,
+    strictLanguageOnly = true,
   } = options;
 
   const seen = new Set<string>();
@@ -199,24 +245,31 @@ export function cleanScannedMatches<T extends { text: string; value: number }>(
   for (const item of items) {
     let t = item.text.trim();
 
+    // Comprehensive junk check
+    if (isMeaninglessJunk(t)) continue;
+
     // Pure numbers check
     if (removePureNumbers && /^\d+$/.test(t)) continue;
 
-    // Junk patterns
-    if (JUNK_PATTERNS.some((p) => p.test(t))) continue;
-
     // Single letter check
-    if (removeSingleLetters && t.length === 1) continue;
+    if (removeSingleLetters && t.replace(/[^a-zA-Z\u0370-\u03FF\u1F00-\u1FFF]/g, "").length <= 1) continue;
 
     // Symbols check
     if (removeSymbols && /^[^a-zA-Z\u0370-\u03FF\u1F00-\u1FFF]+$/.test(t)) continue;
+
+    // Strict alphabet verification (must contain real words in Greek or English)
+    if (strictLanguageOnly) {
+      const hasGreek = /[\u0370-\u03FF\u1F00-\u1FFF]/.test(t);
+      const hasLatin = /[a-zA-Z]/.test(t);
+      if (!hasGreek && !hasLatin) continue;
+    }
 
     // Word count bounds
     const words = t.split(/\s+/).filter((w) => w.length > 0);
     if (words.length < minWords || words.length > maxWords) continue;
 
     // Uniqueness
-    const norm = t.toUpperCase().replace(/\s+/g, " ");
+    const norm = t.toUpperCase().replace(/[\s\-_.,;:'"]+/g, " ").trim();
     if (filterDuplicatePhrases) {
       if (seen.has(norm)) continue;
       seen.add(norm);

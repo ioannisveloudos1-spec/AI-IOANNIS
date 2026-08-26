@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -68,11 +69,69 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json({ limit: "5mb" }));
+  app.use(express.json({ limit: "50mb" }));
 
   // Health check
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // Direct endpoint to persist custom portal audio directly to server static assets
+  app.post("/api/save-portal-audio", (req, res) => {
+    try {
+      const { base64Data } = req.body;
+      if (!base64Data || typeof base64Data !== "string") {
+        return res.status(400).json({ success: false, error: "Missing audio data" });
+      }
+      const cleanBase64 = base64Data.replace(/^data:[^;]+;base64,/, "");
+      const buffer = Buffer.from(cleanBase64, "base64");
+      
+      const publicDir = path.join(process.cwd(), "public");
+      if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+      }
+      const targetPath = path.join(publicDir, "welcome_voice.mp3");
+      fs.writeFileSync(targetPath, buffer);
+
+      // Also copy to dist if dist exists
+      const distDir = path.join(process.cwd(), "dist");
+      if (fs.existsSync(distDir)) {
+        const distTargetPath = path.join(distDir, "welcome_voice.mp3");
+        fs.writeFileSync(distTargetPath, buffer);
+      }
+
+      return res.json({ success: true, message: "Audio saved successfully to welcome_voice.mp3" });
+    } catch (err: any) {
+      console.error("Failed to save audio file:", err);
+      return res.status(500).json({ success: false, error: err?.message || "Internal error" });
+    }
+  });
+
+  // Check if custom audio file is present
+  app.get("/api/portal-audio-status", (_req, res) => {
+    const filePath = path.join(process.cwd(), "public", "welcome_voice.mp3");
+    const exists = fs.existsSync(filePath);
+    let size = 0;
+    if (exists) {
+      try {
+        size = fs.statSync(filePath).size;
+      } catch {
+        // ignore
+      }
+    }
+    return res.json({ exists: exists && size > 1000, size });
+  });
+
+  // Direct Audio Stream endpoint (works on all mobile browsers and webviews)
+  app.get("/api/portal-audio", (_req, res) => {
+    const filePath = path.join(process.cwd(), "public", "welcome_voice.mp3");
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).send("Not found");
+    }
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Accept-Ranges", "bytes");
+    const stream = fs.createReadStream(filePath);
+    stream.pipe(res);
   });
 
   // Online AI Isopsephy Dictionary & Web Finder endpoint

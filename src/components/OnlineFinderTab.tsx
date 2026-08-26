@@ -46,6 +46,7 @@ import {
   categorizeTerm,
   cleanScannedMatches,
   exportToCsvFile,
+  isMeaninglessJunk,
   QualityFilterOptions,
 } from "../utils/topicClustering";
 
@@ -481,6 +482,10 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
             if (data.structuredItems && data.structuredItems.length > 0) {
               data.structuredItems.forEach((item: { phrase: string; jewish?: number; english?: number; simple?: number }) => {
                 const phraseUpper = item.phrase.trim().toUpperCase();
+                
+                // Discard gibberish, symbols-only, or junk web artifacts
+                if (isMeaninglessJunk(phraseUpper)) return;
+
                 let val = 0;
                 if (activeSys === NumberingSystem.ENGLISH_BASE6) {
                   val = item.english !== undefined && item.english > 0 ? item.english : calculateIsopsephy(phraseUpper, activeSys);
@@ -528,6 +533,8 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
 
               words.forEach((w: string) => {
                 const upper = w.toUpperCase();
+                if (isMeaninglessJunk(upper)) return;
+
                 const val = calculateIsopsephy(upper, activeSys);
                 if (val > 0) {
                   if (!isNaN(targetFilterNum) && targetFilterNum > 0) {
@@ -1164,17 +1171,32 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                   </div>
                 </div>
 
-                {/* Append Toggle */}
-                <div className="flex items-center justify-between pt-2 border-t border-[#c89b3c]/15">
-                  <label className="flex items-center gap-2 text-xs font-serif text-[#d4c5b0] cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={crawlAppendMode}
-                      onChange={(e) => setCrawlAppendMode(e.target.checked)}
-                      className="w-4 h-4 accent-[#c89b3c] rounded cursor-pointer"
-                    />
-                    <span>Προσθήκη νέων ευρημάτων στα υπάρχοντα (Χωρίς εκκαθάριση λίστας)</span>
-                  </label>
+                {/* Append Toggle & Quality Filter Switch */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[#c89b3c]/15">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <label className="flex items-center gap-2 text-xs font-serif text-[#d4c5b0] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={crawlAppendMode}
+                        onChange={(e) => setCrawlAppendMode(e.target.checked)}
+                        className="w-4 h-4 accent-[#c89b3c] rounded cursor-pointer"
+                      />
+                      <span>Προσθήκη νέων ευρημάτων στα υπάρχοντα (Χωρίς εκκαθάριση λίστας)</span>
+                    </label>
+
+                    {urlScannedMatches.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleApplySmartQualityClean}
+                        className="text-xs text-emerald-400 hover:text-emerald-300 font-serif flex items-center gap-1 cursor-pointer bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-800/50"
+                        title="Αυτόματο φιλτράρισμα άκυρων λέξεων, τυχαίων συμβόλων και θορύβου"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Καθαρισμός Άκυρων / Θορύβου</span>
+                      </button>
+                    )}
+                  </div>
+
                   {urlScannedMatches.length > 0 && (
                     <button
                       type="button"
