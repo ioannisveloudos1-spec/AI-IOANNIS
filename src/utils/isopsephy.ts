@@ -1,4 +1,20 @@
-import { IonicLetter, LetterBreakdown, WordIsopsephy, PhraseMatch, TextAnalysisStats, TextAnalysisResult, UniqueWordStat, WordCombinationMatch } from "../types";
+import { IonicLetter, LetterBreakdown, WordIsopsephy, PhraseMatch, TextAnalysisStats, TextAnalysisResult, UniqueWordStat, WordCombinationMatch, NumberingSystem } from "../types";
+
+/**
+ * English Gematria Base 6 / Sumerian values (A=6, B=12, C=18 ... Z=156)
+ * As used by Gematrix.org & English Gematria calculators
+ */
+export const ENGLISH_BASE6_VALUES: Record<string, number> = {
+  A: 6, B: 12, C: 18, D: 24, E: 30, F: 36, G: 42, H: 48, I: 54,
+  J: 60, K: 66, L: 72, M: 78, N: 84, O: 90, P: 96, Q: 102, R: 108,
+  S: 114, T: 120, U: 126, V: 132, W: 138, X: 144, Y: 150, Z: 156,
+};
+
+export const ENGLISH_SIMPLE_VALUES: Record<string, number> = {
+  A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9,
+  J: 10, K: 11, L: 12, M: 13, N: 14, O: 15, P: 16, Q: 17, R: 18,
+  S: 19, T: 20, U: 21, V: 22, W: 23, X: 24, Y: 25, Z: 26,
+};
 
 /**
  * Πλήρης πίνακας της Ιωνικής Αρίθμησης (27 γράμματα: 9 μονάδες, 9 δεκάδες, 9 εκατοντάδες)
@@ -334,10 +350,39 @@ export function calculateWordIsopsephy(word: string, indexInText = 0): WordIsops
 }
 
 /**
- * Υπολογισμός συνολικής ισοψηφίας ενός κειμένου/λέξης
+ * Υπολογισμός συνολικής ισοψηφίας/gematria ενός κειμένου/λέξης
  */
-export function calculateIsopsephy(text: string): number {
+export function calculateIsopsephy(
+  text: string,
+  system: NumberingSystem = NumberingSystem.IONIAN
+): number {
   if (!text) return 0;
+
+  if (system === NumberingSystem.ENGLISH_BASE6) {
+    let sum = 0;
+    const upper = text.toUpperCase();
+    for (let i = 0; i < upper.length; i++) {
+      const char = upper[i];
+      if (ENGLISH_BASE6_VALUES[char] !== undefined) {
+        sum += ENGLISH_BASE6_VALUES[char];
+      }
+    }
+    return sum;
+  }
+
+  if (system === NumberingSystem.ENGLISH_SIMPLE) {
+    let sum = 0;
+    const upper = text.toUpperCase();
+    for (let i = 0; i < upper.length; i++) {
+      const char = upper[i];
+      if (ENGLISH_SIMPLE_VALUES[char] !== undefined) {
+        sum += ENGLISH_SIMPLE_VALUES[char];
+      }
+    }
+    return sum;
+  }
+
+  // Default: Greek Ionian 27 digits
   let sum = 0;
   for (let i = 0; i < text.length; i++) {
     sum += getCharIsopsephy(text[i]);
@@ -348,9 +393,46 @@ export function calculateIsopsephy(text: string): number {
 /**
  * Επιστροφή αναλυτικής λίστας γραμμάτων και τιμών για ένα κείμενο/λέξη
  */
-export function getWordLettersBreakdown(text: string): LetterBreakdown[] {
+export function getWordLettersBreakdown(
+  text: string,
+  system: NumberingSystem = NumberingSystem.IONIAN
+): LetterBreakdown[] {
   if (!text) return [];
   const letters: LetterBreakdown[] = [];
+
+  if (system === NumberingSystem.ENGLISH_BASE6) {
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const upperChar = char.toUpperCase();
+      const val = ENGLISH_BASE6_VALUES[upperChar];
+      if (val !== undefined) {
+        letters.push({
+          char: upperChar,
+          originalChar: char,
+          value: val,
+        });
+      }
+    }
+    return letters;
+  }
+
+  if (system === NumberingSystem.ENGLISH_SIMPLE) {
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const upperChar = char.toUpperCase();
+      const val = ENGLISH_SIMPLE_VALUES[upperChar];
+      if (val !== undefined) {
+        letters.push({
+          char: upperChar,
+          originalChar: char,
+          value: val,
+        });
+      }
+    }
+    return letters;
+  }
+
+  // Default: Greek
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
     const val = getCharIsopsephy(char);

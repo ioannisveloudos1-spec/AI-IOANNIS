@@ -21,6 +21,14 @@ export type IsopsephySystemKey =
   | "lat_mult6"
   | "eng_standard";
 
+export enum NumberingSystem {
+  IONIAN = "IONIAN",
+  ENGLISH_BASE6 = "ENGLISH_BASE6",
+  ENGLISH_SIMPLE = "ENGLISH_SIMPLE",
+  ENGLISH_JEWISH = "ENGLISH_JEWISH",
+  ENGLISH_SUMERIAN = "ENGLISH_SUMERIAN",
+}
+
 export interface IonicLetter {
   char: string;
   upper: string;

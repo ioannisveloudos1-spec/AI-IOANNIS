@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { SavedIsopsephyItem } from "../types";
 import { HISTORICAL_ISOPSEPHIES, HistoricalIsopsephyEntry } from "../data/historicalIsopsephies";
 import { numberToGreekNumeral, getMathematicalProperties, calculateWordIsopsephy, cleanAndNormalizePolytonic } from "../utils/isopsephy";
-import { Search, Bookmark, Trash2, Download, Upload, Sparkles, Scale, BookOpen, Layers, Check, Copy, ExternalLink, Plus, Folder, Hash, ArrowUpDown, ArrowDownAZ, ArrowUpAZ, ArrowDown01, ArrowUp10, Clock, LayoutGrid, ListFilter } from "lucide-react";
+import { Search, Bookmark, Trash2, Download, Upload, Sparkles, Scale, BookOpen, Layers, Check, Copy, ExternalLink, Plus, Folder, Hash, ArrowUpDown, ArrowDownAZ, ArrowUpAZ, ArrowDown01, ArrowUp10, Clock, LayoutGrid, ListFilter, X, CheckSquare, Square, Filter } from "lucide-react";
 
 type SortOption = "value_desc" | "value_asc" | "alpha_asc" | "alpha_desc" | "date_desc" | "date_asc" | "count_desc";
 type ViewMode = "folders" | "flat";
@@ -51,12 +51,66 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
   const [viewMode, setViewMode] = useState<ViewMode>("folders");
   const [compareItemIds, setCompareItemIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
+
+  // Counts for words and phrases
+  const singleWordsCount = useMemo(() => savedItems.filter((i) => !i.isPhrase).length, [savedItems]);
+  const phrasesCount = useMemo(() => savedItems.filter((i) => i.isPhrase).length, [savedItems]);
 
   // New item modal or inline state
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [newText, setNewText] = useState<string>("");
   const [newNotes, setNewNotes] = useState<string>("");
   const [newCategory, setNewCategory] = useState<string>("Προσωπικό");
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedItemIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAllFiltered = () => {
+    if (selectedItemIds.size === filteredAndSortedItems.length) {
+      setSelectedItemIds(new Set());
+    } else {
+      setSelectedItemIds(new Set(filteredAndSortedItems.map((i) => i.id)));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedItemIds.size === 0) return;
+    if (confirm(`Είστε βέβαιοι ότι θέλετε να διαγράψετε τα ${selectedItemIds.size} επιλεγμένα στοιχεία;`)) {
+      selectedItemIds.forEach((id) => onDeleteItem(id));
+      setSelectedItemIds(new Set());
+      setIsSelectMode(false);
+    }
+  };
+
+  const handleDeleteOnlyWords = () => {
+    const wordItems = savedItems.filter((i) => !i.isPhrase);
+    if (wordItems.length === 0) {
+      alert("Δεν υπάρχουν μεμονωμένες λέξεις προς διαγραφή.");
+      return;
+    }
+    if (confirm(`Είστε βέβαιοι ότι θέλετε να διαγράψετε και τις ${wordItems.length} μεμονωμένες λέξεις (κρατώντας μόνο τις φράσεις);`)) {
+      wordItems.forEach((i) => onDeleteItem(i.id));
+    }
+  };
+
+  const handleDeleteOnlyPhrases = () => {
+    const phraseItems = savedItems.filter((i) => i.isPhrase);
+    if (phraseItems.length === 0) {
+      alert("Δεν υπάρχουν φράσεις προς διαγραφή.");
+      return;
+    }
+    if (confirm(`Είστε βέβαιοι ότι θέλετε να διαγράψετε και τις ${phraseItems.length} φράσεις (κρατώντας μόνο τις λέξεις);`)) {
+      phraseItems.forEach((i) => onDeleteItem(i.id));
+    }
+  };
 
   // Filtered and sorted saved items
   const filteredAndSortedItems = useMemo(() => {
@@ -376,9 +430,9 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
 
                 <div className="flex bg-[#0e0c0a] p-1 rounded-lg border border-[#2a2218]">
                   {[
-                    { id: "all", label: "Όλα" },
-                    { id: "words", label: "Λέξεις" },
-                    { id: "phrases", label: "Φράσεις" },
+                    { id: "all", label: `Όλα (${savedItems.length})` },
+                    { id: "words", label: `Λέξεις (${singleWordsCount})` },
+                    { id: "phrases", label: `Φράσεις (${phrasesCount})` },
                   ].map((c) => (
                     <button
                       key={c.id}
@@ -394,9 +448,48 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                   ))}
                 </div>
 
+                {/* Batch Delete Words / Phrases Dropdown or Buttons */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsSelectMode(!isSelectMode)}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-serif border transition-all cursor-pointer ${
+                      isSelectMode
+                        ? "bg-[#c89b3c]/20 border-[#c89b3c] text-[#e6c670] font-bold"
+                        : "bg-[#181410] border-[#382b1d] text-[#a69680] hover:text-[#f5ecd8]"
+                    }`}
+                    title="Ενεργοποίηση πολλαπλής επιλογής"
+                  >
+                    <CheckSquare className="w-3.5 h-3.5" />
+                    <span>{isSelectMode ? "Ακύρωση Επιλογής" : "Επιλογή"}</span>
+                  </button>
+
+                  {singleWordsCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteOnlyWords}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#221313] hover:bg-[#331a1a] text-red-300 hover:text-red-200 text-xs font-serif border border-red-900/40 transition-colors cursor-pointer"
+                      title="Διαγραφή όλων των μεμονωμένων λέξεων (κρατούνται οι φράσεις)"
+                    >
+                      Διαγραφή ΜΟΝΟ Λέξεων ({singleWordsCount})
+                    </button>
+                  )}
+
+                  {phrasesCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteOnlyPhrases}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#221313] hover:bg-[#331a1a] text-amber-300 hover:text-amber-200 text-xs font-serif border border-amber-900/40 transition-colors cursor-pointer"
+                      title="Διαγραφή όλων των φράσεων (κρατούνται οι μεμονωμένες λέξεις)"
+                    >
+                      Διαγραφή ΜΟΝΟ Φράσεων ({phrasesCount})
+                    </button>
+                  )}
+                </div>
+
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#271e14] hover:bg-[#382b1d] text-[#e6c670] text-xs font-serif border border-[#c89b3c]/40 font-bold transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#271e14] hover:bg-[#382b1d] text-[#e6c670] text-xs font-serif border border-[#c89b3c]/40 font-bold transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Προσθήκη Λέξης</span>
@@ -409,7 +502,7 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                         onResetToDefault();
                       }
                     }}
-                    className="px-2.5 py-1.5 rounded-lg bg-[#1a1713] hover:bg-[#282119] text-[#c89b3c] hover:text-[#f5ecd8] text-xs font-serif border border-[#3d3022] transition-colors"
+                    className="px-2.5 py-1.5 rounded-lg bg-[#1a1713] hover:bg-[#282119] text-[#c89b3c] hover:text-[#f5ecd8] text-xs font-serif border border-[#3d3022] transition-colors cursor-pointer"
                     title="Επαναφορά στα 9 κύρια ονόματα"
                   >
                     Επαναφορά (9 Ονόματα)
@@ -419,17 +512,44 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                 {savedItems.length > 0 && (
                   <button
                     onClick={() => {
-                      if (confirm("Είστε βέβαιοι ότι θέλετε να διαγράψετε όλα τα αποθηκευμένα στοιχεία;")) {
+                      if (confirm("Είστε βέβαιοι ότι θέλετε να διαγράψετε ΟΛΑ τα αποθηκευμένα στοιχεία;")) {
                         onClearAll();
                       }
                     }}
-                    className="px-2.5 py-1.5 rounded-lg bg-[#201414] hover:bg-[#2e1c1c] text-red-300 text-xs font-serif border border-red-900/40 transition-colors"
+                    className="px-2.5 py-1.5 rounded-lg bg-[#201414] hover:bg-[#2e1c1c] text-red-300 text-xs font-serif border border-red-900/40 transition-colors cursor-pointer"
                   >
-                    Καθαρισμός
+                    Καθαρισμός Όλων
                   </button>
                 )}
               </div>
             </div>
+
+            {/* Selection Toolbar when in Select Mode */}
+            {isSelectMode && (
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-[#221710] border border-[#c89b3c]/40 text-xs font-serif">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSelectAllFiltered}
+                    className="px-2.5 py-1 rounded bg-[#16120e] hover:bg-[#201a14] border border-[#3d3020] text-[#e6c670] transition-colors"
+                  >
+                    {selectedItemIds.size === filteredAndSortedItems.length ? "Αποεπιλογή Όλων" : "Επιλογή Όλων των Εμφανιζόμενων"}
+                  </button>
+                  <span className="text-[#a69680]">
+                    Επιλέχθηκαν: <strong className="text-[#f5ecd8]">{selectedItemIds.size}</strong> από {filteredAndSortedItems.length}
+                  </span>
+                </div>
+
+                {selectedItemIds.size > 0 && (
+                  <button
+                    onClick={handleDeleteSelected}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-900/70 hover:bg-red-800 text-red-100 font-bold border border-red-600/50 shadow-md transition-all cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Διαγραφή ({selectedItemIds.size}) Επιλεγμένων</span>
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Quick Isopsephy Group Jump Pills */}
             {savedItems.length > 0 && (
@@ -487,23 +607,52 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredAndSortedItems.map((item) => {
                   const isCompared = compareItemIds.includes(item.id);
+                  const isSelected = selectedItemIds.has(item.id);
                   const greekNum = item.greekNumeral || numberToGreekNumeral(item.value);
 
                   return (
                     <div
                       key={item.id}
-                      className={`p-4 rounded-xl bg-[#171410] border transition-all space-y-3 shadow-md ${
-                        isCompared ? "border-emerald-500/60 bg-[#162217]" : "border-[#2d241b] hover:border-[#423425]"
+                      className={`p-4 rounded-xl bg-[#171410] border transition-all space-y-3 shadow-md relative ${
+                        isSelected
+                          ? "border-[#c89b3c] bg-[#221a12]"
+                          : isCompared
+                          ? "border-emerald-500/60 bg-[#162217]"
+                          : "border-[#2d241b] hover:border-[#423425]"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-0.5">
-                          <span className="text-lg font-serif font-bold text-[#f5ecd8] leading-tight block">
-                            {renderHighlightedText(item.text, searchTerm)}
-                          </span>
-                          <span className="text-[10px] text-[#8c7e6c] font-mono">
-                            {item.category} • {item.isPhrase ? `Φράση (${item.wordCount} λέξεις)` : "Λέξη"}
-                          </span>
+                        <div className="flex items-start gap-2.5">
+                          {isSelectMode && (
+                            <button
+                              type="button"
+                              onClick={() => toggleSelectOne(item.id)}
+                              className="mt-0.5 text-[#c89b3c] hover:scale-110 transition-transform cursor-pointer"
+                            >
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-[#e6c670]" />
+                              ) : (
+                                <Square className="w-4 h-4 text-[#6e5f50]" />
+                              )}
+                            </button>
+                          )}
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-lg font-serif font-bold text-[#f5ecd8] leading-tight block">
+                                {renderHighlightedText(item.text, searchTerm)}
+                              </span>
+                              <button
+                                onClick={() => onDeleteItem(item.id)}
+                                className="p-1 rounded-md bg-[#201812] hover:bg-red-950/70 border border-[#382b1d] hover:border-red-600/60 text-[#8c7e6c] hover:text-red-400 transition-all flex items-center justify-center cursor-pointer"
+                                title="Διαγραφή λέξης / φράσης (Χ)"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <span className="text-[10px] text-[#8c7e6c] font-mono">
+                              {item.category} • {item.isPhrase ? `Φράση (${item.wordCount} λέξεις)` : "Λέξη"}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="flex flex-col items-end">
@@ -556,10 +705,10 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
 
                           <button
                             onClick={() => onDeleteItem(item.id)}
-                            className="text-[#6e5f50] hover:text-red-400 transition-colors p-1"
-                            title="Διαγραφή"
+                            className="p-1 rounded bg-[#201812] hover:bg-red-950/60 border border-[#33271c] hover:border-red-700/50 text-[#8c7e6c] hover:text-red-400 transition-colors flex items-center justify-center"
+                            title="Διαγραφή (X)"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
@@ -620,24 +769,45 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {items.map((item) => {
                         const isCompared = compareItemIds.includes(item.id);
+                        const isSelected = selectedItemIds.has(item.id);
 
                         return (
                           <div
                             key={item.id}
-                            className={`p-3.5 rounded-xl bg-[#1a1612] border transition-all space-y-2.5 ${
-                              isCompared ? "border-emerald-500/50 bg-[#162217]" : "border-[#2b2219] hover:border-[#3d3023]"
+                            className={`p-3.5 rounded-xl bg-[#1a1612] border transition-all space-y-2.5 relative ${
+                              isSelected
+                                ? "border-[#c89b3c] bg-[#221a12]"
+                                : isCompared
+                                ? "border-emerald-500/50 bg-[#162217]"
+                                : "border-[#2b2219] hover:border-[#3d3023]"
                             }`}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="text-base font-serif font-bold text-[#f5ecd8] leading-tight">
-                                {renderHighlightedText(item.text, searchTerm)}
-                              </span>
+                              <div className="flex items-start gap-2">
+                                {isSelectMode && (
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleSelectOne(item.id)}
+                                    className="mt-0.5 text-[#c89b3c] hover:scale-110 transition-transform cursor-pointer"
+                                  >
+                                    {isSelected ? (
+                                      <CheckSquare className="w-4 h-4 text-[#e6c670]" />
+                                    ) : (
+                                      <Square className="w-4 h-4 text-[#6e5f50]" />
+                                    )}
+                                  </button>
+                                )}
+                                <span className="text-base font-serif font-bold text-[#f5ecd8] leading-tight">
+                                  {renderHighlightedText(item.text, searchTerm)}
+                                </span>
+                              </div>
+
                               <button
                                 onClick={() => onDeleteItem(item.id)}
-                                className="text-[#6e5f50] hover:text-red-400 transition-colors p-1"
-                                title="Διαγραφή"
+                                className="p-1 rounded-md bg-[#201812] hover:bg-red-950/70 border border-[#382b1d] hover:border-red-600/60 text-[#8c7e6c] hover:text-red-400 transition-all flex items-center justify-center flex-shrink-0 cursor-pointer"
+                                title="Διαγραφή λέξης / φράσης (Χ)"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <X className="w-3.5 h-3.5" />
                               </button>
                             </div>
 
@@ -669,6 +839,14 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                                   title="Αντιγραφή"
                                 >
                                   {copiedId === item.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                                </button>
+
+                                <button
+                                  onClick={() => onDeleteItem(item.id)}
+                                  className="p-1 rounded bg-[#201812] hover:bg-red-950/60 border border-[#33271c] hover:border-red-700/50 text-[#8c7e6c] hover:text-red-400 transition-colors flex items-center justify-center cursor-pointer"
+                                  title="Διαγραφή (X)"
+                                >
+                                  <X className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             </div>

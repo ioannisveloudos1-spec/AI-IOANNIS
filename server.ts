@@ -93,13 +93,13 @@ async function startServer() {
         });
       }
 
-      const prompt = `Είσαι η «Τ.Ν. ΙΩΑΝΝΗΣ 1.0», ο κορυφαίος ειδικός στην Ελληνική Ισοψηφία και την Αρχαιοελληνική/Κλασική Γραμματεία.
-Αποστολή σου είναι να βρεις και να καταγράψεις υπαρκτές αρχαιοελληνικές, πλατωνικές, ομηρικές, θεολογικές ή φιλοσοφικές λέξεις και εκφράσεις που έχουν ΑΚΡΙΒΩΣ λεξαριθμική αξία (Ιωνική Αρίθμηση 27 ψηφίων) ίση με τον αριθμό ${target}.
+      const prompt = `Είσαι η «Τ.Ν. ΙΩΑΝΝΗΣ 1.0», ο κορυφαίος ειδικός στην Ελληνική Ισοψηφία και την Αρχαιοελληνική, Βιβλική, Φιλοσοφική και Κλασική Γραμματεία.
+Αποστολή σου είναι να βρεις και να καταγράψεις όσο το δυνατόν περισσότερες (τουλάχιστον 15-25) υπαρκτές αρχαιοελληνικές, πλατωνικές, ομηρικές, εκκλησιαστικές, θεολογικές, μυθολογικές ή φιλοσοφικές λέξεις και εκφράσεις που έχουν ΑΚΡΙΒΩΣ λεξαριθμική αξία (Ιωνική Αρίθμηση 27 ψηφίων) ίση με τον αριθμό ${target}.
 
-ΚΑΝΟΝΕΣ ΙΣΟΨΗΦΙΑΣ:
-- Α=1, Β=2, Γ=3, Δ=4, Ε=5, Ϛ=6, Ζ=7, Η=8, Θ=9
-- Ι=10, Κ=20, Λ=30, Μ=40, Ν=50, Ξ=60, Ο=70, Π=80, Ϟ=90
-- Ρ=100, Σ=200, Τ=300, Υ=400, Φ=500, Χ=600, Ψ=700, Ω=800, Ϡ=900
+ΚΑΝΟΝΕΣ ΙΣΟΨΗΦΙΑΣ (ΙΩΝΙΚΗ ΑΡΙΘΜΗΣΗ 27 ΨΗΦΙΩΝ):
+- Μονάδες: Α=1, Β=2, Γ=3, Δ=4, Ε=5, Ϛ/Ϝ=6, Ζ=7, Η=8, Θ=9
+- Δεκάδες: Ι=10, Κ=20, Λ=30, Μ=40, Ν=50, Ξ=60, Ο=70, Π=80, Ϟ=90
+- Εκατοντάδες: Ρ=100, Σ/ς=200, Τ=300, Υ=400, Φ=500, Χ=600, Ψ=700, Ω=800, Ϡ=900
 - Σημείωση: Στο τελικό σίγμα 'ς' ισχύει η αξία 200.
 
 Παράδωσε ΜΟΝΟ μια έγκυρη δομή JSON (χωρίς markdown backticks ή άλλο περιττό κείμενο) με την εξής μορφή:
@@ -108,8 +108,8 @@ async function startServer() {
   "results": [
     {
       "text": "ΛΕΞΗ Ή ΦΡΑΣΗ",
-      "meaning": "Σύντομη περιγραφή / μετάφραση στα ελληνικά",
-      "source": "Πηγή (π.χ. Πλάτων, Όμηρος, Καινή Διαθήκη, Ορφικά, Πυθαγόρειοι)",
+      "meaning": "Σύντομη περιγραφή / μετάφραση / σημασία στα ελληνικά",
+      "source": "Πηγή (π.χ. Πλάτων, Όμηρος, Καινή Διαθήκη, Ορφικά, Πυθαγόρειοι, Αριθμοσοφία)",
       "calculatedSum": ${target}
     }
   ],
@@ -122,13 +122,16 @@ async function startServer() {
   ]
 }
 
-ΑΠΑΓΟΡΕΥΕΤΑΙ η χρήση LaTeX. Επιστροφή ΜΟΝΟ JSON.`;
+ΑΠΑΓΟΡΕΥΕΤΑΙ η χρήση LaTeX. Παράθεσε πλούσια λίστα αποτελεσμάτων. Επιστροφή ΜΟΝΟ JSON.`;
+
+      let aiResults: any[] = [];
+      let aiCombinations: any[] = [];
 
       if (ai) {
-        const candidateModels = ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-flash-latest"];
+        const candidateModels = ["gemini-2.5-flash", "gemini-3.7-flash", "gemini-flash-latest"];
         for (const modelName of candidateModels) {
           try {
-            const response = await ai.models.generateContent({
+            const aiPromise = ai.models.generateContent({
               model: modelName,
               contents: prompt,
               config: {
@@ -136,13 +139,22 @@ async function startServer() {
               },
             });
 
+            // 6-second timeout race per model
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("AI generation timeout")), 6000)
+            );
+
+            const response: any = await Promise.race([aiPromise, timeoutPromise]);
+
             if (response && response.text) {
               const parsed = JSON.parse(response.text.trim());
-              return res.json({
-                success: true,
-                source: "AI Online Dictionary Search",
-                ...parsed,
-              });
+              if (Array.isArray(parsed.results)) {
+                aiResults = parsed.results;
+              }
+              if (Array.isArray(parsed.relatedCombinations)) {
+                aiCombinations = parsed.relatedCombinations;
+              }
+              break;
             }
           } catch (err: any) {
             console.warn(`Online search with ${modelName} issue:`, err?.message || err);
@@ -150,13 +162,49 @@ async function startServer() {
         }
       }
 
-      // Offline fallback dictionary matches
+      // Merge with offline curated corpus to maximize breadth and depth
+      const offlineMatches = getOfflineIsopsephyMatches(target);
+      const offlineCombos = getOfflineIsopsephyCombinations(target);
+
+      const combinedMap = new Map<string, any>();
+
+      // Add offline matches first
+      for (const item of offlineMatches) {
+        const key = item.text.trim().toUpperCase();
+        combinedMap.set(key, item);
+      }
+
+      // Add AI matches
+      for (const item of aiResults) {
+        if (item && item.text) {
+          const key = item.text.trim().toUpperCase();
+          if (!combinedMap.has(key)) {
+            combinedMap.set(key, {
+              text: item.text.trim().toUpperCase(),
+              meaning: item.meaning || "Ισόψηφο εύρημα",
+              source: item.source || "Αρχαία / Φιλοσοφική Γραμματεία",
+              calculatedSum: target,
+            });
+          }
+        }
+      }
+
+      // Combined combinations
+      const combinedCombos = [...offlineCombos];
+      for (const c of aiCombinations) {
+        if (c && c.expression && !combinedCombos.some(x => x.expression === c.expression)) {
+          combinedCombos.push(c);
+        }
+      }
+
+      const finalResults = Array.from(combinedMap.values());
+
       return res.json({
         success: true,
-        source: "Corpus Offline Library",
+        source: aiResults.length > 0 ? "AI Online Dictionary & Corpus Search" : "Corpus Offline Library",
         target,
-        results: getOfflineIsopsephyMatches(target),
-        relatedCombinations: getOfflineIsopsephyCombinations(target),
+        results: finalResults,
+        relatedCombinations: combinedCombos,
       });
     } catch (error: any) {
       console.error("Online search error:", error);
@@ -164,77 +212,157 @@ async function startServer() {
     }
   });
 
-  // Web URL Reader & Greek Text Extraction endpoint
+  // Web URL Reader & Gematria / Text Extraction endpoint (supports multi-page crawling)
   app.post("/api/fetch-web-text", async (req, res) => {
     try {
-      const { url } = req.body;
+      const { url, pagesCount = 1, startPage = 1 } = req.body;
       if (!url || typeof url !== "string" || !url.startsWith("http")) {
         return res.status(400).json({ success: false, error: "Μη έγκυρο URL (πρέπει να ξεκινά με http:// ή https://)." });
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      const isGematrix = /gematrix\.org/i.test(url);
+      const isArithmosofia = /arithmosofia\.com/i.test(url);
 
-      const response = await fetch(url, {
-        signal: controller.signal,
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,text/plain",
-        },
-      });
-      clearTimeout(timeoutId);
+      const fetchSinglePage = async (pageUrl: string) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        try {
+          const response = await fetch(pageUrl, {
+            signal: controller.signal,
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml,text/plain",
+            },
+          });
+          clearTimeout(timeoutId);
+          if (!response.ok) return null;
+          return await response.text();
+        } catch {
+          clearTimeout(timeoutId);
+          return null;
+        }
+      };
 
-      if (!response.ok) {
+      // Base URL without page param
+      const baseObj = new URL(url);
+      const numPagesToFetch = Math.min(Math.max(parseInt(pagesCount, 10) || 1, 1), 25);
+      const initialPageNum = Math.max(parseInt(startPage, 10) || 1, 1);
+
+      // Build array of URLs to fetch for this batch
+      const urlsToFetch: string[] = [];
+      for (let p = initialPageNum; p < initialPageNum + numPagesToFetch; p++) {
+        const pUrl = new URL(url);
+        pUrl.searchParams.set("page", String(p));
+        urlsToFetch.push(pUrl.toString());
+      }
+
+      // Fetch primary (first) page first to detect total pages and verify connectivity
+      const primaryUrl = urlsToFetch[0];
+      const primaryHtml = await fetchSinglePage(primaryUrl);
+      if (!primaryHtml) {
         return res.status(400).json({
           success: false,
-          error: `Αδυναμία λήψης ιστοσελίδας (HTTP ${response.status}: ${response.statusText})`,
+          error: `Αδυναμία λήψης της σελίδας ${initialPageNum} (${primaryUrl}) ή χρονικό όριο σύνδεσης.`,
         });
       }
 
-      const html = await response.text();
-
-      // Check for pagination indicators in HTML (like ASP.NET GridView or numbered pages)
-      const pageNumbersMatch = html.match(/__doPostBack\([^)]*Page\$(\d+)[^)]*\)/g) || html.match(/>(\d+)<\/a>/g);
+      // Check total pages detected in HTML
       let detectedPagesCount = 1;
-      if (pageNumbersMatch && pageNumbersMatch.length > 0) {
-        const numbers = pageNumbersMatch
+      const gematrixPagerMatch = primaryHtml.match(/href="[^"]*page=(\d+)"/g);
+      if (gematrixPagerMatch) {
+        const pNums = gematrixPagerMatch
           .map(m => {
-            const num = m.match(/\d+/);
-            return num ? parseInt(num[0]) : 1;
+            const match = m.match(/page=(\d+)/);
+            return match ? parseInt(match[1], 10) : 1;
           })
           .filter(n => !isNaN(n) && n > 0);
-        if (numbers.length > 0) {
-          detectedPagesCount = Math.max(...numbers, 1);
+        if (pNums.length > 0) {
+          detectedPagesCount = Math.max(...pNums, 1);
+        }
+      } else {
+        const pageNumbersMatch = primaryHtml.match(/__doPostBack\([^)]*Page\$(\d+)[^)]*\)/g) || primaryHtml.match(/>(\d+)<\/a>/g);
+        if (pageNumbersMatch && pageNumbersMatch.length > 0) {
+          const numbers = pageNumbersMatch
+            .map(m => {
+              const num = m.match(/\d+/);
+              return num ? parseInt(num[0]) : 1;
+            })
+            .filter(n => !isNaN(n) && n > 0);
+          if (numbers.length > 0) {
+            detectedPagesCount = Math.max(...numbers, 1);
+          }
         }
       }
 
-      // Extract plain text from HTML (remove script, style, html tags, decode entities)
-      let cleaned = html
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ")
-        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ")
-        .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, " ")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/\s+/g, " ")
-        .trim();
+      let allHtmls = [primaryHtml];
 
-      // Limit to 100,000 characters for rich multi-table pages
-      if (cleaned.length > 100000) {
-        cleaned = cleaned.substring(0, 100000);
+      // If user requested multi-page crawl and more than 1 page is requested in this batch
+      if (urlsToFetch.length > 1) {
+        const remainingUrls = urlsToFetch.slice(1);
+        const fetchPromises = remainingUrls.map(u => fetchSinglePage(u));
+        const extraHtmls = await Promise.all(fetchPromises);
+        extraHtmls.forEach(h => {
+          if (h) allHtmls.push(h);
+        });
+      }
+
+      // Extract items from all fetched pages
+      let structuredItems: Array<{ phrase: string; jewish?: number; english?: number; simple?: number }> = [];
+
+      if (isGematrix) {
+        // Regex extract Gematrix table rows
+        const rowRegex = /<tr[^>]*>\s*<td[^>]*>\s*<a[^>]*href="[^"]*word=[^"]*"[^>]*>([\s\S]*?)<\/a>\s*<\/td>\s*<td[^>]*>\s*<a[^>]*>(\d+)<\/a>\s*<\/td>\s*<td[^>]*>\s*<a[^>]*>(\d+)<\/a>\s*<\/td>\s*<td[^>]*>\s*<a[^>]*>(\d+)<\/a>\s*<\/td>/gi;
+        
+        for (const htmlContent of allHtmls) {
+          let match;
+          while ((match = rowRegex.exec(htmlContent)) !== null) {
+            const rawPhrase = match[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#39;/g, "'").trim();
+            if (rawPhrase) {
+              structuredItems.push({
+                phrase: rawPhrase,
+                jewish: parseInt(match[2], 10),
+                english: parseInt(match[3], 10),
+                simple: parseInt(match[4], 10),
+              });
+            }
+          }
+        }
+      }
+
+      // Also clean full combined text for general isopsephy scanner
+      let combinedCleanedText = "";
+      for (const htmlContent of allHtmls) {
+        const cleaned = htmlContent
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ")
+          .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ")
+          .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, " ")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\s+/g, " ")
+          .trim();
+        combinedCleanedText += " " + cleaned;
+      }
+
+      if (combinedCleanedText.length > 500000) {
+        combinedCleanedText = combinedCleanedText.substring(0, 500000);
       }
 
       return res.json({
         success: true,
         url,
+        startPage: initialPageNum,
+        endPage: initialPageNum + allHtmls.length - 1,
         totalPagesDetected: detectedPagesCount,
-        isAspnetPaging: html.includes("__doPostBack") && html.includes("Page$"),
-        textLength: cleaned.length,
-        extractedText: cleaned,
+        pagesFetched: allHtmls.length,
+        isGematrix,
+        structuredItemsCount: structuredItems.length,
+        structuredItems: structuredItems.slice(0, 3000), // Return structured table items if parsed
+        extractedText: combinedCleanedText.trim(),
       });
     } catch (error: any) {
       console.error("Fetch URL error:", error);
