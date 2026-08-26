@@ -29,6 +29,9 @@ import {
   Trash2,
   ArrowUpDown,
   X,
+  FileSpreadsheet,
+  ShieldCheck,
+  Tag,
 } from "lucide-react";
 import {
   calculateIsopsephy,
@@ -38,6 +41,13 @@ import {
 } from "../utils/isopsephy";
 import { SavedIsopsephyItem, NumberingSystem } from "../types";
 import { translateEnglishToGreek } from "../utils/translator";
+import {
+  TOPIC_CATEGORIES,
+  categorizeTerm,
+  cleanScannedMatches,
+  exportToCsvFile,
+  QualityFilterOptions,
+} from "../utils/topicClustering";
 
 interface OnlineFinderTabProps {
   onSaveItem?: (item: Omit<SavedIsopsephyItem, "id" | "createdAt">) => void;
@@ -154,11 +164,66 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
   const [urlResultsSearch, setUrlResultsSearch] = useState<string>("");
   const [urlResultsSort, setUrlResultsSort] = useState<"count_desc" | "alpha_asc" | "length_desc" | "value_asc">("count_desc");
   const [urlFilterType, setUrlFilterType] = useState<"all" | "words" | "phrases">("all");
+  const [urlSelectedTopic, setUrlSelectedTopic] = useState<string>("all");
   const [lastCrawledRange, setLastCrawledRange] = useState<{ start: number; end: number } | null>(null);
+  const [qualityCleanReport, setQualityCleanReport] = useState<string | null>(null);
 
   // Helper counts
   const urlSingleWordsCount = urlScannedMatches.filter((m) => !m.text.trim().includes(" ")).length;
   const urlPhrasesCount = urlScannedMatches.filter((m) => m.text.trim().includes(" ")).length;
+
+  const handleApplySmartQualityClean = () => {
+    if (urlScannedMatches.length === 0) return;
+    const { cleaned, removedCount } = cleanScannedMatches(urlScannedMatches, {
+      minWords: 1,
+      maxWords: 8,
+      removeSymbols: true,
+      removePureNumbers: true,
+      removeSingleLetters: true,
+      filterDuplicatePhrases: true,
+    });
+    setUrlScannedMatches(cleaned);
+    setQualityCleanReport(`Αφαιρέθηκαν επιτυχώς ${removedCount} περιττά στοιχεία θορύβου/συμβόλων.`);
+    setTimeout(() => setQualityCleanReport(null), 4000);
+  };
+
+  const handleExportCsv = () => {
+    if (urlScannedMatches.length === 0) return;
+    const headers = [
+      "Λέξη / Φράση (Text)",
+      "Ελληνική Μετάφραση (Translation)",
+      "Αριθμητική Αξία (Gematria Value)",
+      "Πυθμένας (Digital Root)",
+      "Ελληνική Αρίθμηση (Greek Numeral)",
+      "Πλήθος Εμφανίσεων (Count)",
+      "Πλήθος Λέξεων (Word Count)",
+      "Θεματική Κατηγορία (Topic)",
+      "Πηγή URL / Σελίδες (Source)",
+    ];
+
+    const rows = urlScannedMatches.map((m) => {
+      const topic = categorizeTerm(m.text, m.translation || undefined);
+      const isPhrase = m.text.trim().includes(" ");
+      const wordCount = m.text.trim().split(/\s+/).length;
+      return [
+        m.text,
+        m.translation || "",
+        m.value,
+        calculatePythmen(m.value),
+        numberToGreekNumeral(m.value),
+        m.count,
+        wordCount,
+        topic.name,
+        lastCrawledRange ? `${targetUrl} (Σελ. ${lastCrawledRange.start}-${lastCrawledRange.end})` : targetUrl,
+      ];
+    });
+
+    exportToCsvFile(
+      headers,
+      rows,
+      `gematria_scanned_matches_${crawlStartPage}_${crawlEndPage}_target_${filterTargetFromUrl || "all"}`
+    );
+  };
 
   const handleDeleteOnlyWordsFromUrl = () => {
     if (urlSingleWordsCount === 0) return;
@@ -1220,6 +1285,17 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* Export CSV (Excel) Button */}
+                  <button
+                    type="button"
+                    onClick={handleExportCsv}
+                    className="px-3 py-2 rounded-lg bg-[#141b12] hover:bg-[#1f2d1c] border border-emerald-700/50 text-emerald-300 text-xs font-serif font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Εξαγωγή σε υπολογιστικό φύλλο Excel (.csv) με πλήρη στοιχεία και ελληνικούς χαρακτήρες"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                    <span>Εξαγωγή Excel/CSV</span>
+                  </button>
+
                   {/* Export JSON Button */}
                   <button
                     type="button"
@@ -1244,7 +1320,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                       a.click();
                       URL.revokeObjectURL(url);
                     }}
-                    className="px-3.5 py-2 rounded-lg bg-[#140f0a] hover:bg-[#241a10] border border-[#c89b3c]/40 text-[#e6c670] text-xs font-serif font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-3 py-2 rounded-lg bg-[#140f0a] hover:bg-[#241a10] border border-[#c89b3c]/40 text-[#e6c670] text-xs font-serif font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <FileDown className="w-4 h-4 text-[#c89b3c]" />
                     <span>Εξαγωγή JSON ({urlScannedMatches.length})</span>
@@ -1329,82 +1405,132 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
               </div>
 
               {/* Search, Filter & Sort Inside Collected Results */}
-              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between p-3 rounded-xl bg-[#120f0c] border border-[#c89b3c]/20">
-                <div className="relative flex-1">
-                  <input
-                    type="text"
-                    value={urlResultsSearch}
-                    onChange={(e) => setUrlResultsSearch(e.target.value)}
-                    placeholder="Αναζήτηση λέξης, φράσης ή μετάφρασης στα αποτελέσματα..."
-                    className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#1a1612] border border-[#c89b3c]/30 text-[#f5ebd7] text-xs font-serif outline-none focus:border-[#c89b3c]"
-                  />
-                  <Search className="w-4 h-4 text-[#c89b3c] absolute left-3 top-1/2 -translate-y-1/2" />
+              <div className="flex flex-col gap-3 p-3 rounded-xl bg-[#120f0c] border border-[#c89b3c]/20">
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={urlResultsSearch}
+                      onChange={(e) => setUrlResultsSearch(e.target.value)}
+                      placeholder="Αναζήτηση λέξης, φράσης ή μετάφρασης στα αποτελέσματα..."
+                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#1a1612] border border-[#c89b3c]/30 text-[#f5ebd7] text-xs font-serif outline-none focus:border-[#c89b3c]"
+                    />
+                    <Search className="w-4 h-4 text-[#c89b3c] absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+
+                  {/* Filter Pills: All / Words Only / Phrases Only */}
+                  <div className="flex bg-[#1a1612] p-1 rounded-lg border border-[#c89b3c]/25">
+                    {[
+                      { id: "all", label: `Όλα (${urlScannedMatches.length})` },
+                      { id: "words", label: `Λέξεις (${urlSingleWordsCount})` },
+                      { id: "phrases", label: `Φράσεις (${urlPhrasesCount})` },
+                    ].map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => setUrlFilterType(c.id as any)}
+                        className={`px-2.5 py-1 rounded text-xs font-serif transition-colors cursor-pointer ${
+                          urlFilterType === c.id
+                            ? "bg-[#251e17] text-[#e6c670] font-bold border border-[#c89b3c]/40"
+                            : "text-[#8c7e6c] hover:text-[#d6c7b2]"
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <ArrowUpDown className="w-4 h-4 text-[#c89b3c]" />
+                    <select
+                      value={urlResultsSort}
+                      onChange={(e: any) => setUrlResultsSort(e.target.value)}
+                      className="px-3 py-2 rounded-lg bg-[#1a1612] border border-[#c89b3c]/30 text-[#e6c670] text-xs font-serif outline-none"
+                    >
+                      <option value="count_desc">Συχνότητα (Υψηλότερη)</option>
+                      <option value="alpha_asc">Αλφαβητική σειρά (A-Z)</option>
+                      <option value="length_desc">Μέγεθος φράσης (Μεγαλύτερο)</option>
+                      <option value="value_asc">Αριθμητική τιμή (Αύξουσα)</option>
+                    </select>
+                  </div>
                 </div>
 
-                {/* Filter Pills: All / Words Only / Phrases Only */}
-                <div className="flex bg-[#1a1612] p-1 rounded-lg border border-[#c89b3c]/25">
-                  {[
-                    { id: "all", label: `Όλα (${urlScannedMatches.length})` },
-                    { id: "words", label: `Λέξεις (${urlSingleWordsCount})` },
-                    { id: "phrases", label: `Φράσεις (${urlPhrasesCount})` },
-                  ].map((c) => (
+                {/* Thematic Topic Clustering Pills */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-[#c89b3c]/15">
+                  <span className="text-[11px] font-serif text-[#8c7e6c] flex items-center gap-1 mr-1">
+                    <Tag className="w-3 h-3 text-[#c89b3c]" />
+                    <span>Θεματική Ομαδοποίηση:</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setUrlSelectedTopic("all")}
+                    className={`px-2 py-0.5 rounded text-[11px] font-serif transition-colors cursor-pointer ${
+                      urlSelectedTopic === "all"
+                        ? "bg-[#c89b3c]/20 text-[#e6c670] font-bold border border-[#c89b3c]"
+                        : "bg-[#181410] text-[#a69680] hover:text-[#f5ecd8] border border-[#33271c]"
+                    }`}
+                  >
+                    Όλες οι Θεματικές
+                  </button>
+                  {TOPIC_CATEGORIES.map((cat) => (
                     <button
-                      key={c.id}
-                      onClick={() => setUrlFilterType(c.id as any)}
-                      className={`px-2.5 py-1 rounded text-xs font-serif transition-colors cursor-pointer ${
-                        urlFilterType === c.id
-                          ? "bg-[#251e17] text-[#e6c670] font-bold border border-[#c89b3c]/40"
-                          : "text-[#8c7e6c] hover:text-[#d6c7b2]"
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setUrlSelectedTopic(cat.id)}
+                      className={`px-2 py-0.5 rounded text-[11px] font-serif transition-colors flex items-center gap-1 cursor-pointer ${
+                        urlSelectedTopic === cat.id
+                          ? `${cat.badgeBg} ${cat.badgeText} font-bold border ${cat.badgeBorder}`
+                          : "bg-[#181410] text-[#a69680] hover:text-[#f5ecd8] border border-[#33271c]"
                       }`}
                     >
-                      {c.label}
+                      <span>{cat.icon}</span>
+                      <span>{cat.name}</span>
                     </button>
                   ))}
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown className="w-4 h-4 text-[#c89b3c]" />
-                  <select
-                    value={urlResultsSort}
-                    onChange={(e: any) => setUrlResultsSort(e.target.value)}
-                    className="px-3 py-2 rounded-lg bg-[#1a1612] border border-[#c89b3c]/30 text-[#e6c670] text-xs font-serif outline-none"
-                  >
-                    <option value="count_desc">Συχνότητα (Υψηλότερη)</option>
-                    <option value="alpha_asc">Αλφαβητική σειρά (A-Z)</option>
-                    <option value="length_desc">Μέγεθος φράσης (Μεγαλύτερο)</option>
-                    <option value="value_asc">Αριθμητική τιμή (Αύξουσα)</option>
-                  </select>
-                </div>
               </div>
 
-              {/* Quick Deletion of Words / Phrases Actions */}
-              {(urlSingleWordsCount > 0 || urlPhrasesCount > 0) && (
-                <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-[#16120e] border border-[#2e2318] text-xs font-serif">
-                  <span className="text-[#8c7e6c]">Επιλεκτική Διαγραφή από τα Αποτελέσματα:</span>
-                  <div className="flex items-center gap-2">
-                    {urlSingleWordsCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={handleDeleteOnlyWordsFromUrl}
-                        className="px-2.5 py-1 rounded bg-[#201414] hover:bg-[#301a1a] text-red-300 hover:text-red-200 border border-red-900/40 transition-colors cursor-pointer"
-                        title="Αφαίρεση μόνο των μεμονωμένων λέξεων από τη λίστα"
-                      >
-                        Διαγραφή ΜΟΝΟ Λέξεων ({urlSingleWordsCount})
-                      </button>
-                    )}
-                    {urlPhrasesCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={handleDeleteOnlyPhrasesFromUrl}
-                        className="px-2.5 py-1 rounded bg-[#201414] hover:bg-[#301a1a] text-amber-300 hover:text-amber-200 border border-amber-900/40 transition-colors cursor-pointer"
-                        title="Αφαίρεση μόνο των φράσεων από τη λίστα"
-                      >
-                        Διαγραφή ΜΟΝΟ Φράσεων ({urlPhrasesCount})
-                      </button>
-                    )}
-                  </div>
+              {/* Quality Cleaner & Quick Deletion Actions Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-[#16120e] border border-[#2e2318] text-xs font-serif">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleApplySmartQualityClean}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1f281b] hover:bg-[#2b3a25] text-emerald-300 hover:text-emerald-200 border border-emerald-700/50 font-bold transition-colors cursor-pointer"
+                    title="Αυτόματη αφαίρεση τυχαίων συμβόλων, spam URLs, ορφανών αριθμών και περιττού θορύβου"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Έξυπνος Καθαρισμός Θορύβου</span>
+                  </button>
+                  {qualityCleanReport && (
+                    <span className="text-emerald-400 font-sans text-xs animate-pulse">
+                      {qualityCleanReport}
+                    </span>
+                  )}
                 </div>
-              )}
+
+                <div className="flex items-center gap-2">
+                  {urlSingleWordsCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteOnlyWordsFromUrl}
+                      className="px-2.5 py-1 rounded bg-[#201414] hover:bg-[#301a1a] text-red-300 hover:text-red-200 border border-red-900/40 transition-colors cursor-pointer"
+                      title="Αφαίρεση μόνο των μεμονωμένων λέξεων από τη λίστα"
+                    >
+                      Διαγραφή ΜΟΝΟ Λέξεων ({urlSingleWordsCount})
+                    </button>
+                  )}
+                  {urlPhrasesCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteOnlyPhrasesFromUrl}
+                      className="px-2.5 py-1 rounded bg-[#201414] hover:bg-[#301a1a] text-amber-300 hover:text-amber-200 border border-amber-900/40 transition-colors cursor-pointer"
+                      title="Αφαίρεση μόνο των φράσεων από τη λίστα"
+                    >
+                      Διαγραφή ΜΟΝΟ Φράσεων ({urlPhrasesCount})
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {batchSaveStatus && (
                 <div className="p-3 rounded-xl bg-green-950/40 border border-green-800 text-green-300 text-xs font-serif">
@@ -1412,12 +1538,16 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                 </div>
               )}
 
-              {/* Results Grid with Translation */}
+              {/* Results Grid with Translation & Topic Badges */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {urlScannedMatches
                   .filter((m) => {
                     if (urlFilterType === "words" && m.text.trim().includes(" ")) return false;
                     if (urlFilterType === "phrases" && !m.text.trim().includes(" ")) return false;
+                    if (urlSelectedTopic !== "all") {
+                      const topic = categorizeTerm(m.text, m.translation || undefined);
+                      if (topic.id !== urlSelectedTopic) return false;
+                    }
                     if (!urlResultsSearch.trim()) return true;
                     const q = urlResultsSearch.trim().toUpperCase();
                     return (
@@ -1433,14 +1563,22 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                     if (urlResultsSort === "value_asc") return a.value - b.value;
                     return 0;
                   })
-                  .map((m, idx) => (
+                  .map((m, idx) => {
+                    const topic = categorizeTerm(m.text, m.translation || undefined);
+                    return (
                     <div
                       key={idx}
                       className="p-4 rounded-xl bg-[#1a1612] border border-[#c89b3c]/20 hover:border-[#c89b3c]/50 transition-all flex items-start justify-between gap-3 shadow-md"
                     >
                       <div className="space-y-1">
-                        <div className="font-serif font-bold text-sm text-[#f5ebd7] tracking-wide">
-                          {m.text}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className="font-serif font-bold text-sm text-[#f5ebd7] tracking-wide">
+                            {m.text}
+                          </div>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${topic.badgeBg} ${topic.badgeBorder} ${topic.badgeText} flex items-center gap-0.5`}>
+                            <span>{topic.icon}</span>
+                            <span>{topic.name}</span>
+                          </span>
                         </div>
                         {m.translation && (
                           <div className="text-xs font-serif text-[#e6c670] flex items-center gap-1">
@@ -1464,7 +1602,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                               greekNumeral: numberToGreekNumeral(m.value),
                               isPhrase: m.text.includes(" "),
                               wordCount: m.text.split(/\s+/).length,
-                              category: "ΑΝΤΛΗΣΗ URL",
+                              category: topic.name,
                               notes: m.translation
                                 ? `Μετάφραση: ${m.translation} | Αντλήθηκε από ${targetUrl} (Σελ. ${crawlStartPage}-${crawlEndPage})`
                                 : `Αντλήθηκε από ${targetUrl} (Σελ. ${crawlStartPage}-${crawlEndPage})`,
@@ -1484,7 +1622,8 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                         </button>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
               </div>
             </div>
           )}

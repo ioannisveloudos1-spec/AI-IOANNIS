@@ -2,7 +2,8 @@ import React, { useState, useMemo } from "react";
 import { SavedIsopsephyItem } from "../types";
 import { HISTORICAL_ISOPSEPHIES, HistoricalIsopsephyEntry } from "../data/historicalIsopsephies";
 import { numberToGreekNumeral, getMathematicalProperties, calculateWordIsopsephy, cleanAndNormalizePolytonic } from "../utils/isopsephy";
-import { Search, Bookmark, Trash2, Download, Upload, Sparkles, Scale, BookOpen, Layers, Check, Copy, ExternalLink, Plus, Folder, Hash, ArrowUpDown, ArrowDownAZ, ArrowUpAZ, ArrowDown01, ArrowUp10, Clock, LayoutGrid, ListFilter, X, CheckSquare, Square, Filter } from "lucide-react";
+import { Search, Bookmark, Trash2, Download, Upload, Sparkles, Scale, BookOpen, Layers, Check, Copy, ExternalLink, Plus, Folder, Hash, ArrowUpDown, ArrowDownAZ, ArrowUpAZ, ArrowDown01, ArrowUp10, Clock, LayoutGrid, ListFilter, X, CheckSquare, Square, Filter, FileSpreadsheet, Tag } from "lucide-react";
+import { TOPIC_CATEGORIES, categorizeTerm, exportToCsvFile } from "../utils/topicClustering";
 
 type SortOption = "value_desc" | "value_asc" | "alpha_asc" | "alpha_desc" | "date_desc" | "date_asc" | "count_desc";
 type ViewMode = "folders" | "flat";
@@ -211,6 +212,42 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
     downloadAnchor.remove();
   };
 
+  const handleExportCSV = () => {
+    if (savedItems.length === 0) return;
+    const headers = [
+      "Λέξη / Φράση (Text)",
+      "Κανονικοποιημένο (Normalized)",
+      "Αριθμητική Αξία (Isopsephy Value)",
+      "Πυθμένας (Digital Root)",
+      "Ελληνικό Αριθμητικό (Greek Numeral)",
+      "Τύπος (Type)",
+      "Πλήθος Λέξεων (Word Count)",
+      "Κατηγορία (Category)",
+      "Θεματική (Topic)",
+      "Σημειώσεις (Notes)",
+      "Ημερομηνία Αποθήκευσης (Saved At)",
+    ];
+
+    const rows = savedItems.map((item) => {
+      const topic = categorizeTerm(item.text, item.notes);
+      return [
+        item.text,
+        item.normalized,
+        item.value,
+        item.root,
+        item.greekNumeral,
+        item.isPhrase ? "Φράση" : "Λέξη",
+        item.wordCount,
+        item.category || "Γενικά",
+        topic.name,
+        item.notes || "",
+        item.createdAt,
+      ];
+    });
+
+    exportToCsvFile(headers, rows, `lexarithmos_archive_${new Date().toISOString().slice(0, 10)}`);
+  };
+
   const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -338,9 +375,19 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
 
           <div className="flex items-center gap-1.5">
             <button
+              onClick={handleExportCSV}
+              id="btn-export-archive-csv"
+              className="px-2.5 py-1.5 rounded-xl bg-[#141d13] hover:bg-[#1f2e1c] border border-emerald-700/50 text-emerald-300 hover:text-emerald-200 text-xs font-serif flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Εξαγωγή σε υπολογιστικό φύλλο Excel (.csv)"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+              <span className="hidden sm:inline">Excel/CSV</span>
+            </button>
+
+            <button
               onClick={handleExportJSON}
               id="btn-export-archive-json"
-              className="p-2 rounded-xl bg-[#1c1813] hover:bg-[#28221a] border border-[#332a20] text-[#a69680] hover:text-[#f5ecd8] text-xs transition-colors"
+              className="p-2 rounded-xl bg-[#1c1813] hover:bg-[#28221a] border border-[#332a20] text-[#a69680] hover:text-[#f5ecd8] text-xs transition-colors cursor-pointer"
               title="Εξαγωγή JSON"
             >
               <Download className="w-4 h-4" />
