@@ -60,12 +60,6 @@ export const HISTORICAL_ISOPSEPHIES: HistoricalIsopsephyEntry[] = [
         description: "Ο νους, η νόηση και η διάνοια στην ομηρική και κλασική φιλοσοφία.",
         category: "classical",
       },
-      {
-        word: "ΤΑΝΤΑΛΟΣ",
-        breakdown: "300 + 1 + 50 + 300 + 1 + 30 + 70 + 200 = 666 (Τάνταλος = 952 / Τανταλος παραλλαγή)",
-        description: "Μυθολογικό πρόσωπο που συνδέεται με τον αέναο πόθο.",
-        category: "historical",
-      },
     ],
   },
   {
@@ -157,20 +151,8 @@ export const HISTORICAL_ISOPSEPHIES: HistoricalIsopsephyEntry[] = [
       {
         word: "ΑΒΡΑΣΑΞ",
         breakdown: "1 + 2 + 100 + 1 + 200 + 1 + 60 = 365",
-        description: "Μυστικιστικό όνομα της γνωστικής θεότητας (Βασιλείδης) που αντιπροσωπεύει τις 365 εκπορεύσεις.",
-        category: "gnostic",
-      },
-      {
-        word: "ΜΕΙΘΡΑΣ",
-        breakdown: "40 + 5 + 10 + 9 + 100 + 1 + 200 = 365",
-        description: "Ηλιακός θεός Μίθρας στην ελληνική ορθογραφία των ελληνιστικών χρόνων.",
+        description: "Μυστικιστικό όνομα που αντιπροσωπεύει τις 365 ημέρες του ενιαυσίου κύκλου.",
         category: "classical",
-      },
-      {
-        word: "ΝΕΕΙΛΟΣ",
-        breakdown: "50 + 5 + 5 + 10 + 30 + 70 + 200 = 370 (αρχαία γραφή Νείλος = 365 με παραλλαγή Νειλος)",
-        description: "Ο ποταμός Νείλος που συνδέεται με τον ετήσιο κύκλο της πλημμύρας.",
-        category: "historical",
       },
     ],
   },
@@ -219,12 +201,6 @@ export const HISTORICAL_ISOPSEPHIES: HistoricalIsopsephyEntry[] = [
         breakdown: "10 + 800 + 1 + 50 + 50 + 8 + 200 = 1119",
         description: "Το όνομα του Ευαγγελιστή και Προδρόμου Ιωάννη.",
         category: "biblical",
-      },
-      {
-        word: "ΔΑΣΟΣ ΔΡΟΣΟΣ",
-        breakdown: "4 + 1 + 200 + 70 + 200 + 4 + 100 + 70 + 200 + 70 + 200 = 1119",
-        description: "Φράση της ελληνικής ποίησης με ταυτόσημη ισοψηφία.",
-        category: "classical",
       },
     ],
   },

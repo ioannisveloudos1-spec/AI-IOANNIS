@@ -96,6 +96,22 @@ export interface WordCombinationMatch {
   isUniqueMode?: boolean;
 }
 
+export interface SeedWordCombinationMatch {
+  id: string;
+  seedPhrase: string;
+  seedValue: number;
+  textWords: WordIsopsephy[];
+  textWordsValue: number;
+  totalValue: number;
+  totalRoot: number;
+  fullEquation: string;
+  fullPhrase: string;
+  textWordCount: number;
+  totalWordCount: number;
+  indices: number[];
+  isUniqueMode?: boolean;
+}
+
 export interface TextAnalysisStats {
   totalChars: number;
   totalGreekChars: number;

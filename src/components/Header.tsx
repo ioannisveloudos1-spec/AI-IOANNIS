@@ -91,9 +91,9 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex flex-col md:flex-row md:items-center md:justify-between py-2.5 sm:py-3 gap-2.5 sm:gap-3">
           
           {/* Logo & Classical Title */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#8a6825] via-[#c89b3c] to-[#e6c670] p-[1.5px] shadow-lg shadow-[#c89b3c]/20 shrink-0 overflow-hidden">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#8a6825] via-[#c89b3c] to-[#e6c670] p-[1.5px] shadow-lg shadow-[#c89b3c]/20 shrink-0 overflow-hidden">
                 <img
                   src={appLogoImg}
                   alt="ΕΓΩ ΕΙΜΙ - ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ"
@@ -101,16 +101,16 @@ export const Header: React.FC<HeaderProps> = ({
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                  <h1 className="text-base sm:text-2xl font-serif font-bold tracking-wider text-[#f5ecd8] truncate">
+              <div className="shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h1 className="text-base sm:text-2xl font-serif font-bold tracking-wider text-[#f5ecd8] whitespace-nowrap">
                     ΛΕΞΑΡΙΘΜΟΣ
                   </h1>
                   <span className="text-[9px] sm:text-[11px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#2a2219] text-[#c89b3c] border border-[#4a3a29] font-sans font-semibold shrink-0">
                     Ιωνικη
                   </span>
                 </div>
-                <p className="text-[10px] sm:text-xs text-[#a69680] font-serif italic truncate hidden xs:block">
+                <p className="text-[10px] sm:text-xs text-[#a69680] font-serif italic whitespace-nowrap hidden xs:block">
                   Ελληνική Ισοψηφία & Στατιστική
                 </p>
               </div>

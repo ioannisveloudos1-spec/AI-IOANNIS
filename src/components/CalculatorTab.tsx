@@ -519,7 +519,8 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
           </div>
           <div className="flex flex-wrap gap-2">
             {recentHistory.map((item, idx) => {
-              const res = calculateWordIsopsephy(item);
+              const evalRes = evaluateIsopsephyExpression(item);
+              const displayVal = evalRes.finalValue;
               return (
                 <button
                   key={idx}
@@ -527,9 +528,9 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#161310] hover:bg-[#201a14] border border-[#29221a] hover:border-[#3d3224] text-xs font-serif text-[#b8a791] transition-all"
                 >
                   <span>{item}</span>
-                  {res.value > 0 && (
+                  {displayVal > 0 && (
                     <span className="text-[10px] font-mono text-[#c89b3c]">
-                      ({res.value})
+                      ({displayVal})
                     </span>
                   )}
                 </button>

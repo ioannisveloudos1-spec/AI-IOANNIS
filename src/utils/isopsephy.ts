@@ -1,4 +1,4 @@
-import { IonicLetter, LetterBreakdown, WordIsopsephy, PhraseMatch, TextAnalysisStats, TextAnalysisResult, UniqueWordStat, WordCombinationMatch, NumberingSystem } from "../types";
+import { IonicLetter, LetterBreakdown, WordIsopsephy, PhraseMatch, TextAnalysisStats, TextAnalysisResult, UniqueWordStat, WordCombinationMatch, SeedWordCombinationMatch, NumberingSystem } from "../types";
 
 /**
  * English Gematria Base 6 / Sumerian values (A=6, B=12, C=18 ... Z=156)
@@ -1087,6 +1087,211 @@ export function findAnywhereWordCombinations(
     }
 
     backtrack(0, [], 0);
+  }
+
+  return results;
+}
+
+export interface FindSeedCombinationsOptions {
+  seedPhrase: string;
+  targetTotalSum: number;
+  textWordCounts?: number[]; // e.g. [1], [2], [3], [4], [5]
+  mode?: "uniqueWords" | "allOccurrences";
+  maxResults?: number;
+}
+
+/**
+ * Εντοπισμός συμπληρωματικών συνδυασμών λέξεων από το κείμενο
+ * που ενώνονται με τη «Δική μου λέξη / φράση-κλειδί» (Seed Phrase)
+ * ώστε το συνολικό άθροισμα (Seed + Λέξεις Κειμένου) να ισούται ακριβώς με τον στόχο.
+ */
+export function findSeedWordCombinations(
+  words: WordIsopsephy[],
+  options: FindSeedCombinationsOptions
+): SeedWordCombinationMatch[] {
+  const {
+    seedPhrase,
+    targetTotalSum,
+    textWordCounts = [1, 2, 3, 4, 5],
+    mode = "uniqueWords",
+    maxResults = 150,
+  } = options;
+
+  if (!words || words.length === 0 || !seedPhrase || !seedPhrase.trim() || !targetTotalSum || targetTotalSum <= 0) {
+    return [];
+  }
+
+  const cleanSeed = seedPhrase.trim();
+  const seedEval = evaluateIsopsephyExpression(cleanSeed);
+  const seedValue = seedEval.finalValue > 0 ? seedEval.finalValue : calculateWordIsopsephy(cleanSeed).value;
+  if (seedValue <= 0) return [];
+
+  const neededSum = targetTotalSum - seedValue;
+  if (neededSum <= 0) return [];
+
+  const validCounts = textWordCounts.filter((c) => c >= 1 && c <= 5);
+  if (validCounts.length === 0) return [];
+
+  // Filter words whose value <= neededSum
+  let candidateWords: WordIsopsephy[] = [];
+  if (mode === "uniqueWords") {
+    const seenMap = new Map<string, WordIsopsephy>();
+    for (const w of words) {
+      const key = w.normalizedWord || w.rawWord.toUpperCase();
+      if (w.value <= neededSum && !seenMap.has(key)) {
+        seenMap.set(key, w);
+      }
+    }
+    candidateWords = Array.from(seenMap.values());
+  } else {
+    candidateWords = words.filter((w) => w.value <= neededSum);
+  }
+
+  candidateWords.sort((a, b) => a.value - b.value);
+  const n = candidateWords.length;
+  if (n === 0) return [];
+
+  // Precompute suffix sums
+  const suffixSum = new Array(n + 1).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    suffixSum[i] = suffixSum[i + 1] + candidateWords[i].value;
+  }
+
+  const results: SeedWordCombinationMatch[] = [];
+  const seenCombos = new Set<string>();
+
+  const totalRoot = calculatePythmen(targetTotalSum);
+
+  for (const k of validCounts.sort((a, b) => a - b)) {
+    if (results.length >= maxResults) break;
+    if (n < k) continue;
+
+    // k = 1 (Exact 1 text word match + seed phrase)
+    if (k === 1) {
+      for (let i = 0; i < n; i++) {
+        if (results.length >= maxResults) break;
+        if (candidateWords[i].value === neededSum) {
+          const w = candidateWords[i];
+          const key = `seed|${w.normalizedWord}`;
+          if (!seenCombos.has(key)) {
+            seenCombos.add(key);
+            const fullEquation = `${cleanSeed} (${seedValue}) + ${w.rawWord} (${w.value}) = ${targetTotalSum}`;
+            const fullPhrase = `${cleanSeed} + ${w.rawWord}`;
+            results.push({
+              id: `seed-combo-1-${w.indexInText ?? 0}-${results.length}`,
+              seedPhrase: cleanSeed,
+              seedValue,
+              textWords: [w],
+              textWordsValue: w.value,
+              totalValue: targetTotalSum,
+              totalRoot,
+              fullEquation,
+              fullPhrase,
+              textWordCount: 1,
+              totalWordCount: 2,
+              indices: [w.indexInText ?? 0],
+              isUniqueMode: mode === "uniqueWords",
+            });
+          }
+        }
+      }
+      continue;
+    }
+
+    // k = 2 (2 text words + seed phrase)
+    if (k === 2) {
+      let left = 0;
+      let right = n - 1;
+      while (left < right && results.length < maxResults) {
+        const sum = candidateWords[left].value + candidateWords[right].value;
+        if (sum === neededSum) {
+          const combo = [candidateWords[left], candidateWords[right]];
+          const key = `seed|` + combo.map((w) => w.normalizedWord).sort().join("|");
+          if (!seenCombos.has(key)) {
+            seenCombos.add(key);
+            const fullEquation = `${cleanSeed} (${seedValue}) + ${combo.map((w) => `${w.rawWord} (${w.value})`).join(" + ")} = ${targetTotalSum}`;
+            const fullPhrase = `${cleanSeed} + ${combo.map((w) => w.rawWord).join(" + ")}`;
+            results.push({
+              id: `seed-combo-2-${combo.map((w) => w.indexInText ?? 0).join("-")}-${results.length}`,
+              seedPhrase: cleanSeed,
+              seedValue,
+              textWords: combo,
+              textWordsValue: neededSum,
+              totalValue: targetTotalSum,
+              totalRoot,
+              fullEquation,
+              fullPhrase,
+              textWordCount: 2,
+              totalWordCount: 3,
+              indices: combo.map((w) => w.indexInText ?? 0),
+              isUniqueMode: mode === "uniqueWords",
+            });
+          }
+          left++;
+          right--;
+        } else if (sum < neededSum) {
+          left++;
+        } else {
+          right--;
+        }
+      }
+      continue;
+    }
+
+    // General backtrack for k >= 3
+    function backtrackSeed(startIndex: number, currentCombo: WordIsopsephy[], currentSum: number) {
+      if (results.length >= maxResults) return;
+
+      const remainingK = k - currentCombo.length;
+      if (remainingK === 0) {
+        if (currentSum === neededSum) {
+          const key = `seed|` + currentCombo.map((w) => w.normalizedWord).sort().join("|");
+          if (!seenCombos.has(key)) {
+            seenCombos.add(key);
+            const fullEquation = `${cleanSeed} (${seedValue}) + ${currentCombo.map((w) => `${w.rawWord} (${w.value})`).join(" + ")} = ${targetTotalSum}`;
+            const fullPhrase = `${cleanSeed} + ${currentCombo.map((w) => w.rawWord).join(" + ")}`;
+            results.push({
+              id: `seed-combo-${k}-${currentCombo.map((w) => w.indexInText ?? 0).join("-")}-${results.length}`,
+              seedPhrase: cleanSeed,
+              seedValue,
+              textWords: [...currentCombo],
+              textWordsValue: neededSum,
+              totalValue: targetTotalSum,
+              totalRoot,
+              fullEquation,
+              fullPhrase,
+              textWordCount: k,
+              totalWordCount: 1 + k,
+              indices: currentCombo.map((w) => w.indexInText ?? 0),
+              isUniqueMode: mode === "uniqueWords",
+            });
+          }
+        }
+        return;
+      }
+
+      for (let i = startIndex; i <= n - remainingK; i++) {
+        if (results.length >= maxResults) break;
+
+        const val = candidateWords[i].value;
+        const newSum = currentSum + val;
+
+        if (i + 1 < n && newSum + (remainingK - 1) * candidateWords[i + 1].value > neededSum) {
+          break;
+        }
+
+        const maxPossibleRemaining = suffixSum[n - (remainingK - 1)];
+        if (newSum + maxPossibleRemaining < neededSum) {
+          continue;
+        }
+
+        currentCombo.push(candidateWords[i]);
+        backtrackSeed(i + 1, currentCombo, newSum);
+        currentCombo.pop();
+      }
+    }
+
+    backtrackSeed(0, [], 0);
   }
 
   return results;

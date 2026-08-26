@@ -220,12 +220,12 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
           src={portalImage}
           alt="ΛΑΥΡΕΙΟΝ - Χαραγμένο στον Βράχο - Ουδός προς το Φως"
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-top sm:object-center"
         />
-        {/* Atmospheric subtle vignette */}
+        {/* Subtle vignette that does NOT darken the top rock-carved ΛΑΥΡΕΙΟΝ */}
         <div
-          className={`absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 transition-opacity duration-1000 ${
-            isTransitioning ? "opacity-10" : isPlaying ? "opacity-60" : "opacity-90"
+          className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/85 transition-opacity duration-1000 ${
+            isTransitioning ? "opacity-10" : isPlaying ? "opacity-40" : "opacity-75"
           }`}
         />
       </div>
@@ -245,17 +245,9 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
         }}
       />
 
-      {/* Top Subtle Subtitle Badge */}
-      <div
-        className={`relative z-10 w-full pt-16 sm:pt-20 px-4 flex flex-col items-center transition-all duration-700 ${
-          isTransitioning ? "opacity-0 -translate-y-6 pointer-events-none" : "opacity-100 translate-y-0"
-        }`}
-      >
-        <div className="px-4 py-1 rounded-full bg-black/60 border border-[#c89b3c]/40 backdrop-blur-md text-[11px] sm:text-xs font-mono tracking-[0.25em] text-[#e6c670] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] flex items-center gap-2">
-          <span>ΟΥΔΟΣ</span>
-          <span className="text-[#8e6d2b]">•</span>
-          <span>ΑΠΟ ΤΟ ΣΚΟΤΟΣ ΠΡΟΣ ΤΟ ΦΩΣ</span>
-        </div>
+      {/* Top Spacer to leave the carved rock completely clear */}
+      <div className="relative z-10 w-full pt-16 sm:pt-20 px-4 flex flex-col items-center pointer-events-none">
+        {/* Intentionally left clear so the carved rock inscription ΛΑΥΡΕΙΟΝ is 100% visible */}
       </div>
 
       {/* Center Audio Visualizer (Active during playback) */}

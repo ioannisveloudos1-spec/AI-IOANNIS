@@ -5,11 +5,13 @@ import {
   cleanAndNormalizePolytonic,
   getAlphabetAndTextLetterBreakdown,
   calculateWordIsopsephy,
+  evaluateIsopsephyExpression,
   getMathematicalProperties,
   findAnywhereWordCombinations,
+  findSeedWordCombinations,
 } from "../utils/isopsephy";
 import { PRESET_TEXTS } from "../data/presets";
-import { SavedIsopsephyItem, WordIsopsephy, PhraseMatch, WordCombinationMatch } from "../types";
+import { SavedIsopsephyItem, WordIsopsephy, PhraseMatch, WordCombinationMatch, SeedWordCombinationMatch } from "../types";
 import {
   Search,
   Sparkles,
@@ -38,6 +40,10 @@ import {
   CheckSquare,
   ArrowRight,
   Flame,
+  Key,
+  PlusCircle,
+  Wand2,
+  Zap,
 } from "lucide-react";
 
 interface SearchTabProps {
@@ -72,8 +78,16 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   const [selectedAnywhereCombo, setSelectedAnywhereCombo] = useState<WordCombinationMatch | null>(null);
   const [comboFilterLength, setComboFilterLength] = useState<number | "all">("all");
 
+  // Custom Seed Word / Phrase Combinations (Anchor + Text Words)
+  const [customSeedPhrase, setCustomSeedPhrase] = useState<string>("ΙΩΑΝΝΗΣ");
+  const [customSeedTarget, setCustomSeedTarget] = useState<string>("2368");
+  const [seedTextWordCounts, setSeedTextWordCounts] = useState<number[]>([1, 2, 3, 4]);
+  const [seedMode, setSeedMode] = useState<"uniqueWords" | "allOccurrences">("uniqueWords");
+  const [selectedSeedCombo, setSelectedSeedCombo] = useState<SeedWordCombinationMatch | null>(null);
+  const [seedFilterLength, setSeedFilterLength] = useState<number | "all">("all");
+
   // Active view tab inside search
-  const [viewMode, setViewMode] = useState<"matches" | "interactive-flow" | "interactive-list" | "anywhere-combos" | "lexicon">("interactive-flow");
+  const [viewMode, setViewMode] = useState<"matches" | "interactive-flow" | "interactive-list" | "anywhere-combos" | "seed-combos" | "lexicon">("interactive-flow");
   const [topTextViewMode, setTopTextViewMode] = useState<"edit" | "highlighted">("edit");
   const [dismissedMatchIds, setDismissedMatchIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -203,6 +217,107 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     if (comboFilterLength === "all") return anywhereCombos;
     return anywhereCombos.filter((c) => c.wordCount === comboFilterLength);
   }, [anywhereCombos, comboFilterLength]);
+
+  // Seed Word / Phrase Combinations calculation (Anchor + Text Words)
+  const customSeedEval = useMemo(() => {
+    if (!customSeedPhrase.trim()) return { value: 0, text: "" };
+    const evalRes = evaluateIsopsephyExpression(customSeedPhrase.trim());
+    const val = evalRes.finalValue > 0 ? evalRes.finalValue : calculateWordIsopsephy(customSeedPhrase.trim()).value;
+    return { value: val, text: customSeedPhrase.trim() };
+  }, [customSeedPhrase]);
+
+  const customSeedTargetNum = customSeedTarget ? parseInt(customSeedTarget, 10) : 0;
+  const customSeedNeededValue = customSeedTargetNum > customSeedEval.value ? customSeedTargetNum - customSeedEval.value : 0;
+
+  const seedCombos = useMemo(() => {
+    if (!customSeedEval.text || !customSeedTargetNum || customSeedTargetNum <= 0 || !analysis.words.length) return [];
+    return findSeedWordCombinations(analysis.words, {
+      seedPhrase: customSeedEval.text,
+      targetTotalSum: customSeedTargetNum,
+      textWordCounts: seedTextWordCounts,
+      mode: seedMode,
+      maxResults: 250,
+    });
+  }, [analysis.words, customSeedEval.text, customSeedTargetNum, seedTextWordCounts, seedMode]);
+
+  const filteredSeedCombos = useMemo(() => {
+    if (seedFilterLength === "all") return seedCombos;
+    return seedCombos.filter((c) => c.textWordCount === seedFilterLength);
+  }, [seedCombos, seedFilterLength]);
+
+  const handleToggleSeedWordCount = (count: number) => {
+    setSeedTextWordCounts((prev) => {
+      if (prev.includes(count)) {
+        const next = prev.filter((c) => c !== count);
+        return next.length > 0 ? next : [count];
+      } else {
+        return [...prev, count].sort((a, b) => a - b);
+      }
+    });
+  };
+
+  const handleSaveSeedCombo = (comboObj: SeedWordCombinationMatch) => {
+    const greekNum = numberToGreekNumeral(comboObj.totalValue);
+    onSaveItem({
+      text: comboObj.fullPhrase,
+      normalized: comboObj.fullPhrase.toUpperCase(),
+      value: comboObj.totalValue,
+      root: comboObj.totalRoot,
+      greekNumeral: greekNum || `${comboObj.totalValue}`,
+      isPhrase: true,
+      wordCount: comboObj.totalWordCount,
+      sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
+      notes: `Συνδυασμός με Δική μου Λέξη «${comboObj.seedPhrase}» (${comboObj.seedValue}) + ${comboObj.textWordCount} λέξεις κειμένου: ${comboObj.fullEquation}`,
+      category: "Συνδυασμός με Λέξη-Κλειδί",
+    });
+  };
+
+  const handleSaveAllSeedCombos = () => {
+    if (filteredSeedCombos.length === 0) return;
+    let newSavedCount = 0;
+    filteredSeedCombos.forEach((comboObj) => {
+      const isSaved = savedItems.some(
+        (item) => item.text.trim().toUpperCase() === comboObj.fullPhrase.toUpperCase() && item.value === comboObj.totalValue
+      );
+      if (!isSaved) {
+        handleSaveSeedCombo(comboObj);
+        newSavedCount++;
+      }
+    });
+    setSavedToastMessage(
+      newSavedCount > 0
+        ? `Αποθηκεύτηκαν επιτυχώς ${newSavedCount} νέοι συνδυασμοί-κλειδιά στο Αρχείο!`
+        : `Όλοι οι συνδυασμοί είναι ήδη αποθηκευμένοι στο Αρχείο.`
+    );
+    setTimeout(() => setSavedToastMessage(null), 3500);
+  };
+
+  const handleTriggerGuideWordSearch = () => {
+    if (!inputText.trim()) {
+      setSavedToastMessage("Παρακαλώ εισαγάγετε ή επικολλήστε πρώτα κείμενο στο επάνω πλαίσιο.");
+      setTimeout(() => setSavedToastMessage(null), 3000);
+      return;
+    }
+    if (!customSeedPhrase.trim()) {
+      setSavedToastMessage("Παρακαλώ πληκτρολογήστε μία Λέξη-Οδηγό στο φωτεινό μπλε πεδίο.");
+      setTimeout(() => setSavedToastMessage(null), 3000);
+      return;
+    }
+    setViewMode("seed-combos");
+    setSavedToastMessage(
+      seedCombos.length > 0
+        ? `✨ Βρέθηκαν ${seedCombos.length} συνδυασμοί της λέξης «${customSeedEval.text}» (${customSeedEval.value}) με λέξεις του κειμένου!`
+        : `Απαιτούμενο υπόλοιπο από το κείμενο: ${customSeedNeededValue} (${customSeedTarget} - ${customSeedEval.value}). Δοκιμάστε άλλον στόχο ή ενεργοποιήστε περισσότερες λέξεις (+2λ, +3λ, +4λ).`
+    );
+    setTimeout(() => setSavedToastMessage(null), 4000);
+
+    setTimeout(() => {
+      const el = document.getElementById("seed-combos-results-container");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
+  };
 
   const handleToggleWordCount = (count: number) => {
     setComboWordCounts((prev) => {
@@ -343,6 +458,17 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     if (!selectedAnywhereCombo) return new Set<string>();
     return new Set<string>(selectedAnywhereCombo.words.map((w) => w.normalizedWord));
   }, [selectedAnywhereCombo]);
+
+  // Set of indices for selected seed combination
+  const selectedSeedComboIndices = useMemo(() => {
+    if (!selectedSeedCombo) return new Set<number>();
+    return new Set<number>(selectedSeedCombo.indices);
+  }, [selectedSeedCombo]);
+
+  const selectedSeedComboNormalizedSet = useMemo(() => {
+    if (!selectedSeedCombo) return new Set<string>();
+    return new Set<string>(selectedSeedCombo.textWords.map((w) => w.normalizedWord));
+  }, [selectedSeedCombo]);
 
   // Set of word indices that match single word target or search query
   const singleMatchIndices = useMemo(() => {
@@ -583,6 +709,231 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             </div>
           </div>
         )}
+
+        {/* =========================================================================
+            HERO GUIDE-WORD PANEL: BRIGHT BLUE GLOWING INPUT & ADJACENT FIND BUTTON
+           ========================================================================= */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#051424] via-[#0b243d] to-[#051424] border-2 border-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.45)] ring-2 ring-cyan-500/30 space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 border-b border-cyan-500/30 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2.5 rounded-xl bg-cyan-950/90 text-cyan-300 border border-cyan-400/60 shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                <Key className="w-5 h-5 text-cyan-300 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-serif font-black text-cyan-100 flex items-center gap-2 flex-wrap">
+                  <span>🌟 Λέξη-Οδηγός & Αυτόματη Συμπλήρωση από το Κείμενο</span>
+                  {seedCombos.length > 0 && (
+                    <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-cyan-500 text-black font-black shadow-[0_0_10px_rgba(6,182,212,0.6)]">
+                      {seedCombos.length} Βρέθηκαν
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-cyan-200/80 font-sans">
+                  Πληκτρολογήστε τη δική σας λέξη-οδηγό στο μπλε φωτεινό πεδίο και πατήστε το κουμπί για να αναζητήσει αυτόματα συνδυασμούς λέξεων από το κείμενο που περιέχουν τη λέξη σας και αθροίζουν στον επιθυμητό στόχο.
+                </p>
+              </div>
+            </div>
+
+            {seedCombos.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode("seed-combos");
+                  setTimeout(() => {
+                    const el = document.getElementById("seed-combos-results-container");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }, 50);
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-black font-serif text-xs font-black transition-all shadow-[0_0_15px_rgba(6,182,212,0.5)] cursor-pointer self-start md:self-auto"
+              >
+                <span>Προβολή {seedCombos.length} Συνδυασμών</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Guide Word Input Row with glowing bright blue border and adjacent action button */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-end">
+            
+            {/* Guide Word Input with glowing blue border */}
+            <div className="lg:col-span-7 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-serif font-bold text-cyan-200 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                  <span>Δική μου Λέξη-Οδηγός (Λέξη ή Φράση-Κλειδί):</span>
+                </label>
+                {customSeedEval.value > 0 && (
+                  <span className="text-xs font-mono font-bold text-amber-300 bg-[#06121f] px-2 py-0.5 rounded border border-amber-500/40 shadow-sm">
+                    {customSeedEval.text} = <strong>{customSeedEval.value}</strong> ({numberToGreekNumeral(customSeedEval.value)})
+                  </span>
+                )}
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  value={customSeedPhrase}
+                  onChange={(e) => setCustomSeedPhrase(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleTriggerGuideWordSearch();
+                    }
+                  }}
+                  placeholder="π.χ. ΙΩΑΝΝΗΣ, ΛΑΥΡΕΙΟΝ, ΑΓΑΠΗ, ΦΩΣ, ΣΟΦΙΑ..."
+                  className="w-full px-4 py-3 bg-[#030c17] border-2 border-cyan-400 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-400/40 rounded-xl text-base sm:text-lg font-serif font-black text-cyan-50 placeholder-cyan-600/60 shadow-[0_0_18px_rgba(6,182,212,0.45)] outline-none transition-all"
+                />
+                {customSeedPhrase && (
+                  <button
+                    type="button"
+                    onClick={() => setCustomSeedPhrase("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-white p-1 rounded-md"
+                    title="Καθαρισμός"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Guide Word Presets */}
+              <div className="flex flex-wrap items-center gap-1 pt-1">
+                <span className="text-[10px] text-cyan-400/80 font-serif mr-1">Προτάσεις:</span>
+                {[
+                  "ΙΩΑΝΝΗΣ",
+                  "ΛΑΥΡΕΙΟΝ",
+                  "ΑΓΑΠΗ",
+                  "ΦΩΣ",
+                  "ΛΟΓΟΣ",
+                  "Η ΑΛΗΘΕΙΑ",
+                  "ΘΕΟΣ",
+                  "ΣΟΦΙΑ",
+                ].map((presetSeed) => (
+                  <button
+                    key={presetSeed}
+                    type="button"
+                    onClick={() => setCustomSeedPhrase(presetSeed)}
+                    className={`px-2 py-0.5 rounded text-[11px] font-serif transition-all ${
+                      customSeedPhrase.trim().toUpperCase() === presetSeed
+                        ? "bg-cyan-500 text-black font-black shadow-[0_0_8px_rgba(6,182,212,0.6)]"
+                        : "bg-[#091e33] hover:bg-[#0e2c4a] text-cyan-200 border border-cyan-500/30"
+                    }`}
+                  >
+                    {presetSeed}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Adjacent Action Button */}
+            <div className="lg:col-span-5 flex flex-col justify-end">
+              <button
+                type="button"
+                onClick={handleTriggerGuideWordSearch}
+                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-cyan-500 hover:from-cyan-400 hover:to-blue-500 text-white font-serif font-black text-sm sm:text-base border border-cyan-300 shadow-[0_0_25px_rgba(6,182,212,0.65)] hover:shadow-[0_0_35px_rgba(6,182,212,0.9)] transition-all cursor-pointer active:scale-95 text-center"
+              >
+                <Sparkles className="w-5 h-5 text-amber-300 animate-spin" />
+                <span>✨ Συμπλήρωση από Κείμενο & Εύρεση Συνδυασμών</span>
+              </button>
+            </div>
+
+          </div>
+
+          {/* Target Number & Equation Banner */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 pt-2 border-t border-cyan-500/20 items-center">
+            
+            {/* Target Input */}
+            <div className="md:col-span-5 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-serif font-bold text-cyan-200">
+                  Στόχος Συνολικού Λεξαρίθμου:
+                </label>
+                {customSeedTarget && (
+                  <span className="text-xs font-mono text-amber-300">
+                    {numberToGreekNumeral(customSeedTargetNum)}
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={customSeedTarget}
+                  onChange={(e) => setCustomSeedTarget(e.target.value)}
+                  placeholder="π.χ. 2368, 1480, 888..."
+                  className="w-full px-3.5 py-2 bg-[#040e1a] border border-cyan-500/50 focus:border-cyan-300 rounded-lg text-sm font-mono font-bold text-amber-300 outline-none"
+                />
+              </div>
+
+              {/* Quick Target Presets */}
+              <div className="flex flex-wrap gap-1 pt-0.5">
+                {[
+                  { label: "2368 (Ι.Χ.)", val: "2368" },
+                  { label: "1480 (Χριστός)", val: "1480" },
+                  { label: "888 (Ιησούς)", val: "888" },
+                  { label: "3168 (Κύριος)", val: "3168" },
+                  { label: "666", val: "666" },
+                  { label: "1572", val: "1572" },
+                ].map((preset) => (
+                  <button
+                    key={preset.val}
+                    type="button"
+                    onClick={() => setCustomSeedTarget(preset.val)}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-all ${
+                      customSeedTarget === preset.val
+                        ? "bg-cyan-500 text-black font-black"
+                        : "bg-[#081a2c] hover:bg-[#0f2c4a] text-cyan-300 border border-cyan-500/30"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Word Count Toggles & Equation breakdown */}
+            <div className="md:col-span-7 space-y-2">
+              <div className="p-3 bg-[#030b14] rounded-xl border border-cyan-500/40 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-1 text-xs font-serif text-cyan-200">
+                  <span>Αριθμός Συμπληρωματικών Λέξεων:</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((count) => {
+                      const isChecked = seedTextWordCounts.includes(count);
+                      return (
+                        <button
+                          key={count}
+                          type="button"
+                          onClick={() => handleToggleSeedWordCount(count)}
+                          className={`px-2 py-1 rounded text-xs font-mono font-bold transition-all ${
+                            isChecked
+                              ? "bg-cyan-500 text-black shadow-sm"
+                              : "bg-[#091b2c] hover:bg-[#112a45] text-cyan-300 border border-cyan-500/30"
+                          }`}
+                          title={`Συνδυασμός με +${count} λέξεις κειμένου`}
+                        >
+                          +{count}λ
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Mathematical Equation Overview */}
+                <div className="text-[11px] font-mono flex flex-wrap items-center gap-1.5 text-cyan-200/90 pt-1 border-t border-cyan-500/20">
+                  <span className="text-cyan-300">
+                    Οδηγός: <strong>«{customSeedPhrase || "..."}» ({customSeedEval.value})</strong>
+                  </span>
+                  <span>+</span>
+                  <span className="text-amber-300">
+                    Υπόλοιπο Κειμένου: <strong>({customSeedNeededValue})</strong>
+                  </span>
+                  <span>=</span>
+                  <span className="text-white font-bold bg-cyan-900/60 px-1.5 py-0.5 rounded border border-cyan-400/40">
+                    Στόχος: {customSeedTarget || 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
 
         {/* =========================================================================
             ΕΠΕΞΗΓΗΣΗ ΛΕΞΑΡΙΘΜΟΥ & ΣΥΝΟΛΙΚΟ ΑΘΡΟΙΣΜΑ 27 ΓΡΑΜΜΑΤΩΝ (4995)
@@ -1156,6 +1507,211 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             </div>
           </div>
 
+          {/* =========================================================================
+              DEDICATED SEED WORD / PHRASE COMBINATIONS PANEL (ANCHOR + TEXT WORDS)
+             ========================================================================= */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-[#1a1224] via-[#221630] to-[#1a1224] border border-purple-500/60 space-y-3.5 shadow-xl ring-1 ring-purple-500/30">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-purple-900/60 text-purple-200 border border-purple-400/40">
+                  <Sparkles className="w-4 h-4 text-purple-300 animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-serif font-bold text-purple-100 flex items-center gap-2">
+                    <span>Συνδυασμοί με Δική μου Λέξη / Φράση & Συμπλήρωση από το Κείμενο</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-600 text-white font-black shadow-sm">
+                      {seedCombos.length} Βρέθηκαν
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-purple-200/80 font-sans">
+                    Εισάγετε μία δική σας λέξη/φράση και η εφαρμογή αναζητά αυτόματα λέξεις από το επικολλημένο κείμενο ώστε το συνολικό άθροισμα να ισούται ακριβώς με τον στόχο σας.
+                  </p>
+                </div>
+              </div>
+
+              {seedCombos.length > 0 && (
+                <button
+                  onClick={() => setViewMode("seed-combos")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-600 text-white font-serif text-xs font-bold transition-all shadow-md border border-purple-400/50 cursor-pointer"
+                >
+                  <span>Προβολή {seedCombos.length} Συνδυασμών Κλειδιού</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+              
+              {/* 1. Custom Seed Word / Phrase Input */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-serif font-bold text-purple-200 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Key className="w-3.5 h-3.5 text-purple-300" />
+                    <span>Δική μου Λέξη / Φράση-Κλειδί</span>
+                  </span>
+                  {customSeedEval.value > 0 && (
+                    <span className="text-[11px] font-mono font-bold text-amber-300 bg-black/40 px-1.5 py-0.2 rounded border border-amber-500/30">
+                      = {customSeedEval.value}
+                    </span>
+                  )}
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={customSeedPhrase}
+                    onChange={(e) => setCustomSeedPhrase(e.target.value)}
+                    placeholder="π.χ. ΙΩΑΝΝΗΣ, ΛΑΥΡΕΙΟΝ, ΑΓΑΠΗ..."
+                    className="w-full px-3 py-2 bg-[#120c1a] border border-purple-500/40 focus:border-purple-300 rounded-lg text-sm font-serif text-white outline-none shadow-inner"
+                  />
+                  {customSeedPhrase && (
+                    <button
+                      onClick={() => setCustomSeedPhrase("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-purple-400 hover:text-white"
+                      title="Καθαρισμός"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Seed Phrase Presets */}
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {[
+                    "ΙΩΑΝΝΗΣ",
+                    "ΛΑΥΡΕΙΟΝ",
+                    "ΑΓΑΠΗ",
+                    "ΦΩΣ",
+                    "ΛΟΓΟΣ",
+                    "Η ΑΛΗΘΕΙΑ",
+                  ].map((presetSeed) => (
+                    <button
+                      key={presetSeed}
+                      type="button"
+                      onClick={() => setCustomSeedPhrase(presetSeed)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-serif transition-all ${
+                        customSeedPhrase.trim().toUpperCase() === presetSeed
+                          ? "bg-purple-600 text-white font-bold"
+                          : "bg-[#181124] hover:bg-[#251b38] text-purple-200 border border-purple-500/30"
+                      }`}
+                    >
+                      {presetSeed}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Target Number & Needed Difference */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-serif font-bold text-purple-200 flex items-center justify-between">
+                  <span>Στόχος Συνολικού Λεξαρίθμου</span>
+                  {customSeedTarget && (
+                    <span className="text-[11px] font-serif text-purple-300">
+                      {numberToGreekNumeral(customSeedTargetNum)}
+                    </span>
+                  )}
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={customSeedTarget}
+                    onChange={(e) => setCustomSeedTarget(e.target.value)}
+                    placeholder="π.χ. 2368, 1480, 888, 666..."
+                    className="w-full px-3 py-2 bg-[#120c1a] border border-purple-500/40 focus:border-purple-300 rounded-lg text-sm font-mono text-white outline-none"
+                  />
+                </div>
+
+                {/* Real-time Needed Difference Info Badge */}
+                <div className="text-[10px] font-mono px-2 py-1 rounded bg-[#100a17] border border-purple-500/30 text-purple-200 flex items-center justify-between">
+                  <span>Υπόλοιπο από κείμενο:</span>
+                  {customSeedTargetNum > customSeedEval.value ? (
+                    <strong className="text-amber-300">
+                      {customSeedTargetNum} - {customSeedEval.value} = {customSeedNeededValue}
+                    </strong>
+                  ) : (
+                    <span className="text-red-400">Ο στόχος πρέπει να είναι &gt; {customSeedEval.value}</span>
+                  )}
+                </div>
+
+                {/* Quick Target Preset Chips */}
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {["2368", "1480", "888", "666", "3168", "1332", "1572"].map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => setCustomSeedTarget(chip)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-all ${
+                        customSeedTarget === chip
+                          ? "bg-purple-600 text-white font-bold"
+                          : "bg-[#181124] hover:bg-[#251b38] text-purple-200 border border-purple-500/30"
+                      }`}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Text Words Count & Processing Mode */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-serif font-bold text-purple-200 flex items-center justify-between">
+                  <span>Συμπληρωματικές Λέξεις από Κείμενο</span>
+                  <span className="text-[10px] font-mono text-purple-300">
+                    {seedTextWordCounts.sort((a,b)=>a-b).join(", ")} λέξεις
+                  </span>
+                </label>
+
+                {/* Text Word Count Selector Buttons */}
+                <div className="flex flex-wrap items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((num) => {
+                    const isSelected = seedTextWordCounts.includes(num);
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => handleToggleSeedWordCount(num)}
+                        className={`flex-1 min-w-[36px] py-1.5 rounded-lg text-xs font-mono font-bold transition-all text-center ${
+                          isSelected
+                            ? "bg-purple-600 text-white shadow-sm"
+                            : "bg-[#140e1f] hover:bg-[#201530] text-purple-300 border border-purple-500/30"
+                        }`}
+                        title={`Συνδυασμός με ${num} λέξεις από το κείμενο`}
+                      >
+                        +{num}λ
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Mode toggle */}
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setSeedMode("uniqueWords")}
+                    className={`px-2 py-1 rounded-lg text-[11px] font-serif transition-all text-center ${
+                      seedMode === "uniqueWords"
+                        ? "bg-purple-900/80 text-white border border-purple-400/60 font-bold"
+                        : "bg-[#120c1a] text-purple-300 border border-purple-500/20 hover:text-white"
+                    }`}
+                  >
+                    Μοναδικές
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSeedMode("allOccurrences")}
+                    className={`px-2 py-1 rounded-lg text-[11px] font-serif transition-all text-center ${
+                      seedMode === "allOccurrences"
+                        ? "bg-purple-900/80 text-white border border-purple-400/60 font-bold"
+                        : "bg-[#120c1a] text-purple-300 border border-purple-500/20 hover:text-white"
+                    }`}
+                  >
+                    Όλες οι Θέσεις
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -1244,6 +1800,19 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             </button>
 
             <button
+              onClick={() => setViewMode("seed-combos")}
+              id="tab-view-seed-combos"
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-serif font-semibold transition-all ${
+                viewMode === "seed-combos"
+                  ? "bg-[#0a233b] text-cyan-200 border-2 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] ring-1 ring-cyan-400/40 font-bold"
+                  : "text-cyan-300/80 hover:text-cyan-100 hover:bg-[#071829]"
+              }`}
+            >
+              <Key className="w-3.5 h-3.5 text-cyan-300" />
+              <span>🌟 Λέξη-Οδηγός + Κείμενο ({seedCombos.length})</span>
+            </button>
+
+            <button
               onClick={() => setViewMode("anywhere-combos")}
               id="tab-view-anywhere-combos"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-serif font-semibold transition-all ${
@@ -1283,6 +1852,44 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Active Selected Seed Combination Banner if present */}
+        {selectedSeedCombo && (
+          <div className="p-3.5 rounded-xl bg-[#281433] border border-purple-400/60 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-2.5">
+              <span className="p-1.5 rounded-lg bg-purple-900/80 text-purple-200">
+                <Sparkles className="w-4 h-4 text-purple-300" />
+              </span>
+              <div>
+                <div className="text-xs font-serif font-bold text-purple-200 flex items-center gap-2 flex-wrap">
+                  <span>Επιλεγμένος Συνδυασμός με Λέξη-Κλειδί:</span>
+                  <span className="text-amber-300 font-mono font-bold">
+                    {selectedSeedCombo.fullEquation}
+                  </span>
+                </div>
+                <div className="text-[11px] text-purple-300/80">
+                  Η λέξη-κλειδί «{selectedSeedCombo.seedPhrase}» ({selectedSeedCombo.seedValue}) ενώνεται με {selectedSeedCombo.textWordCount} λέξεις από το κείμενο: {selectedSeedCombo.textWords.map(w => `${w.rawWord}(${w.value})`).join(", ")}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setViewMode("seed-combos")}
+                className="px-2.5 py-1 rounded bg-purple-800/90 hover:bg-purple-700 text-xs font-serif text-white transition-colors"
+              >
+                Όλοι οι Συνδυασμοί Κλειδιού
+              </button>
+              <button
+                onClick={() => setSelectedSeedCombo(null)}
+                className="p-1 rounded text-purple-300 hover:text-white"
+                title="Καθαρισμός επιλογής"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Active Selected Anywhere Combination Banner if present */}
         {selectedAnywhereCombo && (
@@ -1341,10 +1948,15 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                 const phrases = phraseMatchWordMap.get(w.indexInText!) || [];
                 const isPhraseMatch = phrases.length > 0;
                 const isTargetMatch = isSingleMatch || isPhraseMatch;
-                const isComboWord = selectedAnywhereCombo && (
+                const isAnywhereComboWord = selectedAnywhereCombo && (
                   selectedComboIndices.has(w.indexInText!) ||
                   (selectedAnywhereCombo.isUniqueMode && selectedComboNormalizedSet.has(w.normalizedWord))
                 );
+                const isSeedComboWord = selectedSeedCombo && (
+                  selectedSeedComboIndices.has(w.indexInText!) ||
+                  (selectedSeedCombo.isUniqueMode && selectedSeedComboNormalizedSet.has(w.normalizedWord))
+                );
+                const isComboWord = isAnywhereComboWord || isSeedComboWord;
                 const isSelected = selectedWordObj?.indexInText === w.indexInText;
                 const isSaved = savedItems.some(
                   (item) => item.text.trim().toUpperCase() === w.rawWord.toUpperCase() && item.value === w.value
@@ -1383,7 +1995,14 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                             </span>
                           )}
 
-                          {isComboWord && (
+                          {isSeedComboWord && (
+                            <span className="px-2 py-0.5 rounded bg-purple-700 text-white text-[10px] font-mono font-black uppercase tracking-wider shadow-sm animate-pulse flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" />
+                              <span>Κλειδί «{selectedSeedCombo?.seedPhrase}» + {w.rawWord}</span>
+                            </span>
+                          )}
+
+                          {isAnywhereComboWord && !isSeedComboWord && (
                             <span className="px-2 py-0.5 rounded bg-purple-600 text-white text-[10px] font-mono font-black uppercase tracking-wider shadow-sm animate-pulse">
                               🧩 Μέρος Συνδυασμού ({selectedAnywhereCombo?.value})
                             </span>
@@ -1487,10 +2106,15 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                   const phrases = phraseMatchWordMap.get(w.indexInText!) || [];
                   const isPhraseMatch = phrases.length > 0;
                   const isTargetMatch = isSingleMatch || isPhraseMatch;
-                  const isComboWord = selectedAnywhereCombo && (
+                  const isAnywhereComboWord = selectedAnywhereCombo && (
                     selectedComboIndices.has(w.indexInText!) ||
                     (selectedAnywhereCombo.isUniqueMode && selectedComboNormalizedSet.has(w.normalizedWord))
                   );
+                  const isSeedComboWord = selectedSeedCombo && (
+                    selectedSeedComboIndices.has(w.indexInText!) ||
+                    (selectedSeedCombo.isUniqueMode && selectedSeedComboNormalizedSet.has(w.normalizedWord))
+                  );
+                  const isComboWord = isAnywhereComboWord || isSeedComboWord;
                   const isSelected = selectedWordObj?.indexInText === w.indexInText;
 
                   return (
@@ -1500,6 +2124,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                         isSelected
                           ? "bg-[#c89b3c] text-black font-bold ring-2 ring-[#e6c670] shadow-lg shadow-black/50"
+                          : isSeedComboWord
+                          ? "bg-purple-700 text-white font-black border-2 border-amber-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.85)] scale-105 hover:bg-purple-600"
                           : (isTargetMatch || isComboWord)
                           ? "bg-purple-600 text-white font-black border-2 border-purple-300 ring-2 ring-purple-400/80 shadow-[0_0_15px_rgba(168,85,247,0.7)] scale-105 hover:bg-purple-500"
                           : "hover:bg-[#251e17] hover:text-[#f5ecd8] border border-transparent"
@@ -1509,6 +2135,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
                         isSelected
                           ? "bg-black/30 text-black font-bold"
+                          : isSeedComboWord
+                          ? "bg-purple-950 text-amber-300 font-bold border border-amber-400/50 shadow-sm"
                           : (isTargetMatch || isComboWord)
                           ? "bg-purple-950 text-white font-bold border border-purple-400/40 shadow-sm"
                           : "text-[#c89b3c] bg-[#1a1510]"
@@ -1785,6 +2413,245 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                 </p>
                 <p className="text-xs text-[#736655] max-w-md mx-auto">
                   Δοκιμάστε να αλλάξετε τον στόχο λεξαρίθμου (π.χ. 888, 1480, 2368, 666), να επιλέξετε περισσότερα μεγέθη λέξεων (2, 3, 4, 5, 6) ή να αλλάξετε λειτουργία σε «Όλες οι Θέσεις».
+                </p>
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* 3B. SEED PHRASE + TEXT WORD COMBINATIONS VIEW */}
+        {viewMode === "seed-combos" && (
+          <div id="seed-combos-results-container" className="space-y-6 scroll-mt-20">
+            
+            {/* Top Toolbar & Filter bar */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#07192b] via-[#0e2c4a] to-[#07192b] border-2 border-cyan-400/80 space-y-4 shadow-[0_0_25px_rgba(6,182,212,0.3)] ring-1 ring-cyan-500/30">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="p-2 rounded-xl bg-cyan-950 text-cyan-300 border border-cyan-400/50 shadow-[0_0_10px_rgba(6,182,212,0.4)]">
+                      <Key className="w-4 h-4 text-cyan-300" />
+                    </span>
+                    <h3 className="text-sm sm:text-base font-serif font-black text-cyan-100 flex items-center gap-2 flex-wrap">
+                      <span>Συνδυασμοί με Λέξη-Οδηγό «{customSeedEval.text || customSeedPhrase}»</span>
+                      <span className="text-amber-300 font-mono">({customSeedEval.value})</span>
+                      <span className="text-cyan-300">+ Λέξεις Κειμένου =</span>
+                      <span className="text-amber-300 font-mono font-black text-lg bg-black/40 px-2 py-0.5 rounded border border-amber-500/40">
+                        {customSeedTarget}
+                      </span>
+                    </h3>
+                  </div>
+                  <p className="text-xs text-cyan-200/80 font-sans">
+                    Βρέθηκαν <strong>{seedCombos.length}</strong> έγκυροι συνδυασμοί που περιέχουν τη λέξη-οδηγό σας και συμπληρώνονται από λέξεις του κειμένου. Μπορείτε να αποθηκεύσετε στο Αρχείο όποιους προτιμάτε.
+                  </p>
+                </div>
+
+                {filteredSeedCombos.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleSaveAllSeedCombos}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-serif text-xs sm:text-sm font-black transition-all shadow-[0_0_15px_rgba(6,182,212,0.5)] cursor-pointer self-start md:self-auto active:scale-95"
+                  >
+                    <Bookmark className="w-4 h-4 fill-black" />
+                    <span>📥 Αποθήκευση Όλων στο Αρχείο ({filteredSeedCombos.length})</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Length Filter Pills */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-cyan-500/20">
+                <span className="text-[11px] font-serif text-cyan-300 mr-1 flex items-center gap-1">
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>Φίλτρο Συμπληρωματικών Λέξεων:</span>
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setSeedFilterLength("all")}
+                  className={`px-3 py-1 rounded-lg text-xs font-serif transition-all ${
+                    seedFilterLength === "all"
+                      ? "bg-cyan-500 text-black font-black shadow-[0_0_10px_rgba(6,182,212,0.5)]"
+                      : "bg-[#061524] hover:bg-[#0c243d] text-cyan-200 border border-cyan-500/30"
+                  }`}
+                >
+                  Όλοι ({seedCombos.length})
+                </button>
+
+                {[1, 2, 3, 4, 5].map((count) => {
+                  const matchesCount = seedCombos.filter((c) => c.textWordCount === count).length;
+                  if (matchesCount === 0 && !seedTextWordCounts.includes(count)) return null;
+                  return (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => setSeedFilterLength(count)}
+                      className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
+                        seedFilterLength === count
+                          ? "bg-cyan-500 text-black font-black shadow-[0_0_10px_rgba(6,182,212,0.5)]"
+                          : "bg-[#061524] hover:bg-[#0c243d] text-cyan-200 border border-cyan-500/30"
+                      }`}
+                    >
+                      +{count} {count === 1 ? "λέξη" : "λέξεις"} ({matchesCount})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Results Grid */}
+            {filteredSeedCombos.length > 0 ? (
+              <div className="grid grid-cols-1 gap-3.5">
+                {filteredSeedCombos.map((comboObj) => {
+                  const isSelected = selectedSeedCombo?.id === comboObj.id;
+                  const isSaved = savedItems.some(
+                    (item) => item.text.trim().toUpperCase() === comboObj.fullPhrase.toUpperCase() && item.value === comboObj.totalValue
+                  );
+
+                  return (
+                    <div
+                      key={comboObj.id}
+                      className={`p-4 sm:p-5 rounded-2xl border-2 transition-all space-y-3.5 ${
+                        isSelected
+                          ? "bg-[#081c30] border-cyan-300 ring-2 ring-cyan-400 shadow-[0_0_25px_rgba(6,182,212,0.5)]"
+                          : "bg-[#061322] border-cyan-500/40 hover:border-cyan-400/80 shadow-lg hover:shadow-[0_0_15px_rgba(6,182,212,0.25)]"
+                      }`}
+                    >
+                      {/* Top Header: Seed Tag, Equation Summary, Value Badge */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-cyan-500/20 pb-2.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-3 py-1 rounded-full bg-cyan-600 text-black text-xs font-serif font-black shadow-sm flex items-center gap-1">
+                            <Key className="w-3.5 h-3.5 text-black" />
+                            <span>Λέξη-Οδηγός: «{comboObj.seedPhrase}»</span>
+                          </span>
+
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#0a233b] text-cyan-200 text-[11px] font-mono border border-cyan-500/40">
+                            +{comboObj.textWordCount} {comboObj.textWordCount === 1 ? "λέξη κειμένου" : "λέξεις κειμένου"}
+                          </span>
+
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#071a2c] text-cyan-300 text-[11px] font-mono border border-cyan-500/30">
+                            Σύνολο: {comboObj.totalWordCount} λέξεις
+                          </span>
+
+                          <span className="text-xs font-mono text-cyan-300">
+                            Πυθμένας: <strong className="text-amber-300">{comboObj.totalRoot}</strong>
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                          <div className="text-right">
+                            <div className="text-lg sm:text-xl font-serif font-black text-amber-300 bg-[#030b14] px-3.5 py-1 rounded-xl border border-cyan-500/50 shadow-inner">
+                              = {comboObj.totalValue}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Middle: Rich Visual Formula Box */}
+                      <div className="p-3.5 bg-[#030c17] rounded-xl border border-cyan-500/30 space-y-2">
+                        <div className="text-xs sm:text-sm font-serif text-cyan-100 flex flex-wrap items-center gap-2 leading-relaxed">
+                          {/* Anchor Seed Word Box */}
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-600 text-black font-black border border-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.4)]">
+                            <Key className="w-3.5 h-3.5 text-black" />
+                            <span>{comboObj.seedPhrase}</span>
+                            <span className="text-xs font-mono font-black bg-black/20 px-1 py-0.2 rounded">({comboObj.seedValue})</span>
+                          </span>
+
+                          <span className="text-cyan-300 font-bold px-1 text-base">+</span>
+
+                          {/* Text Words Boxes */}
+                          {comboObj.textWords.map((tw, twIdx) => (
+                            <React.Fragment key={twIdx}>
+                              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#0b243d] text-cyan-100 border border-cyan-400/60 shadow-sm">
+                                <span className="font-bold">{tw.rawWord}</span>
+                                <span className="text-[11px] font-mono text-amber-300">({tw.value})</span>
+                              </span>
+                              {twIdx < comboObj.textWords.length - 1 && (
+                                <span className="text-cyan-300 font-bold px-1 text-base">+</span>
+                              )}
+                            </React.Fragment>
+                          ))}
+
+                          <span className="text-amber-300 font-bold px-1 text-base">=</span>
+                          <span className="font-mono font-black text-amber-300 text-base sm:text-lg px-2.5 py-0.5 rounded-lg bg-black/60 border border-amber-500/50">
+                            {comboObj.totalValue}
+                          </span>
+                        </div>
+
+                        <div className="text-[11px] font-mono text-cyan-300/80 pt-1.5 border-t border-cyan-500/20 flex flex-wrap items-center justify-between gap-2">
+                          <span>
+                            Ιωνικός Λεξάριθμος: <strong>{numberToGreekNumeral(comboObj.totalValue)}</strong>
+                          </span>
+                          <span>
+                            Συμπληρωματικές λέξεις από κείμενο: {comboObj.textWords.map((w) => w.rawWord).join(", ")}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Bottom Action Buttons */}
+                      <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            onClick={() => {
+                              setSelectedSeedCombo(comboObj);
+                              setSelectedAnywhereCombo(null);
+                              setViewMode("interactive-flow");
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-900/60 hover:bg-cyan-800 text-cyan-100 text-xs font-serif font-bold border border-cyan-400/60 transition-all shadow-sm cursor-pointer"
+                          >
+                            <Eye className="w-4 h-4 text-cyan-300" />
+                            <span>Εντοπισμός στο Κείμενο</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleSaveSeedCombo(comboObj)}
+                            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-serif font-black transition-all cursor-pointer shadow-md ${
+                              isSaved
+                                ? "bg-emerald-800/80 text-emerald-100 border border-emerald-400"
+                                : "bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black border border-amber-300"
+                            }`}
+                          >
+                            {isSaved ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-200" />
+                                <span>Αποθηκεύτηκε στο Αρχείο ✅</span>
+                              </>
+                            ) : (
+                              <>
+                                <Bookmark className="w-3.5 h-3.5 fill-black" />
+                                <span>💾 Αποθήκευση στο Αρχείο</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            onClick={() => handleCopyText(comboObj.fullEquation, comboObj.id)}
+                            className="p-2 rounded-xl bg-[#081a2c] hover:bg-[#0f2e4e] text-cyan-300 hover:text-white border border-cyan-500/40 transition-colors"
+                            title="Αντιγραφή εξίσωσης"
+                          >
+                            {copiedId === comboObj.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => onOpenAiModal(comboObj.fullPhrase, comboObj.totalValue, [comboObj.seedPhrase, ...comboObj.textWords.map((w) => w.rawWord)])}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#091f35] hover:bg-[#103254] text-cyan-100 border border-cyan-400/50 text-xs font-serif font-bold transition-colors cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                          <span>AI Ερμηνεία</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-12 text-center space-y-3 bg-[#051322] rounded-2xl border-2 border-cyan-500/40 p-6">
+                <Sparkles className="w-8 h-8 text-cyan-400 mx-auto animate-pulse" />
+                <p className="text-sm font-serif text-cyan-100">
+                  Δεν βρέθηκαν συνδυασμοί της λέξης <strong>«{customSeedPhrase}» ({customSeedEval.value})</strong> με {seedTextWordCounts.sort((a, b) => a - b).join(", ")} λέξεις από το κείμενο για στόχο <strong>{customSeedTarget}</strong>.
+                </p>
+                <p className="text-xs text-cyan-300/80 max-w-md mx-auto">
+                  Το απαιτούμενο υπόλοιπο από το κείμενο είναι <strong>{customSeedNeededValue}</strong>. Δοκιμάστε να αλλάξετε τον στόχο (π.χ. 2368, 1480, 888, 3168), να ενεργοποιήσετε περισσότερες συμπληρωματικές λέξεις (+1λ, +2λ, +3λ, +4λ, +5λ) ή να αλλάξετε λειτουργία σε «Όλες οι Θέσεις».
                 </p>
               </div>
             )}
