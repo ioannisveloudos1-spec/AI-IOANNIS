@@ -9,9 +9,17 @@ import {
   getMathematicalProperties,
   findAnywhereWordCombinations,
   findSeedWordCombinations,
+  extractSentencesWithIsopsephy,
 } from "../utils/isopsephy";
 import { PRESET_TEXTS } from "../data/presets";
-import { SavedIsopsephyItem, WordIsopsephy, PhraseMatch, WordCombinationMatch, SeedWordCombinationMatch } from "../types";
+import {
+  SavedIsopsephyItem,
+  WordIsopsephy,
+  PhraseMatch,
+  WordCombinationMatch,
+  SeedWordCombinationMatch,
+  SentenceIsopsephyMatch,
+} from "../types";
 import {
   Search,
   Sparkles,
@@ -44,6 +52,12 @@ import {
   PlusCircle,
   Wand2,
   Zap,
+  Quote,
+  FileText,
+  Download,
+  FolderPlus,
+  BookMarked,
+  ArrowUpDown,
 } from "lucide-react";
 
 interface SearchTabProps {
@@ -86,8 +100,17 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   const [selectedSeedCombo, setSelectedSeedCombo] = useState<SeedWordCombinationMatch | null>(null);
   const [seedFilterLength, setSeedFilterLength] = useState<number | "all">("all");
 
+  // Sentence-level search & analysis (Clauses ending in . ; ! ? · :)
+  const [sentenceTarget, setSentenceTarget] = useState<string>("");
+  const [sentenceSearchQuery, setSentenceSearchQuery] = useState<string>("");
+  const [sentenceMinWords, setSentenceMinWords] = useState<number>(1);
+  const [sentenceMaxWords, setSentenceMaxWords] = useState<number>(100);
+  const [sentenceRootFilter, setSentenceRootFilter] = useState<number | "all">("all");
+  const [sentenceSortOption, setSentenceSortOption] = useState<"index_asc" | "val_desc" | "val_asc" | "words_desc" | "root_asc">("index_asc");
+  const [selectedSentenceObj, setSelectedSentenceObj] = useState<SentenceIsopsephyMatch | null>(null);
+
   // Active view tab inside search
-  const [viewMode, setViewMode] = useState<"matches" | "interactive-flow" | "interactive-list" | "anywhere-combos" | "seed-combos" | "lexicon">("interactive-flow");
+  const [viewMode, setViewMode] = useState<"matches" | "interactive-flow" | "interactive-list" | "sentences" | "anywhere-combos" | "seed-combos" | "lexicon">("interactive-flow");
   const [topTextViewMode, setTopTextViewMode] = useState<"edit" | "highlighted">("edit");
   const [dismissedMatchIds, setDismissedMatchIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -442,11 +465,120 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     });
     setSavedToastMessage(
       newSavedCount > 0
-        ? `Αποθηκεύτηκαν επιτυχώς ${newSavedCount} νέα ευρήματα (λέξεις & φράσεις) στο Αρχείο!`
-        : `Όλα τα ${totalFoundMatches} ευρήματα είναι ήδη αποθηκευμένα στο Αρχείο.`
+        ? `Αποθηκεύτηκαν επιτυχώς ${newSavedCount} νέα ευρήματα (λέξεις & φράσεις) στον Θησαυρό!`
+        : `Όλα τα ${totalFoundMatches} ευρήματα είναι ήδη αποθηκευμένα στον Θησαυρό.`
     );
     setTimeout(() => setSavedToastMessage(null), 3500);
   };
+
+  // Bulk Save of ALL text words into the Archive / Treasure
+  const handleSaveAllTextWords = (mode: "unique" | "all" = "unique") => {
+    if (!analysis.words.length) {
+      setSavedToastMessage("Δεν υπάρχουν λέξεις στο κείμενο προς αποθήκευση.");
+      setTimeout(() => setSavedToastMessage(null), 3000);
+      return;
+    }
+
+    let wordsToSave: WordIsopsephy[] = [];
+    if (mode === "unique") {
+      const seen = new Set<string>();
+      for (const w of analysis.words) {
+        const key = w.normalizedWord;
+        if (!seen.has(key)) {
+          seen.add(key);
+          wordsToSave.push(w);
+        }
+      }
+    } else {
+      wordsToSave = analysis.words;
+    }
+
+    let newSavedCount = 0;
+    wordsToSave.forEach((w) => {
+      const isSaved = savedItems.some(
+        (item) => item.text.trim().toUpperCase() === w.rawWord.toUpperCase() && item.value === w.value
+      );
+      if (!isSaved) {
+        handleSaveWordMatch(w);
+        newSavedCount++;
+      }
+    });
+
+    setSavedToastMessage(
+      newSavedCount > 0
+        ? `✨ Αποθηκεύτηκαν επιτυχώς ${newSavedCount} νέες λέξεις στον Θησαυρό Λεξαρίθμων!`
+        : `Όλες οι ${wordsToSave.length} λέξεις υπάρχουν ήδη αποθηκευμένες στον Θησαυρό.`
+    );
+    setTimeout(() => setSavedToastMessage(null), 3500);
+  };
+
+  // Sentence-level analysis (Clauses ending in . ; ! ? · :)
+  const sentences = useMemo(() => {
+    return extractSentencesWithIsopsephy(inputText);
+  }, [inputText]);
+
+  const filteredSentences = useMemo(() => {
+    const targetVal = sentenceTarget.trim() ? parseInt(sentenceTarget.trim(), 10) : null;
+    const q = sentenceSearchQuery.trim().toLowerCase();
+
+    const filtered = sentences.filter((s) => {
+      if (targetVal !== null && s.value !== targetVal) return false;
+      if (sentenceRootFilter !== "all" && s.root !== sentenceRootFilter) return false;
+      if (s.wordCount < sentenceMinWords || s.wordCount > sentenceMaxWords) return false;
+      if (q) {
+        const textMatch = s.text.toLowerCase().includes(q);
+        const numMatch = s.value.toString().includes(q);
+        if (!textMatch && !numMatch) return false;
+      }
+      return true;
+    });
+
+    // Sorting
+    return [...filtered].sort((a, b) => {
+      if (sentenceSortOption === "val_desc") return b.value - a.value;
+      if (sentenceSortOption === "val_asc") return a.value - b.value;
+      if (sentenceSortOption === "words_desc") return b.wordCount - a.wordCount;
+      if (sentenceSortOption === "root_asc") return a.root - b.root;
+      return a.sentenceIndex - b.sentenceIndex;
+    });
+  }, [sentences, sentenceTarget, sentenceSearchQuery, sentenceMinWords, sentenceMaxWords, sentenceRootFilter, sentenceSortOption]);
+
+  const handleSaveSentence = (sentenceObj: SentenceIsopsephyMatch) => {
+    const greekNum = numberToGreekNumeral(sentenceObj.value);
+    onSaveItem({
+      text: sentenceObj.text,
+      normalized: sentenceObj.normalizedText,
+      value: sentenceObj.value,
+      root: sentenceObj.root,
+      greekNumeral: greekNum || `${sentenceObj.value}`,
+      isPhrase: true,
+      wordCount: sentenceObj.wordCount,
+      sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
+      notes: `Πρόταση #${sentenceObj.sentenceIndex} (${sentenceObj.wordCount} λέξεις, ${sentenceObj.charCount} γράμματα): ${sentenceObj.words.slice(0, 6).map(w => `${w.rawWord}(${w.value})`).join(" + ")}${sentenceObj.words.length > 6 ? " + ..." : ""} = ${sentenceObj.value}`,
+      category: "Πρόταση / Φράση Κειμένου",
+    });
+  };
+
+  const handleSaveAllSentences = () => {
+    if (filteredSentences.length === 0) return;
+    let newSavedCount = 0;
+    filteredSentences.forEach((sentenceObj) => {
+      const isSaved = savedItems.some(
+        (item) => item.text.trim().toUpperCase() === sentenceObj.text.toUpperCase() && item.value === sentenceObj.value
+      );
+      if (!isSaved) {
+        handleSaveSentence(sentenceObj);
+        newSavedCount++;
+      }
+    });
+    setSavedToastMessage(
+      newSavedCount > 0
+        ? `✨ Αποθηκεύτηκαν επιτυχώς ${newSavedCount} νέες προτάσεις στον Θησαυρό!`
+        : `Όλες οι ${filteredSentences.length} προτάσεις είναι ήδη αποθηκευμένες στον Θησαυρό.`
+    );
+    setTimeout(() => setSavedToastMessage(null), 3500);
+  };
+
 
   // Set of indices for selected combination
   const selectedComboIndices = useMemo(() => {
@@ -628,6 +760,54 @@ export const SearchTab: React.FC<SearchTabProps> = ({
               title="Εκκαθάριση κειμένου"
             >
               <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Text Area Bottom Quick Actions: Save All Words & Switch to Sentences */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 p-2.5 bg-[#100e0b] rounded-xl border border-[#2a2118]">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-serif text-[#a69680] flex items-center gap-1">
+              <Bookmark className="w-3.5 h-3.5 text-[#c89b3c]" />
+              <span>Αποθήκευση στον Θησαυρό:</span>
+            </span>
+
+            <button
+              type="button"
+              onClick={() => handleSaveAllTextWords("unique")}
+              disabled={analysis.words.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#241c12] hover:bg-[#382b1c] disabled:opacity-40 disabled:cursor-not-allowed text-[#e6c670] hover:text-amber-200 border border-[#4a3a25] text-xs font-serif font-bold transition-all shadow-sm"
+              title="Αποθήκευση όλων των μοναδικών λέξεων του κειμένου με τον αντίστοιχο λεξάριθμό τους στον Θησαυρό"
+            >
+              <FolderPlus className="w-3.5 h-3.5 text-[#c89b3c]" />
+              <span>Όλες οι Μοναδικές Λέξεις ({analysis.uniqueWordsMap.size})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSaveAllTextWords("all")}
+              disabled={analysis.words.length === 0}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#191510] hover:bg-[#282017] disabled:opacity-40 disabled:cursor-not-allowed text-[#bfa98e] hover:text-[#f5ecd8] border border-[#332619] text-xs font-serif transition-all"
+              title="Αποθήκευση όλων των εμφανίσεων λέξεων στον Θησαυρό"
+            >
+              <span>Όλες οι Εμφανίσεις ({analysis.words.length})</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode("sentences");
+                setTimeout(() => {
+                  const el = document.getElementById("sentences-section-anchor");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }, 50);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 border border-amber-500/40 text-xs font-serif font-bold transition-all"
+            >
+              <Quote className="w-3.5 h-3.5 text-amber-400" />
+              <span>Ανάλυση {sentences.length} Προτάσεων (μέχρι .)</span>
             </button>
           </div>
         </div>
@@ -1813,6 +1993,19 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             </button>
 
             <button
+              onClick={() => setViewMode("sentences")}
+              id="tab-view-sentences"
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-serif font-semibold transition-all ${
+                viewMode === "sentences"
+                  ? "bg-[#2d1c0b] text-amber-200 border-2 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)] ring-1 ring-amber-500/40 font-bold"
+                  : "text-[#d6c7b2] hover:text-amber-200 hover:bg-[#1a140d]"
+              }`}
+            >
+              <Quote className="w-3.5 h-3.5 text-amber-400" />
+              <span>📜 Προτάσεις / Φράσεις (μέχρι .) ({sentences.length})</span>
+            </button>
+
+            <button
               onClick={() => setViewMode("anywhere-combos")}
               id="tab-view-anywhere-combos"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-serif font-semibold transition-all ${
@@ -2652,6 +2845,353 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                 </p>
                 <p className="text-xs text-cyan-300/80 max-w-md mx-auto">
                   Το απαιτούμενο υπόλοιπο από το κείμενο είναι <strong>{customSeedNeededValue}</strong>. Δοκιμάστε να αλλάξετε τον στόχο (π.χ. 2368, 1480, 888, 3168), να ενεργοποιήσετε περισσότερες συμπληρωματικές λέξεις (+1λ, +2λ, +3λ, +4λ, +5λ) ή να αλλάξετε λειτουργία σε «Όλες οι Θέσεις».
+                </p>
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* =========================================================================
+            5. DEDICATED SENTENCE / CLAUSE ISOPSEPHY ANALYSIS VIEW (UNTIL PERIOD .)
+           ========================================================================= */}
+        {viewMode === "sentences" && (
+          <div id="sentences-section-anchor" className="space-y-6">
+            
+            {/* Header / Info Panel */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#1c140c] via-[#2a1d10] to-[#1c140c] border-2 border-amber-500/60 shadow-xl space-y-3">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-950 text-amber-300 border border-amber-500/50 shadow-inner">
+                    <Quote className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100 flex items-center gap-2 flex-wrap">
+                      <span>Ανάλυση & Εύρεση Λεξαρίθμου ανά Πρόταση / Φράση</span>
+                      <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-amber-500 text-black font-bold">
+                        {sentences.length} Προτάσεις
+                      </span>
+                    </h3>
+                    <p className="text-xs text-amber-200/80 font-sans mt-0.5">
+                      Διαχωρισμός κειμένου σε αυτοτελείς προτάσεις (μέχρι τελεία <strong>.</strong>, άνω τελεία <strong>·</strong>, ερωτηματικό <strong>;</strong> ή θαυμαστικό <strong>!</strong>) και πλήρης ισοψηφικός υπολογισμός.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bulk Save Button for Sentences */}
+                {filteredSentences.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleSaveAllSentences}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-black font-serif text-xs font-black transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] cursor-pointer self-start md:self-auto shrink-0"
+                  >
+                    <Bookmark className="w-4 h-4 text-black" />
+                    <span>📥 Αποθήκευση {filteredSentences.length} Προτάσεων στον Θησαυρό</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Preset Targets Bar for Sentences */}
+              <div className="pt-2 border-t border-amber-500/20 flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="text-amber-300 font-serif text-[11px] font-bold">Δημοφιλείς Στόχοι:</span>
+                {[
+                  { label: "888 (ΙΗΣΟΥΣ)", val: "888" },
+                  { label: "1480 (ΧΡΙΣΤΟΣ)", val: "1480" },
+                  { label: "2368 (ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ)", val: "2368" },
+                  { label: "3168 (ΚΥΡΙΟΣ)", val: "3168" },
+                  { label: "666 (ΘΗΡΙΟΝ)", val: "666" },
+                  { label: "1119 (ΣΤΑΥΡΟΣ)", val: "1119" },
+                  { label: "1000", val: "1000" },
+                  { label: "1776", val: "1776" },
+                  { label: "2024", val: "2024" },
+                ].map((tgt) => (
+                  <button
+                    key={tgt.val}
+                    type="button"
+                    onClick={() => setSentenceTarget(sentenceTarget === tgt.val ? "" : tgt.val)}
+                    className={`px-2 py-0.5 rounded-lg text-[11px] font-mono transition-colors ${
+                      sentenceTarget === tgt.val
+                        ? "bg-amber-400 text-black font-bold shadow-sm"
+                        : "bg-[#181109] text-amber-200/90 hover:text-white hover:bg-[#281b0e] border border-amber-900/60"
+                    }`}
+                  >
+                    {tgt.label}
+                  </button>
+                ))}
+                {sentenceTarget && (
+                  <button
+                    type="button"
+                    onClick={() => setSentenceTarget("")}
+                    className="text-[10px] text-amber-400 hover:text-white px-1.5 py-0.5 rounded bg-black/40 underline"
+                  >
+                    Καθαρισμός
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Sentence Filtering Controls Bar */}
+            <div className="p-4 rounded-xl bg-[#14100c] border border-[#2e2215] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              
+              {/* Target Isopsephic Value */}
+              <div className="space-y-1">
+                <label className="font-serif text-[#e6c670] font-bold flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Hash className="w-3.5 h-3.5 text-[#c89b3c]" />
+                    <span>Στόχος Λεξαρίθμου Πρότασης</span>
+                  </span>
+                  {sentenceTarget && (
+                    <span className="text-[10px] font-mono text-amber-300">
+                      {numberToGreekNumeral(parseInt(sentenceTarget, 10))}
+                    </span>
+                  )}
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={sentenceTarget}
+                    onChange={(e) => setSentenceTarget(e.target.value)}
+                    placeholder="π.χ. 2368, 1480, 888..."
+                    className="w-full px-3 py-2 bg-[#1b1510] border border-[#3d2f1d] focus:border-amber-400 rounded-lg text-sm font-mono text-[#f5ecd8] outline-none"
+                  />
+                  {sentenceTarget && (
+                    <button
+                      type="button"
+                      onClick={() => setSentenceTarget("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Text Search inside sentence */}
+              <div className="space-y-1">
+                <label className="font-serif text-[#e6c670] font-bold flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Search className="w-3.5 h-3.5 text-[#c89b3c]" />
+                    <span>Αναζήτηση Λέξης / Αριθμού</span>
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={sentenceSearchQuery}
+                    onChange={(e) => setSentenceSearchQuery(e.target.value)}
+                    placeholder="π.χ. φως, λόγος, θεός..."
+                    className="w-full px-3 py-2 bg-[#1b1510] border border-[#3d2f1d] focus:border-amber-400 rounded-lg text-sm font-serif text-[#f5ecd8] outline-none placeholder-[#665440]"
+                  />
+                  {sentenceSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSentenceSearchQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Digital Root (Pythmen) Filter */}
+              <div className="space-y-1">
+                <label className="font-serif text-[#e6c670] font-bold flex items-center gap-1">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-[#c89b3c]" />
+                  <span>Πυθμένας (Μονοψήφιος 1-9)</span>
+                </label>
+                <select
+                  value={sentenceRootFilter}
+                  onChange={(e) => setSentenceRootFilter(e.target.value === "all" ? "all" : parseInt(e.target.value, 10))}
+                  className="w-full px-3 py-2 bg-[#1b1510] border border-[#3d2f1d] focus:border-amber-400 rounded-lg text-xs font-serif text-[#f5ecd8] outline-none cursor-pointer"
+                >
+                  <option value="all">Όλοι οι Πυθμένες (1 - 9)</option>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((r) => (
+                    <option key={r} value={r}>
+                      Πυθμένας = {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sorting */}
+              <div className="space-y-1">
+                <label className="font-serif text-[#e6c670] font-bold flex items-center gap-1">
+                  <ArrowUpDown className="w-3.5 h-3.5 text-[#c89b3c]" />
+                  <span>Ταξινόμηση Προτάσεων</span>
+                </label>
+                <select
+                  value={sentenceSortOption}
+                  onChange={(e) => setSentenceSortOption(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-[#1b1510] border border-[#3d2f1d] focus:border-amber-400 rounded-lg text-xs font-serif text-[#f5ecd8] outline-none cursor-pointer"
+                >
+                  <option value="index_asc">Σειρά στο Κείμενο (1 → {sentences.length})</option>
+                  <option value="val_desc">Λεξάριθμος: Φθίνων (Μεγάλος → Μικρός)</option>
+                  <option value="val_asc">Λεξάριθμος: Αύξων (Μικρός → Μεγάλος)</option>
+                  <option value="words_desc">Πλήθος Λέξεων: Περισσότερες πρώτα</option>
+                  <option value="root_asc">Πυθμένας (1 → 9)</option>
+                </select>
+              </div>
+
+            </div>
+
+            {/* Sentences List */}
+            {filteredSentences.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs font-serif text-[#a69680] px-1">
+                  <span>
+                    Εμφάνιση <strong>{filteredSentences.length}</strong> από <strong>{sentences.length}</strong> προτάσεις
+                  </span>
+                  {sentenceTarget && (
+                    <span className="text-amber-300 font-mono bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded">
+                      Φίλτρο Στόχου: {sentenceTarget}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-3.5">
+                  {filteredSentences.map((sentenceObj) => {
+                    const isTargetMatch = sentenceTarget && sentenceObj.value === parseInt(sentenceTarget, 10);
+                    const isSaved = savedItems.some(
+                      (item) => item.text.trim().toUpperCase() === sentenceObj.text.toUpperCase() && item.value === sentenceObj.value
+                    );
+
+                    return (
+                      <div
+                        key={sentenceObj.id}
+                        className={`p-4 sm:p-5 rounded-2xl border-2 transition-all space-y-3.5 ${
+                          isTargetMatch
+                            ? "bg-[#211508] border-amber-400 ring-2 ring-amber-400/50 shadow-[0_0_25px_rgba(245,158,11,0.35)]"
+                            : "bg-[#14100c] border-[#2d2217] hover:border-amber-500/50 shadow-md"
+                        }`}
+                      >
+                        {/* Top Bar: Sentence Index, Stats, Large Isopsephy Value */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[#2d2217] pb-2.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="px-3 py-1 rounded-full bg-[#2a1d0f] text-amber-200 text-xs font-serif font-bold border border-amber-600/40 flex items-center gap-1.5 shadow-sm">
+                              <Quote className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Πρόταση #{sentenceObj.sentenceIndex}</span>
+                            </span>
+
+                            <span className="px-2.5 py-0.5 rounded-full bg-[#18120b] text-[#c4b39b] text-[11px] font-mono border border-[#382a1b]">
+                              {sentenceObj.wordCount} {sentenceObj.wordCount === 1 ? "λέξη" : "λέξεις"}
+                            </span>
+
+                            <span className="px-2.5 py-0.5 rounded-full bg-[#18120b] text-[#c4b39b] text-[11px] font-mono border border-[#382a1b]">
+                              {sentenceObj.charCount} γράμματα
+                            </span>
+
+                            <span className="text-xs font-mono text-[#a69680]">
+                              Πυθμένας: <strong className="text-amber-300">{sentenceObj.root}</strong>
+                            </span>
+
+                            {sentenceObj.punctuation && (
+                              <span className="text-[11px] font-serif text-[#8c7e6c] italic">
+                                [Σημείο: {sentenceObj.punctuation}]
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 self-end sm:self-auto">
+                            <div className="text-right">
+                              <div className={`text-lg sm:text-xl font-serif font-black px-3.5 py-1 rounded-xl border shadow-inner ${
+                                isTargetMatch
+                                  ? "text-black bg-amber-400 border-amber-300 font-extrabold"
+                                  : "text-amber-300 bg-[#0d0a07] border-amber-500/40"
+                              }`}>
+                                = {sentenceObj.value.toLocaleString("el-GR")}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Full Sentence Quote Text */}
+                        <div className="p-3.5 rounded-xl bg-[#0c0a08] border border-[#291f15] space-y-2">
+                          <blockquote className="text-sm sm:text-base font-serif text-[#f5ecd8] leading-relaxed italic">
+                            «{sentenceObj.text}»
+                          </blockquote>
+
+                          {/* Word-by-word Breakdown Formula */}
+                          <div className="pt-2 border-t border-[#211810] flex flex-wrap items-center gap-1.5 text-xs font-mono">
+                            <span className="text-[11px] font-serif text-[#8c7e6c] mr-1">Ανάλυση λέξεων:</span>
+                            {sentenceObj.words.map((w, wIdx) => (
+                              <React.Fragment key={wIdx}>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedWordObj(w)}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1a140d] hover:bg-[#2c2014] text-[#d6c7b2] hover:text-white border border-[#382b1b] transition-colors cursor-pointer"
+                                  title={`Κάντε κλικ για λεπτομερή ανάλυση της λέξης «${w.rawWord}» (${w.value})`}
+                                >
+                                  <span className="font-serif font-semibold">{w.rawWord}</span>
+                                  <span className="text-[10px] text-amber-400">({w.value})</span>
+                                </button>
+                                {wIdx < sentenceObj.words.length - 1 && (
+                                  <span className="text-[#8c7e6c] font-bold">+</span>
+                                )}
+                              </React.Fragment>
+                            ))}
+                            <span className="text-amber-400 font-bold ml-1">=</span>
+                            <span className="font-bold text-amber-300 font-mono ml-0.5">
+                              {sentenceObj.value} ({sentenceObj.greekNumeral})
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons Toolbar */}
+                        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            
+                            {/* Save Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleSaveSentence(sentenceObj)}
+                              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold transition-all cursor-pointer shadow-md ${
+                                isSaved
+                                  ? "bg-emerald-900/60 text-emerald-300 border border-emerald-500/50"
+                                  : "bg-[#251a0f] hover:bg-[#382716] text-[#e6c670] hover:text-white border border-amber-600/40"
+                              }`}
+                            >
+                              {isSaved ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Bookmark className="w-3.5 h-3.5 text-amber-400" />}
+                              <span>{isSaved ? "Αποθηκεύτηκε στον Θησαυρό" : "💾 Αποθήκευση στον Θησαυρό"}</span>
+                            </button>
+
+                            {/* Copy Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleCopyText(`${sentenceObj.text} = ${sentenceObj.value} (${sentenceObj.greekNumeral})`, sentenceObj.id)}
+                              className="p-2 rounded-xl bg-[#1c150e] hover:bg-[#2c2014] text-[#a69680] hover:text-white border border-[#382b1b] transition-colors"
+                              title="Αντιγραφή πρότασης και λεξαρίθμου"
+                            >
+                              {copiedId === sentenceObj.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+
+                          {/* AI Interpretation */}
+                          <button
+                            type="button"
+                            onClick={() => onOpenAiModal(sentenceObj.text, sentenceObj.value, sentenceObj.words.map((w) => w.rawWord))}
+                            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#24190d] hover:bg-[#382613] text-amber-200 border border-amber-500/40 text-xs font-serif font-bold transition-colors cursor-pointer"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            <span>✨ AI Ερμηνεία Πρότασης</span>
+                          </button>
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="py-12 text-center space-y-3 bg-[#120e0a] rounded-2xl border-2 border-amber-900/40 p-6">
+                <Quote className="w-8 h-8 text-amber-600/70 mx-auto" />
+                <p className="text-sm font-serif text-amber-200">
+                  Δεν βρέθηκαν προτάσεις που να ικανοποιούν τα τρέχοντα φίλτρα.
+                </p>
+                <p className="text-xs text-[#8c7e6c] max-w-md mx-auto">
+                  {sentenceTarget
+                    ? `Καμία πρόταση δεν έχει λεξάριθμο ίσο με ${sentenceTarget}. Δοκιμάστε να καθαρίσετε τον στόχο ή να αναζητήσετε με άλλο αριθμό.`
+                    : "Εισαγάγετε κείμενο με τελείες (.) στο επάνω πλαίσιο για αυτόματο διαχωρισμό σε προτάσεις."}
                 </p>
               </div>
             )}

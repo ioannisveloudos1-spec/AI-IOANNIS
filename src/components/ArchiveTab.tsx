@@ -323,13 +323,13 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
       <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#2d251e] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
-            <span>Σελίδες & Αρχείο Λεξαρίθμων</span>
+            <span>Θησαυρός Λεξαρίθμων</span>
             <span className="text-xs px-2 py-0.5 rounded bg-[#2a2219] text-[#c89b3c] border border-[#4a3a29] font-mono">
               {savedItems.length} αποθηκευμένα
             </span>
           </h2>
           <p className="text-xs text-[#a69680] mt-0.5">
-            Ομαδοποίηση λέξεων και φράσεων κατά ισοψηφικό άθροισμα, ιστορικές αναφορές και σύγκριση λεξαριθμικών συσχετισμών.
+            Πλήρες αρχείο λέξεων & φράσεων οργανωμένο ανά λεξάριθμο, με δυνατότητα άμεσης διαγραφής, αναζήτησης και σύγκρισης.
           </p>
         </div>
 
@@ -345,7 +345,7 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                   : "text-[#8c7e6c] hover:text-[#e8dfd1]"
               }`}
             >
-              Αρχείο μου ({savedItems.length})
+              Θησαυρός μου ({savedItems.length})
             </button>
             <button
               onClick={() => setActiveSubTab("classical")}

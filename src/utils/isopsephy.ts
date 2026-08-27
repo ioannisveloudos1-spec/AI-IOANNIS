@@ -1,4 +1,4 @@
-import { IonicLetter, LetterBreakdown, WordIsopsephy, PhraseMatch, TextAnalysisStats, TextAnalysisResult, UniqueWordStat, WordCombinationMatch, SeedWordCombinationMatch, NumberingSystem } from "../types";
+import { IonicLetter, LetterBreakdown, WordIsopsephy, PhraseMatch, SentenceIsopsephyMatch, TextAnalysisStats, TextAnalysisResult, UniqueWordStat, WordCombinationMatch, SeedWordCombinationMatch, NumberingSystem } from "../types";
 
 /**
  * English Gematria Base 6 / Sumerian values (A=6, B=12, C=18 ... Z=156)
@@ -1759,4 +1759,83 @@ export function decodeVeloudionCode(codeString: string): { text: string; error?:
 
   return { text };
 }
+
+/**
+ * Διαχωρισμός κειμένου σε πλήρεις προτάσεις/φράσεις (μέχρι τελεία, άνω τελεία, ερωτηματικό ή θαυμαστικό)
+ * και υπολογισμός πλήρους ισοψηφίας για κάθε πρόταση.
+ */
+export function extractSentencesWithIsopsephy(text: string): SentenceIsopsephyMatch[] {
+  if (!text || !text.trim()) return [];
+
+  // Match sentences ending in ., ;, ;, !, ?, ·, ·, :, or end of text/double newline
+  // We use regex to match chunks followed by delimiters or text end
+  const sentenceRegex = /[^.;;!?··:\n\r]+(?:[.;;!?··:]+|$)/g;
+  const rawSegments = text.match(sentenceRegex) || [];
+
+  const results: SentenceIsopsephyMatch[] = [];
+  let globalCharCursor = 0;
+  let sIndex = 0;
+
+  for (const rawSeg of rawSegments) {
+    const trimmedSeg = rawSeg.trim();
+    if (!trimmedSeg) {
+      globalCharCursor += rawSeg.length;
+      continue;
+    }
+
+    // Identify trailing punctuation if any
+    const punctMatch = trimmedSeg.match(/[.;;!?··:]+$/);
+    const punctuation = punctMatch ? punctMatch[0] : "";
+    const cleanSentenceText = trimmedSeg;
+
+    // Tokenize into words
+    // Match valid words in this segment
+    const wordTokens = cleanSentenceText.match(/[\p{L}\p{M}ϚϛϜϝϞϟϘϙϠϡͲͳ]+/gu) || [];
+    if (wordTokens.length === 0) {
+      globalCharCursor += rawSeg.length;
+      continue;
+    }
+
+    const words: WordIsopsephy[] = [];
+    let sentenceTotalValue = 0;
+
+    for (let wIdx = 0; wIdx < wordTokens.length; wIdx++) {
+      const rawW = wordTokens[wIdx];
+      const wordObj = calculateWordIsopsephy(rawW, wIdx);
+      if (wordObj.value > 0) {
+        words.push(wordObj);
+        sentenceTotalValue += wordObj.value;
+      }
+    }
+
+    if (words.length > 0 && sentenceTotalValue > 0) {
+      sIndex++;
+      const root = calculatePythmen(sentenceTotalValue);
+      const greekNumeral = numberToGreekNumeral(sentenceTotalValue) || `${sentenceTotalValue}`;
+      const startIndex = globalCharCursor;
+      const endIndex = globalCharCursor + rawSeg.length;
+
+      results.push({
+        id: `sentence-${sIndex}-${sentenceTotalValue}-${Math.random().toString(36).substring(2, 7)}`,
+        sentenceIndex: sIndex,
+        text: cleanSentenceText,
+        normalizedText: cleanSentenceText.toUpperCase(),
+        value: sentenceTotalValue,
+        root,
+        greekNumeral,
+        words,
+        wordCount: words.length,
+        charCount: cleanSentenceText.replace(/\s+/g, "").length,
+        punctuation,
+        startIndex,
+        endIndex,
+      });
+    }
+
+    globalCharCursor += rawSeg.length;
+  }
+
+  return results;
+}
+
 

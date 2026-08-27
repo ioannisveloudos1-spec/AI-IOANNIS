@@ -70,6 +70,22 @@ export interface PhraseMatch {
   rejected?: boolean;
 }
 
+export interface SentenceIsopsephyMatch {
+  id: string;
+  sentenceIndex: number;
+  text: string;
+  normalizedText: string;
+  value: number;
+  root: number;
+  greekNumeral: string;
+  words: WordIsopsephy[];
+  wordCount: number;
+  charCount: number;
+  punctuation: string;
+  startIndex: number;
+  endIndex: number;
+}
+
 export interface SavedIsopsephyItem {
   id: string;
   text: string;
