@@ -49,6 +49,7 @@ import {
   isMeaninglessJunk,
   QualityFilterOptions,
 } from "../utils/topicClustering";
+import { fetchWebPageUniversal } from "../utils/universalWebFetcher";
 
 interface OnlineFinderTabProps {
   onSaveItem?: (item: Omit<SavedIsopsephyItem, "id" | "createdAt">) => void;
@@ -457,26 +458,15 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
           totalFound: wordFreqMap.size,
         });
 
-        // Request batch from backend
-        const res = await fetch("/api/fetch-web-text", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            url: fetchUrl,
-            pagesCount: batchCount,
-            startPage: currentBatchStart,
-          }),
-        });
+        // Request batch using universal fetcher (backend API + CORS proxy fallback for Netlify / Android APK)
+        const data = await fetchWebPageUniversal(fetchUrl, currentBatchStart, batchCount);
 
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          console.warn(`Σφάλμα στο batch ${currentBatchStart}-${batchEnd}:`, errData);
+        if (!data || !data.success) {
+          console.warn(`Σφάλμα στο batch ${currentBatchStart}-${batchEnd}:`, data?.error);
         } else {
-          const data = await res.json();
-          if (data.success) {
-            if (data.totalPagesDetected) {
-              setUrlDetectedPages(data.totalPagesDetected);
-            }
+          if (data.totalPagesDetected) {
+            setUrlDetectedPages(data.totalPagesDetected);
+          }
 
             // Extract structured table items (e.g. Gematrix.org)
             if (data.structuredItems && data.structuredItems.length > 0) {
@@ -561,7 +551,6 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
             }));
             setUrlScannedMatches(currentLiveMatches);
           }
-        }
 
         totalProcessedPages += batchCount;
         currentBatchStart += batchCount;

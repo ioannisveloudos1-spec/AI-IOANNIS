@@ -147,9 +147,10 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
   return (
     <div
       id="portal-gate-overlay"
-      className={`fixed inset-0 z-50 flex flex-col justify-between bg-black text-center overflow-hidden select-none transition-opacity duration-700 pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] ${
+      className={`fixed inset-0 w-full h-[100vh] h-[100dvh] max-h-[100dvh] z-50 flex flex-col justify-between bg-black text-center overflow-hidden select-none transition-opacity duration-700 pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] ${
         phase === "dissolving" ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
+      style={{ touchAction: "none" }}
     >
       {/* Hidden File Input for Native Mobile Audio Picker */}
       <input
@@ -161,22 +162,22 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
       />
 
       {/* Top Floating Utility Controls */}
-      <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between pointer-events-auto">
+      <div className="absolute top-2.5 left-2.5 right-2.5 sm:top-4 sm:left-4 sm:right-4 z-30 flex items-center justify-between pointer-events-auto">
         {/* Mobile / Desktop Upload Button */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading || isTransitioning}
-          className={`px-3.5 py-1.5 rounded-full border text-xs font-serif tracking-wider transition-all flex items-center gap-1.5 backdrop-blur-md cursor-pointer ${
+          className={`px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full border text-[11px] sm:text-xs font-serif tracking-wider transition-all flex items-center gap-1.5 backdrop-blur-md cursor-pointer ${
             hasCustomAudio
-              ? "bg-black/60 border-[#c89b3c]/50 text-[#e6c670] hover:bg-black/80 hover:border-[#c89b3c]"
-              : "bg-[#251b11]/90 border-[#c89b3c] text-[#fff2be] shadow-[0_0_15px_rgba(200,155,60,0.5)] animate-pulse"
+              ? "bg-black/70 border-[#c89b3c]/50 text-[#e6c670] hover:bg-black/90 hover:border-[#c89b3c]"
+              : "bg-[#251b11]/95 border-[#c89b3c] text-[#fff2be] shadow-[0_0_15px_rgba(200,155,60,0.5)] animate-pulse"
           }`}
           title="Επιλέξτε το δικό σας αρχείο MP3"
         >
           {isUploading ? (
             <>
-              <div className="w-3.5 h-3.5 border-2 border-[#e6c670] border-t-transparent rounded-full animate-spin" />
+              <div className="w-3 h-3 border-2 border-[#e6c670] border-t-transparent rounded-full animate-spin" />
               <span>Αποθήκευση...</span>
             </>
           ) : uploadSuccess ? (
@@ -196,14 +197,14 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
         <button
           type="button"
           onClick={triggerEntranceSequence}
-          className="px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/90 border border-[#c89b3c]/40 text-[#e6c670] text-xs font-serif tracking-wider transition-all cursor-pointer backdrop-blur-sm flex items-center gap-1.5"
+          className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full bg-black/70 hover:bg-black/90 border border-[#c89b3c]/40 text-[#e6c670] text-[11px] sm:text-xs font-serif tracking-wider transition-all cursor-pointer backdrop-blur-sm flex items-center gap-1.5"
         >
           <span>{isPlaying ? "Παράλειψη" : "Άμεση Είσοδος"}</span>
-          <FastForward className="w-3.5 h-3.5" />
+          <FastForward className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
         </button>
       </div>
 
-      {/* Background Fullscreen 9:16 Authentic Tunnel with Rock-Carved ΛΑΥΡΕΙΟΝ and Dynamic Metamorphosis Zoom */}
+      {/* Background Fullscreen Tunnel with Rock-Carved ΛΑΥΡΕΙΟΝ and Dynamic Metamorphosis Zoom */}
       <div
         className={`absolute inset-0 w-full h-full flex items-center justify-center bg-black transition-all ${
           phase === "metamorphosis" || phase === "dissolving"
@@ -220,12 +221,12 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
           src={portalImage}
           alt="ΛΑΥΡΕΙΟΝ - Χαραγμένο στον Βράχο - Ουδός προς το Φως"
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover object-top sm:object-center"
+          className="w-full h-full object-contain sm:object-cover object-center max-w-full max-h-full"
         />
         {/* Subtle vignette that does NOT darken the top rock-carved ΛΑΥΡΕΙΟΝ */}
         <div
           className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/85 transition-opacity duration-1000 ${
-            isTransitioning ? "opacity-10" : isPlaying ? "opacity-40" : "opacity-75"
+            isTransitioning ? "opacity-10" : isPlaying ? "opacity-40" : "opacity-70"
           }`}
         />
       </div>
@@ -246,21 +247,21 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
       />
 
       {/* Top Spacer to leave the carved rock completely clear */}
-      <div className="relative z-10 w-full pt-16 sm:pt-20 px-4 flex flex-col items-center pointer-events-none">
+      <div className="relative z-10 w-full pt-10 sm:pt-16 px-4 flex flex-col items-center pointer-events-none">
         {/* Intentionally left clear so the carved rock inscription ΛΑΥΡΕΙΟΝ is 100% visible */}
       </div>
 
       {/* Center Audio Visualizer (Active during playback) */}
       {isPlaying && (
         <div className="relative z-20 w-full max-w-sm mx-auto px-4 my-auto flex flex-col items-center gap-3 animate-fadeIn">
-          <div className="w-full p-4 rounded-2xl bg-black/85 border border-[#c89b3c]/60 shadow-[0_0_30px_rgba(200,155,60,0.4)] backdrop-blur-md text-center space-y-2.5">
+          <div className="w-full p-3.5 sm:p-4 rounded-2xl bg-black/85 border border-[#c89b3c]/60 shadow-[0_0_30px_rgba(200,155,60,0.4)] backdrop-blur-md text-center space-y-2">
             <div className="flex items-center justify-center gap-2 text-[#e6c670] text-xs font-serif uppercase tracking-widest">
               <Music className="w-4 h-4 text-[#c89b3c] animate-bounce" />
               <span>ΑΝΑΠΑΡΑΓΩΓΗ ΗΧΟΥ</span>
             </div>
 
             {/* Audio Waveform Bars */}
-            <div className="flex items-center justify-center gap-1.5 py-1.5">
+            <div className="flex items-center justify-center gap-1.5 py-1">
               {[40, 75, 55, 90, 100, 60, 85, 45, 95, 70, 50, 80].map((h, i) => (
                 <div
                   key={i}
@@ -295,34 +296,34 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
 
       {/* Bottom Floating Area: Inscription & 3D Mechanical Button */}
       <div
-        className={`relative z-10 w-full max-w-lg mx-auto px-4 pb-10 sm:pb-14 pt-4 flex flex-col items-center gap-4 transition-all duration-700 ${
+        className={`relative z-10 w-full max-w-md mx-auto px-3.5 pb-4 sm:pb-8 pt-1 flex flex-col items-center gap-2.5 sm:gap-3.5 transition-all duration-700 ${
           isTransitioning ? "opacity-0 translate-y-8 pointer-events-none" : "opacity-100 translate-y-0"
         }`}
       >
         {/* Mystical Inscription */}
         {!isPlaying && (
-          <p className="text-xs sm:text-sm font-serif italic text-[#f0cf7e] tracking-wide max-w-md leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,1)] px-2">
+          <p className="text-[11px] sm:text-xs md:text-sm font-serif italic text-[#f0cf7e] tracking-wide max-w-md leading-tight sm:leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,1)] px-2">
             «ΘΑ ΕΙΣΕΛΘΕΙΣ; Η ΕΙΣΟΔΟΣ ΕΝΤΟΣ ΣΟΥ ΕΊΝΑΙ Η ΕΞΟΔΟΣ ΑΠΟ ΤΟΝ ΚΟΣΜΟ ΤΟΥ ΨΕΥΔΟΥΣ.. ΑΛΗΘΕΙΑ»
           </p>
         )}
 
         {/* Outer 3D Stone Recess */}
-        <div className="w-full sm:w-auto p-1.5 rounded-2xl bg-gradient-to-b from-[#120e0a] to-[#251b11] border border-[#423321] shadow-[inset_0_4px_12px_rgba(0,0,0,0.9),0_8px_20px_rgba(0,0,0,0.8)]">
+        <div className="w-full sm:w-auto p-1 sm:p-1.5 rounded-xl sm:rounded-2xl bg-gradient-to-b from-[#120e0a] to-[#251b11] border border-[#423321] shadow-[inset_0_4px_12px_rgba(0,0,0,0.9),0_8px_20px_rgba(0,0,0,0.8)]">
           {/* 3D Embossed Button: ΒΕΛΟΣ + ΟΥΔΟΣ */}
           <button
             id="btn-velos-oudos"
             type="button"
             onClick={isPlaying ? triggerEntranceSequence : handleButtonClick}
             disabled={isTransitioning}
-            className={`group relative w-full sm:w-auto px-8 sm:px-14 py-4 rounded-xl font-serif font-black transition-all cursor-pointer select-none flex items-center justify-center gap-3.5
+            className={`group relative w-full sm:w-auto px-6 sm:px-12 py-3 sm:py-3.5 rounded-lg sm:rounded-xl font-serif font-black transition-all cursor-pointer select-none flex items-center justify-center gap-2.5 sm:gap-3.5
               bg-gradient-to-b from-[#3a2c1b] via-[#241a10] to-[#120c07]
               border-t-2 border-l-2 border-r-2 border-[#d6a94f]
-              border-b-[6px] border-b-[#523b1e]
-              shadow-[0_12px_28px_rgba(0,0,0,0.9),0_0_30px_rgba(200,155,60,0.4)]
-              hover:shadow-[0_14px_35px_rgba(0,0,0,0.95),0_0_45px_rgba(230,198,112,0.6)]
+              border-b-[4px] sm:border-b-[6px] border-b-[#523b1e]
+              shadow-[0_8px_22px_rgba(0,0,0,0.9),0_0_25px_rgba(200,155,60,0.4)]
+              hover:shadow-[0_12px_32px_rgba(0,0,0,0.95),0_0_40px_rgba(230,198,112,0.6)]
               hover:border-t-[#ffe082]
-              active:translate-y-[4px] active:border-b-[2px] active:shadow-[0_2px_8px_rgba(0,0,0,0.9),inset_0_4px_12px_rgba(0,0,0,0.8)]
-              ${phase === "pressed" ? "translate-y-[5px] border-b-[2px] shadow-[inset_0_6px_16px_rgba(0,0,0,0.95)]" : ""}
+              active:translate-y-[3px] active:border-b-[2px] active:shadow-[0_2px_8px_rgba(0,0,0,0.9),inset_0_4px_12px_rgba(0,0,0,0.8)]
+              ${phase === "pressed" ? "translate-y-[4px] border-b-[2px] shadow-[inset_0_6px_16px_rgba(0,0,0,0.95)]" : ""}
               ${isPlaying ? "animate-pulse border-[#ffe082]" : ""}
             `}
           >
@@ -331,7 +332,7 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
 
             {/* Embossed Diamond Relief Text */}
             <span
-              className="text-lg sm:text-2xl font-serif font-black tracking-[0.22em] text-transparent bg-clip-text drop-shadow-[0_3px_6px_rgba(0,0,0,0.95)] transition-all"
+              className="text-base sm:text-xl md:text-2xl font-serif font-black tracking-[0.14em] sm:tracking-[0.22em] text-transparent bg-clip-text drop-shadow-[0_3px_6px_rgba(0,0,0,0.95)] transition-all whitespace-nowrap"
               style={{
                 backgroundImage:
                   "linear-gradient(135deg, #ffffff 0%, #d8ecf8 22%, #fff3b0 45%, #ffffff 60%, #e2d9f3 78%, #fff8db 100%)",
@@ -344,7 +345,7 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
             </span>
 
             <ArrowRight
-              className="w-5 h-5 text-[#fff2be] group-hover:translate-x-1.5 transition-transform shrink-0"
+              className="w-4 h-4 sm:w-5 sm:h-5 text-[#fff2be] group-hover:translate-x-1.5 transition-transform shrink-0"
               style={{
                 filter: "drop-shadow(0 0 6px rgba(255,240,170,0.9))",
               }}
