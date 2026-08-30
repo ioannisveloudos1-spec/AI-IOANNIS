@@ -9,7 +9,6 @@ import { AnagramsTab } from "./components/AnagramsTab";
 import { IsopsephicGraphTab } from "./components/IsopsephicGraphTab";
 import { VeloudionTab } from "./components/VeloudionTab";
 import { CubeApolloTab } from "./components/CubeApolloTab";
-import { GameTab } from "./components/GameTab";
 import { StatsTab } from "./components/StatsTab";
 import { ArchiveTab } from "./components/ArchiveTab";
 import { GuideTab } from "./components/GuideTab";
@@ -18,7 +17,6 @@ import { ApiKeyModal } from "./components/ApiKeyModal";
 import { ExportReportModal } from "./components/ExportReportModal";
 import { PortalGateIntro } from "./components/PortalGateIntro";
 import { numberToGreekNumeral } from "./utils/isopsephy";
-import { Calculator, Search, Box, BookMarked, Sparkles } from "lucide-react";
 
 const LOCAL_STORAGE_KEY = "greek_isopsephy_saved_archive_v3_canonical";
 const API_KEY_STORAGE_KEY = "GEMINI_USER_API_KEY";
@@ -355,8 +353,6 @@ export default function App() {
           />
         )}
 
-        {currentTab === "game" && <GameTab />}
-
         {currentTab === "stats" && (
           <StatsTab
             currentSearchText={currentTextForStats}
@@ -432,47 +428,6 @@ export default function App() {
           onClose={() => setShowPortalGate(false)}
         />
       )}
-
-      {/* Mobile Quick Bottom Navigation Bar (Direct Access to Key Views) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#120f0c]/95 backdrop-blur-md border-t border-[#33261a] px-2 py-1.5 flex items-center justify-around shadow-2xl pb-[max(0.375rem,env(safe-area-inset-bottom))]">
-        {[
-          { id: "calculator" as TabType, label: "Υπολογισμός", icon: Calculator },
-          { id: "search" as TabType, label: "Αναζήτηση", icon: Search },
-          { id: "cube-apollo" as TabType, label: "Κύβος 1331", icon: Box },
-          { id: "archive" as TabType, label: "Θησαυρός", icon: BookMarked, badge: savedItems.length },
-        ].map((item) => {
-          const Icon = item.icon;
-          const isActive = currentTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setCurrentTab(item.id)}
-              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer touch-manipulation min-h-[44px] ${
-                isActive
-                  ? "text-[#e6c670] font-bold"
-                  : "text-[#8c7e6c] hover:text-[#d6c7b2]"
-              }`}
-            >
-              <div className="relative">
-                <Icon className={`w-5 h-5 ${isActive ? "text-[#e6c670]" : "text-[#736553]"}`} />
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 text-[9px] px-1 py-0.2 rounded-full font-bold bg-[#c89b3c] text-black">
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-              <span className="text-[10px] font-serif mt-0.5 tracking-tight">{item.label}</span>
-            </button>
-          );
-        })}
-        <button
-          onClick={() => handleOpenAiModal("ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ", 2368, ["ΙΗΣΟΥΣ", "ΧΡΙΣΤΟΣ"])}
-          className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[#f5ecd8] transition-all cursor-pointer min-h-[44px]"
-        >
-          <Sparkles className="w-5 h-5 text-[#ffd700] animate-pulse" />
-          <span className="text-[10px] font-serif mt-0.5 text-[#e6c670] font-bold">AI</span>
-        </button>
-      </nav>
 
       {/* Toast Notification */}
       {toastMessage && (

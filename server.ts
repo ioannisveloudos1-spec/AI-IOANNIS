@@ -365,23 +365,70 @@ async function startServer() {
         });
       }
 
-      // Extract items from all fetched pages
+      // Extract items from all fetched pages using resilient parsing
       let structuredItems: Array<{ phrase: string; jewish?: number; english?: number; simple?: number }> = [];
+      const seenPhrases = new Set<string>();
 
-      if (isGematrix) {
-        // Regex extract Gematrix table rows
-        const rowRegex = /<tr[^>]*>\s*<td[^>]*>\s*<a[^>]*href="[^"]*word=[^"]*"[^>]*>([\s\S]*?)<\/a>\s*<\/td>\s*<td[^>]*>\s*<a[^>]*>(\d+)<\/a>\s*<\/td>\s*<td[^>]*>\s*<a[^>]*>(\d+)<\/a>\s*<\/td>\s*<td[^>]*>\s*<a[^>]*>(\d+)<\/a>\s*<\/td>/gi;
-        
-        for (const htmlContent of allHtmls) {
-          let match;
-          while ((match = rowRegex.exec(htmlContent)) !== null) {
-            const rawPhrase = match[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#39;/g, "'").trim();
-            if (rawPhrase) {
+      for (const htmlContent of allHtmls) {
+        // Match table rows
+        const trMatches = htmlContent.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
+        for (const tr of trMatches) {
+          const tdMatches = tr.match(/<td[^>]*>([\s\S]*?)<\/td>/gi);
+          if (tdMatches && tdMatches.length >= 2) {
+            const cellTexts = tdMatches.map((td) =>
+              td
+                .replace(/<[^>]+>/g, " ")
+                .replace(/&amp;/g, "&")
+                .replace(/&#39;/g, "'")
+                .replace(/&quot;/g, '"')
+                .replace(/&nbsp;/g, " ")
+                .replace(/\s+/g, " ")
+                .trim()
+            );
+
+            const rawPhrase = cellTexts[0];
+            if (
+              rawPhrase &&
+              rawPhrase.length >= 2 &&
+              !/^(word|phrase|gematria|jewish|english|simple|search|results)/i.test(rawPhrase)
+            ) {
+              const upper = rawPhrase.toUpperCase();
+              if (!seenPhrases.has(upper)) {
+                seenPhrases.add(upper);
+                const nums = cellTexts
+                  .slice(1)
+                  .map((c) => parseInt(c.replace(/[^\d]/g, ""), 10))
+                  .filter((n) => !isNaN(n));
+
+                structuredItems.push({
+                  phrase: rawPhrase,
+                  jewish: nums[0],
+                  english: nums[1] !== undefined ? nums[1] : nums[0],
+                  simple: nums[2],
+                });
+              }
+            }
+          }
+        }
+
+        // Also match direct word links <a href="...word=...">Phrase</a>
+        const wordLinkRegex = /<a[^>]*href="[^"]*(?:word|query)=([^"&>]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+        let linkMatch;
+        while ((linkMatch = wordLinkRegex.exec(htmlContent)) !== null) {
+          const rawPhrase = linkMatch[2]
+            .replace(/<[^>]+>/g, "")
+            .replace(/&amp;/g, "&")
+            .replace(/&#39;/g, "'")
+            .replace(/&quot;/g, '"')
+            .replace(/&nbsp;/g, " ")
+            .trim();
+
+          if (rawPhrase && rawPhrase.length >= 2) {
+            const upper = rawPhrase.toUpperCase();
+            if (!seenPhrases.has(upper)) {
+              seenPhrases.add(upper);
               structuredItems.push({
                 phrase: rawPhrase,
-                jewish: parseInt(match[2], 10),
-                english: parseInt(match[3], 10),
-                simple: parseInt(match[4], 10),
               });
             }
           }

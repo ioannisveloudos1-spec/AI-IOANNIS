@@ -18,7 +18,6 @@ import {
   Binary,
   Box,
   Globe,
-  Gamepad2,
 } from "lucide-react";
 import appLogoImg from "../assets/images/ego_eimi_logo_1787417709332.jpg";
 
@@ -52,7 +51,6 @@ export const Header: React.FC<HeaderProps> = ({
     { id: "graph" as TabType, label: "Χάρτης Σταθμών", icon: Network, desc: "Δίκτυο κόμβων & συνδέσεων" },
     { id: "veloudion" as TabType, label: "ΒΕΛΟΥΔΙΟΝ", icon: Binary, desc: "Τριαδική κρυπτογραφία & 8 Συστήματα" },
     { id: "cube-apollo" as TabType, label: "Κύβος 1331", icon: Box, desc: "3D Κύβος Απόλλωνος (11³)" },
-    { id: "game" as TabType, label: "Αρένα & Παιχνίδι", icon: Gamepad2, desc: "Κουίζ λεξαρίθμων & Μάχη 60s" },
     { id: "stats" as TabType, label: "Στατιστικά", icon: BarChart3, desc: "Οπτικοποίηση, γραφήματα & CSV" },
     { id: "archive" as TabType, label: "Θησαυρός", icon: BookMarked, desc: "Αποθηκευμένες λέξεις & φράσεις λεξαρίθμων", badge: savedCount },
     { id: "guide" as TabType, label: "Οδηγός & 666", icon: BookOpen, desc: "Ιωνική αρίθμηση, 666 & κανόνες" },
@@ -206,16 +204,16 @@ export const Header: React.FC<HeaderProps> = ({
                     key={tab.id}
                     id={`nav-tab-${tab.id}`}
                     onClick={() => onSelectTab(tab.id)}
-                    className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer min-h-[40px] sm:min-h-[44px] touch-manipulation ${
+                    className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer ${
                       isActive
                         ? "bg-gradient-to-r from-[#332616] via-[#42331f] to-[#332616] text-[#f5ecd8] border border-[#c89b3c] shadow-md shadow-[#c89b3c]/15 font-bold"
                         : "text-[#a69680] hover:text-[#e8dfd1] hover:bg-[#231e18]"
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? "text-[#e6c670]" : "text-[#8c7e6c]"}`} />
+                    <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isActive ? "text-[#e6c670]" : "text-[#8c7e6c]"}`} />
                     <span>{tab.label}</span>
                     {tab.badge !== undefined && tab.badge > 0 && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                         isActive ? "bg-[#c89b3c] text-[#14120f]" : "bg-[#2f271e] text-[#c89b3c]"
                       }`}>
                         {tab.badge}

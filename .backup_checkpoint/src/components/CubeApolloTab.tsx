@@ -33,9 +33,6 @@ import {
   Hash,
   Crosshair,
   Scan,
-  Activity,
-  ShieldAlert,
-  Disc,
 } from "lucide-react";
 
 interface CubeApolloTabProps {
@@ -133,9 +130,6 @@ export const CubeApolloTab: React.FC<CubeApolloTabProps> = ({ onOpenAiModal }) =
   const [rayStyle, setRayStyle] = useState<RayStyle>("axes_666");
   const [rayThickness, setRayThickness] = useState<number>(0.008);
   const [selectedFaceIdx, setSelectedFaceIdx] = useState<number | null>(0);
-  const [isPurifyingToneActive, setIsPurifyingToneActive] = useState<boolean>(false);
-  const [purifyingCountdown, setPurifyingCountdown] = useState<number>(0);
-  const purifyingOscRef = useRef<{ stop: () => void } | null>(null);
 
   // 11x11x11 Coordinate Numbering & Inspection States
   const [showNumbersOnAxes, setShowNumbersOnAxes] = useState<boolean>(true);
@@ -573,114 +567,6 @@ export const CubeApolloTab: React.FC<CubeApolloTabProps> = ({ onOpenAiModal }) =
       });
     } catch {
       // ignore
-    }
-  };
-
-  // Dedicated 5-Second Pure 432 Hz "Aktina Dios" Tone Generator for Space Harmonization
-  const triggerPurifying432HzTone = () => {
-    // If already active, cancel/stop early
-    if (isPurifyingToneActive && purifyingOscRef.current) {
-      purifyingOscRef.current.stop();
-      return;
-    }
-
-    try {
-      if (!audioCtxRef.current) {
-        const AudioContextClass =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        audioCtxRef.current = new AudioContextClass();
-      }
-      const ctx = audioCtxRef.current;
-      if (ctx.state === "suspended") ctx.resume();
-
-      const now = ctx.currentTime;
-      const DURATION = 5.0; // 5 Seconds exact
-
-      // Pure Master 432.0 Hz Sine Wave Oscillator
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      // Subtle warm subharmonic (216 Hz) for fullness
-      const subOsc = ctx.createOscillator();
-      const subGain = ctx.createGain();
-
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(432.0, now);
-
-      subOsc.type = "sine";
-      subOsc.frequency.setValueAtTime(216.0, now);
-
-      // Smooth 0.25s Fade-In and 0.5s Fade-Out over 5.0 seconds
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.35, now + 0.25);
-      gain.gain.setValueAtTime(0.35, now + DURATION - 0.5);
-      gain.gain.exponentialRampToValueAtTime(0.00001, now + DURATION);
-
-      subGain.gain.setValueAtTime(0, now);
-      subGain.gain.linearRampToValueAtTime(0.08, now + 0.3);
-      subGain.gain.setValueAtTime(0.08, now + DURATION - 0.5);
-      subGain.gain.exponentialRampToValueAtTime(0.00001, now + DURATION);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      subOsc.connect(subGain);
-      subGain.connect(ctx.destination);
-
-      osc.start(now);
-      subOsc.start(now);
-
-      osc.stop(now + DURATION + 0.1);
-      subOsc.stop(now + DURATION + 0.1);
-
-      setIsPurifyingToneActive(true);
-      setPurifyingCountdown(5);
-      setAktinaVisible(true);
-
-      const countdownInterval = setInterval(() => {
-        setPurifyingCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(countdownInterval);
-            setIsPurifyingToneActive(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      const stopHandler = () => {
-        try {
-          const stopTime = ctx.currentTime;
-          gain.gain.cancelScheduledValues(stopTime);
-          gain.gain.linearRampToValueAtTime(0.00001, stopTime + 0.05);
-          subGain.gain.cancelScheduledValues(stopTime);
-          subGain.gain.linearRampToValueAtTime(0.00001, stopTime + 0.05);
-          setTimeout(() => {
-            try {
-              osc.stop();
-              subOsc.stop();
-            } catch {
-              // ignore
-            }
-          }, 60);
-        } catch {
-          // ignore
-        }
-        clearInterval(countdownInterval);
-        setIsPurifyingToneActive(false);
-        setPurifyingCountdown(0);
-      };
-
-      purifyingOscRef.current = { stop: stopHandler };
-
-      setTimeout(() => {
-        setIsPurifyingToneActive(false);
-        setPurifyingCountdown(0);
-      }, DURATION * 1000);
-    } catch {
-      setIsPurifyingToneActive(false);
-      setPurifyingCountdown(0);
     }
   };
 
@@ -1848,17 +1734,17 @@ export const CubeApolloTab: React.FC<CubeApolloTabProps> = ({ onOpenAiModal }) =
             </div>
 
             {/* Top-Left Live Coordinate HUD & Pause Status Badge */}
-            <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 max-w-xs sm:max-w-sm font-serif pointer-events-none">
+            <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 max-w-sm font-serif">
               {/* Pause Study Status Pill */}
               {isPaused && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#c89b3c]/90 text-black font-bold text-xs shadow-lg backdrop-blur-sm border border-[#ffd700] pointer-events-auto">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#c89b3c]/90 text-black font-bold text-xs shadow-lg backdrop-blur-sm border border-[#ffd700]">
                   <Pause className="w-3.5 h-3.5" />
-                  <span>ΠΑΥΣΗ ΕΝΕΡΓΗ — Ελεύθερη Μελέτη</span>
+                  <span>ΠΑΥΣΗ ΕΝΕΡΓΗ — Ελεύθερη Μελέτη 3D Κύβου</span>
                 </div>
               )}
 
-              {/* Dynamic Hover/Selected Coordinate Card with Glassmorphism */}
-              <div className="p-3 rounded-xl bg-[#120e0b]/80 hover:bg-[#120e0b]/95 backdrop-blur-md border border-[#c89b3c]/40 text-xs shadow-xl space-y-1.5 transition-all pointer-events-auto">
+              {/* Dynamic Hover/Selected Coordinate Card */}
+              <div className="p-3 rounded-xl bg-[#120e0b]/90 backdrop-blur-md border border-[#c89b3c]/50 text-xs shadow-xl space-y-1.5">
                 <div className="flex items-center justify-between gap-2 border-b border-[#2e2318] pb-1">
                   <div className="flex items-center gap-1.5">
                     <Crosshair className="w-3.5 h-3.5 text-[#ffd700]" />
@@ -2384,132 +2270,6 @@ export const CubeApolloTab: React.FC<CubeApolloTabProps> = ({ onOpenAiModal }) =
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Dedicated Section: Pure 432 Hz Space Harmonization & Aktina Dios */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-[#17120e] via-[#241910] to-[#17120e] border border-[#c89b3c]/60 shadow-2xl space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-[#ffd700] animate-pulse" />
-              <h3 className="font-serif font-bold text-base md:text-lg text-[#e6c670]">
-                Ψηφιακή «Ακτίνα Διός» — Καθαρός Τόνος 432 Hz (5 Δευτερόλεπτα)
-              </h3>
-            </div>
-            <p className="text-xs text-[#d6c7b2] font-serif leading-relaxed max-w-3xl">
-              Εκπομπή καθαρού συνεχούς ημιτονοειδούς τόνου στα <strong>432,00 Hz</strong> με φυσικό υπόβαθρο 216 Hz για 5 δευτερόλεπτα.
-              Συνδέεται με τη λεξαριθμική τιμή <strong>«ΑΚΤΙΝΑ ΔΙΟΣ = 666»</strong> και τις αρμονικές συχνότητες του πυθαγόρειου κουρδίσματος για τον καθαρισμό και την αρμονία του χώρου.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={triggerPurifying432HzTone}
-              className={`px-5 py-3 rounded-xl font-serif text-sm font-bold flex items-center gap-2.5 transition-all cursor-pointer shadow-lg touch-manipulation min-h-[48px] ${
-                isPurifyingToneActive
-                  ? "bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 text-black ring-4 ring-yellow-400/40 shadow-yellow-500/30 scale-105 animate-pulse"
-                  : "bg-gradient-to-r from-[#8a2216] via-[#b36a18] to-[#8a2216] hover:from-[#a62b1c] hover:to-[#c9781c] text-[#fff6e6] border border-[#ffd700]/70 hover:shadow-amber-900/50"
-              }`}
-              title="Ενεργοποίηση καθαρού τόνου 432 Hz για 5 δευτερόλεπτα"
-            >
-              <Zap className={`w-5 h-5 ${isPurifyingToneActive ? "text-black animate-spin" : "text-yellow-300"}`} />
-              <span>
-                {isPurifyingToneActive
-                  ? `ΕΚΠΟΜΠΗ 432 Hz (${purifyingCountdown}s) — Διακοπή`
-                  : "⚡ Ενεργοποίηση Ακτίνας Διός (432 Hz • 5s)"}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Live Audio Visualizer / Status Bar when tone is active */}
-        {isPurifyingToneActive && (
-          <div className="p-5 rounded-xl bg-[#0c0907] border border-amber-500/50 space-y-4 animate-fadeIn">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
-                <span className="text-xs font-serif text-[#f5ecd8]">
-                  Κυματομορφή & Ήχος: <strong className="text-[#ffd700] font-mono">432.00 Hz</strong>
-                </span>
-              </div>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="w-full sm:w-48 h-2 bg-[#22180e] rounded-full overflow-hidden border border-[#3e3020]">
-                  <div
-                    className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400 transition-all duration-1000"
-                    style={{ width: `${(purifyingCountdown / 5) * 100}%` }}
-                  />
-                </div>
-                <span className="text-xs font-mono font-bold text-amber-400 shrink-0">
-                  {purifyingCountdown}s
-                </span>
-              </div>
-            </div>
-
-            {/* Chladni Cymatics & Apollo Sun Harmony Visualizer */}
-            <div className="flex flex-col items-center justify-center p-5 rounded-xl bg-[#140e0a] border border-[#2a1e12] relative overflow-hidden space-y-4">
-              <div className="relative w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center">
-                {/* Chladni Geometric Standing Wave Sand Plate Simulation */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-400/20 to-orange-500/20 blur-xl animate-pulse" />
-
-                {/* Chladni Nodal Geometry Patterns (Concentric nodal lines) */}
-                <div className="absolute inset-2 rounded-full border border-amber-400/30 animate-spin" style={{ animationDuration: "30s" }} />
-                <div className="absolute inset-6 rounded-full border-2 border-dashed border-amber-400/60 animate-spin" style={{ animationDuration: "18s" }} />
-                <div className="absolute inset-12 rounded-full border border-yellow-300/50 animate-spin" style={{ animationDuration: "12s", animationDirection: "reverse" }} />
-                <div className="absolute inset-20 rounded-full border border-amber-500/60 animate-pulse" />
-                
-                {/* Chladni Harmonics Crosshairs & Diagonals (Standing Wave Nodes) */}
-                <div className="absolute w-full h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
-                <div className="absolute h-full w-[1.5px] bg-gradient-to-b from-transparent via-amber-400/60 to-transparent" />
-                <div className="absolute w-full h-[1.5px] bg-gradient-to-r from-transparent via-yellow-300/40 to-transparent rotate-45" />
-                <div className="absolute w-full h-[1.5px] bg-gradient-to-r from-transparent via-yellow-300/40 to-transparent -rotate-45" />
-                <div className="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-amber-200/30 to-transparent rotate-[22.5deg]" />
-                <div className="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-amber-200/30 to-transparent -rotate-[22.5deg]" />
-
-                {/* Central Apollo Sun Icon & Solar Disc */}
-                <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-amber-700 via-amber-500 to-yellow-200 flex flex-col items-center justify-center shadow-[0_0_50px_rgba(255,215,0,0.8)] border-2 border-yellow-200 animate-pulse">
-                  <Sun className="w-16 h-16 sm:w-18 sm:h-18 text-[#1a1005] animate-spin" style={{ animationDuration: "20s" }} />
-                  <span className="text-[9px] font-serif font-black text-[#1a1005] uppercase tracking-wider mt-0.5">
-                    ΑΠΟΛΛΩΝ 432Hz
-                  </span>
-                </div>
-              </div>
-
-              {/* Apollo Sun Harmony Badge Card */}
-              <div className="p-3 rounded-xl bg-[#1d1610] border border-[#c89b3c]/50 flex items-center gap-3 shadow-lg max-w-sm w-full">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-400 flex items-center justify-center shrink-0 shadow-md">
-                  <Sun className="w-6 h-6 text-[#140e0a]" />
-                </div>
-                <div className="text-left flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-serif font-bold text-[#ffd700]">
-                      Αρμονία 432 Hz & Ήλιος Απόλλωνος
-                    </span>
-                    <span className="text-[10px] font-mono font-bold text-amber-300">
-                      666 / 1331
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#d6c7b2] font-serif truncate mt-0.5">
-                    Κυματικό πρότυπο Chladni & 3D Κύβος 11³
-                  </p>
-                </div>
-              </div>
-
-              {/* Dynamic Waveform Frequency Bars */}
-              <div className="flex items-center justify-center gap-1 w-full max-w-xs h-7">
-                {Array.from({ length: 28 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 bg-gradient-to-t from-amber-600 via-yellow-400 to-yellow-200 rounded-t transition-all duration-150 animate-pulse"
-                    style={{
-                      height: `${25 + Math.sin((i / 28) * Math.PI * 4 + Date.now() / 200) * 45 + (i % 4) * 10}%`,
-                      animationDelay: `${i * 35}ms`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Explanatory Cards Grid */}

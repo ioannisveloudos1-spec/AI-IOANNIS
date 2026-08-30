@@ -7,7 +7,6 @@ export type TabType =
   | "graph" 
   | "veloudion"
   | "cube-apollo"
-  | "game"
   | "stats" 
   | "archive" 
   | "guide";

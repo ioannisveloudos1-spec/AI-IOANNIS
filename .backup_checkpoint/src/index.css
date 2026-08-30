@@ -9,7 +9,6 @@ html, body {
   padding: 0;
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
-  background-color: #0d0c0a;
 }
 
 #root {
@@ -17,18 +16,6 @@ html, body {
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
-}
-
-/* Base typography enhancements for calm readability */
-body {
-  color: #e8dfd1;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-}
-
-/* Touch target minimum size helper */
-.touch-target {
-  min-height: 44px;
-  min-width: 44px;
 }
 
 /* =========================================================
