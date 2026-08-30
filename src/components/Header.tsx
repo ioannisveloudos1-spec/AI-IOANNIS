@@ -19,6 +19,9 @@ import {
   Box,
   Globe,
   Gamepad2,
+  SpellCheck,
+  Type,
+  Sun,
 } from "lucide-react";
 import appLogoImg from "../assets/images/ego_eimi_logo_1787417709332.jpg";
 
@@ -30,6 +33,8 @@ interface HeaderProps {
   onOpenApiKeyModal: () => void;
   onOpenPortalGate?: () => void;
   onOpenExportReport?: () => void;
+  onOpenFontModal?: () => void;
+  currentFontName?: string;
   hasCustomApiKey?: boolean;
 }
 
@@ -41,6 +46,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenApiKeyModal,
   onOpenPortalGate,
   onOpenExportReport,
+  onOpenFontModal,
+  currentFontName,
   hasCustomApiKey = false,
 }) => {
   const tabs = [
@@ -49,9 +56,11 @@ export const Header: React.FC<HeaderProps> = ({
     { id: "online-finder" as TabType, label: "Ανιχνευτής Web", icon: Globe, desc: "Online λεξικά, URL & 1119" },
     { id: "bridges" as TabType, label: "Γέφυρες", icon: GitCompare, desc: "Σύγκριση & μαθηματικές σχέσεις" },
     { id: "anagrams" as TabType, label: "Matrix 3×3", icon: Grid, desc: "Αναγραμματισμοί & Πυθαγόρειο Matrix" },
+    { id: "grammatari" as TabType, label: "ΓΡΑΜΜΑΤΑΡΙ", icon: SpellCheck, desc: "Υπο-Αναγραμματισμοί 4-9 γραμμάτων" },
     { id: "graph" as TabType, label: "Χάρτης Σταθμών", icon: Network, desc: "Δίκτυο κόμβων & συνδέσεων" },
     { id: "veloudion" as TabType, label: "ΒΕΛΟΥΔΙΟΝ", icon: Binary, desc: "Τριαδική κρυπτογραφία & 8 Συστήματα" },
     { id: "cube-apollo" as TabType, label: "Κύβος 1331", icon: Box, desc: "3D Κύβος Απόλλωνος (11³)" },
+    { id: "solar-square" as TabType, label: "Τετράγωνο Ηλίου", icon: Sun, desc: "Μαγικό Τετράγωνο 6×6, 111 & 666" },
     { id: "game" as TabType, label: "Αρένα & Παιχνίδι", icon: Gamepad2, desc: "Κουίζ λεξαρίθμων & Μάχη 60s" },
     { id: "stats" as TabType, label: "Στατιστικά", icon: BarChart3, desc: "Οπτικοποίηση, γραφήματα & CSV" },
     { id: "archive" as TabType, label: "Θησαυρός", icon: BookMarked, desc: "Αποθηκευμένες λέξεις & φράσεις λεξαρίθμων", badge: savedCount },
@@ -118,8 +127,20 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons (API Key & AI Assistant & Portal Gate & Report) - Clearly visible on all screens */}
+            {/* Action Buttons (API Key & AI Assistant & Portal Gate & Report & Greek Fonts) - Clearly visible on all screens */}
             <div className="flex items-center gap-1.5 shrink-0">
+              {onOpenFontModal && (
+                <button
+                  onClick={onOpenFontModal}
+                  id="header-font-selector-btn"
+                  className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-lg bg-[#18130e] hover:bg-[#251d15] border border-[#3e3020] hover:border-[#c89b3c] text-xs font-serif text-[#d6c7b2] hover:text-[#e6c670] transition-all shadow-sm shrink-0 cursor-pointer"
+                  title={`Επιλογή Αρχαιοελληνικής Γραμματοσειράς (${currentFontName || "GFS Didot"})`}
+                >
+                  <Type className="w-3.5 h-3.5 text-[#e6c670]" />
+                  <span className="text-[11px] font-sans font-medium hidden md:inline">Γραμματοσειρά</span>
+                </button>
+              )}
+
               {onOpenExportReport && (
                 <button
                   onClick={onOpenExportReport}

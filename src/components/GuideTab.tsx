@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { IONIC_ALPHABET } from "../utils/isopsephy";
 import { BookOpen, Sparkles, Hash, Layers, CheckCircle2, Sun, Calculator, ChevronRight, Compass } from "lucide-react";
 import { LavreionStoryView } from "./LavreionStoryView";
+import { AncientSymbolsTable } from "./AncientSymbolsTable";
 
-type GuideSubTab = "all" | "lavreion" | "ionian" | "awakening" | "orphic";
+type GuideSubTab = "all" | "lavreion" | "symbols" | "ionian" | "awakening" | "orphic";
 
 export const GuideTab: React.FC = () => {
   const [activeGuideTab, setActiveGuideTab] = useState<GuideSubTab>("all");
@@ -67,6 +68,18 @@ export const GuideTab: React.FC = () => {
           >
             <Compass className="w-3.5 h-3.5" />
             <span>🏛️ Η Πύλη ΛΑΥΡΕΙΟΝ (Ιανεύς Τελιανός)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGuideTab("symbols")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "symbols"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>🏛️ Πίνακας Αρχαίων Συμβόλων &amp; Επισήμων</span>
           </button>
 
           <button
@@ -879,6 +892,13 @@ export const GuideTab: React.FC = () => {
           </p>
         </div>
       </div>
+      )}
+
+      {/* 4. ANCIENT SYMBOLS & ARCHAIC LETTERS TABLE SECTION */}
+      {(activeGuideTab === "all" || activeGuideTab === "symbols") && (
+        <div className="pt-2">
+          <AncientSymbolsTable />
+        </div>
       )}
 
     </div>

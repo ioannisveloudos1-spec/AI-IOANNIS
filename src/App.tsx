@@ -6,6 +6,7 @@ import { SearchTab } from "./components/SearchTab";
 import { OnlineFinderTab } from "./components/OnlineFinderTab";
 import { BridgesTab } from "./components/BridgesTab";
 import { AnagramsTab } from "./components/AnagramsTab";
+import { GrammatariTab } from "./components/GrammatariTab";
 import { IsopsephicGraphTab } from "./components/IsopsephicGraphTab";
 import { VeloudionTab } from "./components/VeloudionTab";
 import { CubeApolloTab } from "./components/CubeApolloTab";
@@ -17,6 +18,12 @@ import { AiAnalysisModal } from "./components/AiAnalysisModal";
 import { ApiKeyModal } from "./components/ApiKeyModal";
 import { ExportReportModal } from "./components/ExportReportModal";
 import { PortalGateIntro } from "./components/PortalGateIntro";
+import { GreekFontSelectorModal } from "./components/GreekFontSelectorModal";
+import {
+  getInitialAncientFont,
+  saveAncientFont,
+  ANCIENT_GREEK_FONTS,
+} from "./utils/greekFonts";
 import { numberToGreekNumeral } from "./utils/isopsephy";
 import { Calculator, Search, Box, BookMarked, Sparkles } from "lucide-react";
 
@@ -189,6 +196,24 @@ export default function App() {
   // Portal Gate Intro state (always shows on launch/refresh)
   const [showPortalGate, setShowPortalGate] = useState<boolean>(true);
 
+  // Ancient Greek Display Font state
+  const [currentFontId, setCurrentFontId] = useState<string>(getInitialAncientFont);
+  const [fontModalOpen, setFontModalOpen] = useState<boolean>(false);
+
+  // Apply chosen font on mount and change
+  useEffect(() => {
+    saveAncientFont(currentFontId);
+  }, [currentFontId]);
+
+  const handleSelectFont = (fontId: string) => {
+    setCurrentFontId(fontId);
+    saveAncientFont(fontId);
+    const fontObj = ANCIENT_GREEK_FONTS.find((f) => f.id === fontId);
+    if (fontObj) {
+      showToast(`Ενεργοποιήθηκε η γραμματοσειρά: ${fontObj.name}`);
+    }
+  };
+
   // Sync to local storage
   useEffect(() => {
     try {
@@ -289,6 +314,8 @@ export default function App() {
         onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
         onOpenPortalGate={() => setShowPortalGate(true)}
         onOpenExportReport={() => setExportReportOpen(true)}
+        onOpenFontModal={() => setFontModalOpen(true)}
+        currentFontName={ANCIENT_GREEK_FONTS.find((f) => f.id === currentFontId)?.name}
         onOpenAiAssistant={() => handleOpenAiModal("ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ", 2368, ["ΙΗΣΟΥΣ", "ΧΡΙΣΤΟΣ"])}
       />
 
@@ -328,6 +355,13 @@ export default function App() {
         {currentTab === "anagrams" && (
           <AnagramsTab
             savedItems={savedItems}
+            onSaveItem={handleSaveItem}
+            onOpenAiModal={handleOpenAiModal}
+          />
+        )}
+
+        {currentTab === "grammatari" && (
+          <GrammatariTab
             onSaveItem={handleSaveItem}
             onOpenAiModal={handleOpenAiModal}
           />
@@ -423,6 +457,14 @@ export default function App() {
         isOpen={exportReportOpen}
         onClose={() => setExportReportOpen(false)}
         savedItems={savedItems}
+      />
+
+      {/* Ancient Greek Font Selector Modal */}
+      <GreekFontSelectorModal
+        isOpen={fontModalOpen}
+        onClose={() => setFontModalOpen(false)}
+        currentFontId={currentFontId}
+        onSelectFont={handleSelectFont}
       />
 
       {/* Mystical Portal Gate Intro (Lavreion / Velos + Oudos) */}

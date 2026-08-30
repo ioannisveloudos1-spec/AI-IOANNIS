@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import portalImage from "../assets/images/lavrion_portal_exact_1787777926189.jpg";
-import { ArrowRight, Music, Upload, Check, FastForward } from "lucide-react";
+import stoneRockButtonImage from "../assets/images/rock_oudos_cave_light_1788091017852.jpg";
+import { Music, Upload, Check, FastForward } from "lucide-react";
 import {
   checkServerAudioStatus,
   getLocalAudioBlob,
@@ -204,7 +205,7 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
         </button>
       </div>
 
-      {/* Background Fullscreen Tunnel with Rock-Carved ΛΑΥΡΕΙΟΝ and Dynamic Metamorphosis Zoom */}
+      {/* Background Fullscreen Tunnel with Rock-Carved ΛΑΥΡΕΙΟΝ, Pillar Inscription ΙΑΝΕΥΣ and Dynamic Metamorphosis Zoom */}
       <div
         className={`absolute inset-0 w-full h-full flex items-center justify-center bg-black transition-all ${
           phase === "metamorphosis" || phase === "dissolving"
@@ -217,18 +218,21 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
           transformOrigin: "50% 51%", // Directly focused on the light portal at the end of the rails
         }}
       >
-        <img
-          src={portalImage}
-          alt="ΛΑΥΡΕΙΟΝ - Χαραγμένο στον Βράχο - Ουδός προς το Φως"
-          referrerPolicy="no-referrer"
-          className="w-full h-full object-contain sm:object-cover object-center max-w-full max-h-full"
-        />
-        {/* Subtle vignette that does NOT darken the top rock-carved ΛΑΥΡΕΙΟΝ */}
-        <div
-          className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/85 transition-opacity duration-1000 ${
-            isTransitioning ? "opacity-10" : isPlaying ? "opacity-40" : "opacity-70"
-          }`}
-        />
+        <div className="relative h-full w-auto aspect-[9/16] max-w-full flex items-center justify-center">
+          <img
+            src={portalImage}
+            alt="ΛΑΥΡΕΙΟΝ - Χαραγμένο στον Βράχο - Ουδός προς το Φως"
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover object-center max-w-full max-h-full"
+          />
+
+          {/* Subtle vignette that does NOT darken the top rock-carved ΛΑΥΡΕΙΟΝ */}
+          <div
+            className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/85 transition-opacity duration-1000 ${
+              isTransitioning ? "opacity-10" : isPlaying ? "opacity-40" : "opacity-70"
+            }`}
+          />
+        </div>
       </div>
 
       {/* Radiant Golden Light Bloom expanding from the cavern threshold */}
@@ -307,49 +311,41 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
           </p>
         )}
 
-        {/* Outer 3D Stone Recess */}
-        <div className="w-full sm:w-auto p-1 sm:p-1.5 rounded-xl sm:rounded-2xl bg-gradient-to-b from-[#120e0a] to-[#251b11] border border-[#423321] shadow-[inset_0_4px_12px_rgba(0,0,0,0.9),0_8px_20px_rgba(0,0,0,0.8)]">
-          {/* 3D Embossed Button: ΒΕΛΟΣ + ΟΥΔΟΣ */}
+        {/* Bedrock Monolith Stone Slab Button: ΒΕΛΟΣ + ΟΥΔΟΣ */}
+        <div className="w-full max-w-[420px] sm:max-w-[460px] mx-auto relative group flex justify-center">
+          {/* Ambient subterranean torchlight glow matching the portal background */}
+          <div className="absolute -inset-2 sm:-inset-3 rounded-2xl bg-gradient-to-r from-[#d4af37]/25 via-[#ff9900]/20 to-[#d4af37]/25 blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+          {/* Heavy Ancient Chiseled Limestone Rock Button */}
           <button
             id="btn-velos-oudos"
             type="button"
             onClick={isPlaying ? triggerEntranceSequence : handleButtonClick}
             disabled={isTransitioning}
-            className={`group relative w-full sm:w-auto px-6 sm:px-12 py-3 sm:py-3.5 rounded-lg sm:rounded-xl font-serif font-black transition-all cursor-pointer select-none flex items-center justify-center gap-2.5 sm:gap-3.5
-              bg-gradient-to-b from-[#3a2c1b] via-[#241a10] to-[#120c07]
-              border-t-2 border-l-2 border-r-2 border-[#d6a94f]
-              border-b-[4px] sm:border-b-[6px] border-b-[#523b1e]
-              shadow-[0_8px_22px_rgba(0,0,0,0.9),0_0_25px_rgba(200,155,60,0.4)]
-              hover:shadow-[0_12px_32px_rgba(0,0,0,0.95),0_0_40px_rgba(230,198,112,0.6)]
-              hover:border-t-[#ffe082]
-              active:translate-y-[3px] active:border-b-[2px] active:shadow-[0_2px_8px_rgba(0,0,0,0.9),inset_0_4px_12px_rgba(0,0,0,0.8)]
-              ${phase === "pressed" ? "translate-y-[4px] border-b-[2px] shadow-[inset_0_6px_16px_rgba(0,0,0,0.95)]" : ""}
-              ${isPlaying ? "animate-pulse border-[#ffe082]" : ""}
+            className={`group/btn relative w-full aspect-[4/1.25] sm:aspect-[4.5/1.25] min-h-[70px] sm:min-h-[84px] transition-all duration-200 cursor-pointer select-none flex items-center justify-center rounded-xl sm:rounded-2xl overflow-hidden
+              shadow-[0_16px_36px_rgba(0,0,0,0.95),0_4px_14px_rgba(0,0,0,0.9)]
+              hover:scale-[1.02] hover:shadow-[0_20px_44px_rgba(0,0,0,1),0_0_35px_rgba(212,175,55,0.45)]
+              active:scale-[0.98] active:translate-y-[3px]
+              ${phase === "pressed" ? "scale-[0.98] translate-y-[3px]" : ""}
+              ${isPlaying ? "animate-pulse ring-2 ring-[#d4af37] shadow-[0_0_40px_rgba(212,175,55,0.8)]" : ""}
             `}
           >
-            {/* Top metallic reflection bevel */}
-            <div className="absolute top-0 left-2 right-2 h-[2px] bg-gradient-to-r from-transparent via-[#fff3d1]/80 to-transparent rounded-t" />
-
-            {/* Embossed Diamond Relief Text */}
-            <span
-              className="text-base sm:text-xl md:text-2xl font-serif font-black tracking-[0.14em] sm:tracking-[0.22em] text-transparent bg-clip-text drop-shadow-[0_3px_6px_rgba(0,0,0,0.95)] transition-all whitespace-nowrap"
-              style={{
-                backgroundImage:
-                  "linear-gradient(135deg, #ffffff 0%, #d8ecf8 22%, #fff3b0 45%, #ffffff 60%, #e2d9f3 78%, #fff8db 100%)",
-                filter:
-                  "drop-shadow(1px 1px 0px rgba(255,255,255,0.7)) drop-shadow(-1px -1px 0px rgba(60,40,15,0.9)) drop-shadow(0px 0px 10px rgba(255,240,180,0.8))",
-                WebkitTextStroke: "0.5px rgba(255, 255, 255, 0.4)",
-              }}
-            >
-              {isPlaying ? "ΕΙΣΟΔΟΣ ΤΩΡΑ ➔" : "ΒΕΛΟΣ + ΟΥΔΟΣ"}
-            </span>
-
-            <ArrowRight
-              className="w-4 h-4 sm:w-5 sm:h-5 text-[#fff2be] group-hover:translate-x-1.5 transition-transform shrink-0"
-              style={{
-                filter: "drop-shadow(0 0 6px rgba(255,240,170,0.9))",
-              }}
+            {/* Photorealistic Chiseled Limestone Rock Slab with Embedded Carvings */}
+            <img
+              src={stoneRockButtonImage}
+              alt="ΒΕΛΟΣ - ΟΥΔΟΣ - ΙΑΝΕΥΣ"
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 w-full h-full object-cover rounded-xl sm:rounded-2xl transition-transform duration-300 group-hover/btn:scale-105"
             />
+
+            {/* Natural warm cave torchlight gradient matching the background */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-amber-500/10 pointer-events-none rounded-xl sm:rounded-2xl" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,200,100,0.15)_0%,transparent_70%)] pointer-events-none rounded-xl sm:rounded-2xl" />
+            
+            {/* Glow on audio playing / activation */}
+            {isPlaying && (
+              <div className="absolute inset-0 bg-[#d4af37]/20 pointer-events-none animate-pulse rounded-xl sm:rounded-2xl" />
+            )}
           </button>
         </div>
       </div>

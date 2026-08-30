@@ -4,9 +4,11 @@ export type TabType =
   | "online-finder"
   | "bridges" 
   | "anagrams" 
+  | "grammatari"
   | "graph" 
   | "veloudion"
   | "cube-apollo"
+  | "solar-square"
   | "game"
   | "stats" 
   | "archive" 
@@ -99,6 +101,28 @@ export interface SavedIsopsephyItem {
   sourceText?: string;
   notes?: string;
   category?: string;
+  createdAt: string;
+}
+
+export interface GrammatariSavedRecord {
+  id: string;
+  title: string;
+  sourcePhrase: string;
+  sourceIsopsephy: number;
+  sourcePythmen: number;
+  minLen: number;
+  maxLen: number;
+  totalLetters: number;
+  availableLetters: { letter: string; count: number }[];
+  totalMatches: number;
+  matchesByLength: Record<number, {
+    word: string;
+    length: number;
+    isopsephy: number;
+    pythmen: number;
+    letterBreakdown: string;
+  }[]>;
+  notes?: string;
   createdAt: string;
 }
 

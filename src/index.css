@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+:root {
+  --ancient-greek-font: 'GFS Didot', serif;
+}
+
+.font-ancient-greek {
+  font-family: var(--ancient-greek-font), 'GFS Didot', 'Cinzel', 'Cardo', serif !important;
+}
+
+.font-serif {
+  font-family: var(--ancient-greek-font), 'GFS Didot', 'Cinzel', 'Cardo', serif !important;
+}
+
 /* Ensure proper mobile layout & prevent unwanted horizontal scroll/zoom */
 html, body {
   width: 100%;

@@ -408,7 +408,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                   ? "e.g. John True, Jesus, Lucifer..."
                   : "π.χ. ΙΗΣΟΥΣ, ΛΟΓΟΣ, 888 + 1480, ΙΩΑΝΝΗΣ - ΑΜΑΡΤΙΑ..."
               }
-              className="w-full px-4 py-3.5 bg-[#0f0e0c] border border-[#3d3224] focus:border-[#c89b3c] focus:ring-2 focus:ring-[#c89b3c]/20 rounded-xl text-lg sm:text-2xl font-serif text-[#f5ecd8] placeholder-[#5c5144] transition-all outline-none"
+              className="w-full px-4 py-3.5 bg-[#0f0e0c] border border-[#3d3224] focus:border-[#c89b3c] focus:ring-2 focus:ring-[#c89b3c]/20 rounded-xl text-lg sm:text-2xl font-ancient-greek text-[#f5ecd8] placeholder-[#5c5144] transition-all outline-none"
               autoFocus
             />
             {inputExpression && (
@@ -616,7 +616,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-base font-serif font-bold text-[#f5ecd8]">
+                        <span className="text-lg font-ancient-greek font-bold text-[#f5ecd8]">
                           {wordObj.rawWord}
                         </span>
                         {wordObj.normalizedWord !== wordObj.rawWord && (
@@ -642,7 +642,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                           key={lIdx}
                           className="flex flex-col items-center justify-center min-w-[42px] px-2 py-1.5 rounded-lg bg-[#1b1712] border border-[#30261b] hover:border-[#c89b3c]/40 transition-colors"
                         >
-                          <span className="text-sm font-serif font-bold text-[#f5ecd8]">
+                          <span className="text-base font-ancient-greek font-bold text-[#f5ecd8]">
                             {letter.originalChar}
                           </span>
                           <span className="text-[11px] font-mono font-semibold text-[#c89b3c]">
