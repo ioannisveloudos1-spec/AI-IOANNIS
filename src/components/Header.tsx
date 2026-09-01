@@ -1,8 +1,10 @@
 import React, { useRef, useState, useEffect } from "react";
 import { TabType } from "../types";
+import { AppTheme, APP_THEMES } from "../utils/theme";
 import {
   Calculator,
   Search,
+  Calendar,
   BarChart3,
   BookMarked,
   BookOpen,
@@ -22,6 +24,12 @@ import {
   SpellCheck,
   Type,
   Sun,
+  Shield,
+  Moon,
+  Scroll,
+  Feather,
+  Palette,
+  Cpu,
 } from "lucide-react";
 import appLogoImg from "../assets/images/ego_eimi_logo_1787417709332.jpg";
 
@@ -34,8 +42,11 @@ interface HeaderProps {
   onOpenPortalGate?: () => void;
   onOpenExportReport?: () => void;
   onOpenFontModal?: () => void;
+  onOpenThemeModal?: () => void;
   currentFontName?: string;
   hasCustomApiKey?: boolean;
+  theme?: AppTheme;
+  onToggleTheme?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -47,12 +58,17 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPortalGate,
   onOpenExportReport,
   onOpenFontModal,
+  onOpenThemeModal,
   currentFontName,
   hasCustomApiKey = false,
+  theme = "dark-ancient",
+  onToggleTheme,
 }) => {
   const tabs = [
     { id: "calculator" as TabType, label: "Υπολογισμός", icon: Calculator, desc: "Μεμονωμένες λέξεις & πράξεις" },
     { id: "search" as TabType, label: "Αναζήτηση", icon: Search, desc: "Ανάλυση κειμένου & συνδυασμοί" },
+    { id: "calendar" as TabType, label: "Ημερολόγιο", icon: Calendar, desc: "Αττικοί & Σύγχρονοι Μήνες, Θεοί & Σελήνη" },
+    { id: "cosmic-journey" as TabType, label: "Κοσμική Ανάταση", icon: Sparkles, desc: "Διαδραστικό μυθολογικό ταξίδι 4 Πράξεων & Επίγνωσης" },
     { id: "online-finder" as TabType, label: "Ανιχνευτής Web", icon: Globe, desc: "Online λεξικά, URL & 1119" },
     { id: "bridges" as TabType, label: "Γέφυρες", icon: GitCompare, desc: "Σύγκριση & μαθηματικές σχέσεις" },
     { id: "anagrams" as TabType, label: "Matrix 3×3", icon: Grid, desc: "Αναγραμματισμοί & Πυθαγόρειο Matrix" },
@@ -61,6 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
     { id: "veloudion" as TabType, label: "ΒΕΛΟΥΔΙΟΝ", icon: Binary, desc: "Τριαδική κρυπτογραφία & 8 Συστήματα" },
     { id: "cube-apollo" as TabType, label: "Κύβος 1331", icon: Box, desc: "3D Κύβος Απόλλωνος (11³)" },
     { id: "solar-square" as TabType, label: "Τετράγωνο Ηλίου", icon: Sun, desc: "Μαγικό Τετράγωνο 6×6, 111 & 666" },
+    { id: "enotheism" as TabType, label: "Ενοθεϊσμός", icon: Shield, desc: "Ζευς, Άδης, Ποσειδών, Απόλλων, Διόνυσος, Ηρακλής & Το Εν" },
     { id: "game" as TabType, label: "Αρένα & Παιχνίδι", icon: Gamepad2, desc: "Κουίζ λεξαρίθμων & Μάχη 60s" },
     { id: "stats" as TabType, label: "Στατιστικά", icon: BarChart3, desc: "Οπτικοποίηση, γραφήματα & CSV" },
     { id: "archive" as TabType, label: "Θησαυρός", icon: BookMarked, desc: "Αποθηκευμένες λέξεις & φράσεις λεξαρίθμων", badge: savedCount },
@@ -127,8 +144,60 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons (API Key & AI Assistant & Portal Gate & Report & Greek Fonts) - Clearly visible on all screens */}
+            {/* Action Buttons (Theme Toggle & API Key & AI Assistant & Portal Gate & Report & Greek Fonts) */}
             <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={onOpenThemeModal || onToggleTheme}
+                id="header-theme-toggle-btn"
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border text-xs font-serif transition-all shadow-md shrink-0 cursor-pointer ${
+                  theme === "parchment"
+                    ? "bg-gradient-to-r from-[#e8dcbf] to-[#f4ede0] hover:bg-[#decfae] border-[#925f11] text-[#4a3310] ring-1 ring-[#925f11]/30"
+                    : theme === "ancient-calligraphy"
+                    ? "bg-gradient-to-r from-[#f5ebd8] to-[#faf3e6] hover:bg-[#ebdcc5] border-[#b59263] text-[#543216] ring-1 ring-[#b59263]/40"
+                    : theme === "solar"
+                    ? "bg-gradient-to-r from-[#fff4d1] to-[#fae6b1] hover:bg-[#fae09e] border-[#d97706] text-[#b45309] ring-1 ring-[#d97706]/40"
+                    : theme === "ethereal"
+                    ? "bg-gradient-to-r from-[#0b1736] to-[#122452] hover:bg-[#1a326e] border-[#38bdf8] text-[#38bdf8] ring-1 ring-[#38bdf8]/40"
+                    : theme === "cyber-tech"
+                    ? "bg-gradient-to-r from-[#0a1f24] to-[#0f2d33] hover:bg-[#153e47] border-[#10b981] text-[#10b981] ring-1 ring-[#10b981]/40"
+                    : "bg-gradient-to-r from-[#20180f] via-[#2a1e12] to-[#20180f] hover:from-[#2e2114] hover:to-[#2e2114] border-[#ffd700]/70 text-[#ffd700] hover:text-[#fff2a8] shadow-[#ffd700]/15"
+                }`}
+                title="Επιλογή Εμφάνισης (6 Θέματα)"
+              >
+                {theme === "parchment" ? (
+                  <>
+                    <Scroll className="w-4 h-4 text-[#825313]" />
+                    <span className="text-[11px] font-sans font-bold">Περγαμηνή</span>
+                  </>
+                ) : theme === "ancient-calligraphy" ? (
+                  <>
+                    <Feather className="w-4 h-4 text-[#7a491e]" />
+                    <span className="text-[11px] font-sans font-bold">Καλλιγραφία</span>
+                  </>
+                ) : theme === "solar" ? (
+                  <>
+                    <Sun className="w-4 h-4 text-[#d97706]" />
+                    <span className="text-[11px] font-sans font-bold">Ηλιακή</span>
+                  </>
+                ) : theme === "ethereal" ? (
+                  <>
+                    <Sparkles className="w-4 h-4 text-[#38bdf8]" />
+                    <span className="text-[11px] font-sans font-bold">Αιθέρικη</span>
+                  </>
+                ) : theme === "cyber-tech" ? (
+                  <>
+                    <Cpu className="w-4 h-4 text-[#10b981]" />
+                    <span className="text-[11px] font-sans font-bold">Tech</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4 text-[#ffd700]" />
+                    <span className="text-[11px] font-sans font-bold">Κλασικό</span>
+                  </>
+                )}
+                <Palette className="w-3 h-3 opacity-60 ml-0.5" />
+              </button>
+
               {onOpenFontModal && (
                 <button
                   onClick={onOpenFontModal}

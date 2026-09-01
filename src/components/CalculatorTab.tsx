@@ -6,6 +6,9 @@ import {
   getAlphabetChart,
 } from "../utils/isopsephy";
 import { SavedIsopsephyItem, NumberingSystem } from "../types";
+import { GoldenRatioGaugeTool } from "./GoldenRatioGaugeTool";
+import { PythagoreanMonochordAudio } from "./PythagoreanMonochordAudio";
+import { pythagoreanSynth, foldToAudibleSpectrum } from "../utils/pythagoreanAudio";
 import {
   Bookmark,
   Copy,
@@ -20,18 +23,33 @@ import {
   Table,
   ChevronDown,
   ChevronUp,
+  Volume2,
+  Radio,
+  Music,
+  Moon,
+  Scroll,
+  Feather,
+  Sun,
+  Palette,
+  Cpu,
 } from "lucide-react";
 
 interface CalculatorTabProps {
   onSaveItem: (item: Omit<SavedIsopsephyItem, "id" | "createdAt">) => void;
   onOpenAiModal: (text: string, number: number, words: string[]) => void;
   savedItems: SavedIsopsephyItem[];
+  theme?: string;
+  onToggleTheme?: () => void;
+  onOpenThemeModal?: () => void;
 }
 
 export const CalculatorTab: React.FC<CalculatorTabProps> = ({
   onSaveItem,
   onOpenAiModal,
   savedItems,
+  theme = "dark-ancient",
+  onToggleTheme,
+  onOpenThemeModal,
 }) => {
   const [selectedSystem, setSelectedSystem] = useState<NumberingSystem>(NumberingSystem.IONIAN);
   const [inputExpression, setInputExpression] = useState<string>("");
@@ -203,8 +221,63 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
               Επιλέξτε σύστημα αρίθμησης με την ακόλουθη σειρά:
             </p>
           </div>
-          <div className="shrink-0 text-xs font-mono text-[#c89b3c] px-2.5 py-1 rounded-lg bg-[#241c14] border border-[#3e3020]">
-            {getSystemName(selectedSystem)}
+          <div className="flex items-center gap-2 shrink-0">
+            {(onOpenThemeModal || onToggleTheme) && (
+              <button
+                type="button"
+                onClick={onOpenThemeModal || onToggleTheme}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-serif transition-all shadow-sm cursor-pointer ${
+                  theme === "parchment"
+                    ? "bg-[#e8dcbf] hover:bg-[#decfae] border-[#925f11] text-[#4a3310]"
+                    : theme === "ancient-calligraphy"
+                    ? "bg-[#f5ebd8] hover:bg-[#ebdcc5] border-[#b59263] text-[#543216]"
+                    : theme === "solar"
+                    ? "bg-[#fff4d1] hover:bg-[#fae09e] border-[#d97706] text-[#b45309]"
+                    : theme === "ethereal"
+                    ? "bg-[#0b1736] hover:bg-[#122452] border-[#38bdf8] text-[#38bdf8]"
+                    : theme === "cyber-tech"
+                    ? "bg-[#0a1f24] hover:bg-[#0f2d33] border-[#10b981] text-[#10b981]"
+                    : "bg-[#251d15] hover:bg-[#34271c] border-[#ffd700]/60 text-[#ffd700]"
+                }`}
+                title="Επιλογή Εμφάνισης (6 Θέματα)"
+              >
+                {theme === "parchment" ? (
+                  <>
+                    <Scroll className="w-3.5 h-3.5 text-[#825313]" />
+                    <span className="text-[11px] font-sans font-semibold">Περγαμηνή</span>
+                  </>
+                ) : theme === "ancient-calligraphy" ? (
+                  <>
+                    <Feather className="w-3.5 h-3.5 text-[#7a491e]" />
+                    <span className="text-[11px] font-sans font-semibold">Καλλιγραφία</span>
+                  </>
+                ) : theme === "solar" ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-[#d97706]" />
+                    <span className="text-[11px] font-sans font-semibold">Ηλιακή</span>
+                  </>
+                ) : theme === "ethereal" ? (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5 text-[#38bdf8]" />
+                    <span className="text-[11px] font-sans font-semibold">Αιθέρικη</span>
+                  </>
+                ) : theme === "cyber-tech" ? (
+                  <>
+                    <Cpu className="w-3.5 h-3.5 text-[#10b981]" />
+                    <span className="text-[11px] font-sans font-semibold">Tech</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-[#ffd700]" />
+                    <span className="text-[11px] font-sans font-semibold">Κλασικό</span>
+                  </>
+                )}
+                <Palette className="w-3 h-3 opacity-60 ml-0.5" />
+              </button>
+            )}
+            <div className="shrink-0 text-xs font-mono text-[#c89b3c] px-2.5 py-1 rounded-lg bg-[#241c14] border border-[#3e3020]">
+              {getSystemName(selectedSystem)}
+            </div>
           </div>
         </div>
 
@@ -440,7 +513,10 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
 
         {/* Hero Result Section */}
         {result.finalValue > 0 ? (
-          <div className="p-6 rounded-xl bg-[#12100d] border border-[#2d2419] relative overflow-hidden">
+          <div
+            key={`calc-hero-${result.finalValue}-${selectedSystem}`}
+            className="p-6 rounded-xl bg-[#12100d] border border-[#3d2f1f] relative overflow-hidden animate-lexarithm-result animate-card-shimmer transition-all"
+          >
             {/* Background decorative watermark */}
             <div className="absolute right-4 -bottom-6 text-[110px] font-serif font-black text-[#ffffff]/[0.02] pointer-events-none select-none">
               {greekNumeral || (isEnglishSystem ? "G" : "Ω")}
@@ -454,11 +530,17 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                   Συνολικος {isEnglishSystem ? "Gematria" : "Λεξαριθμος"}
                 </span>
                 <div className="flex items-baseline gap-4 mt-1">
-                  <span className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#f7e0aa] via-[#e6c670] to-[#c89b3c] drop-shadow-md">
+                  <span
+                    key={`calc-num-${result.finalValue}`}
+                    className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#f7e0aa] via-[#e6c670] to-[#c89b3c] drop-shadow-md animate-number-glow inline-block"
+                  >
                     {result.finalValue.toLocaleString("el-GR")}
                   </span>
                   {greekNumeral && (
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#221c15] border border-[#443625]">
+                    <div
+                      key={`calc-numeral-${greekNumeral}`}
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#221c15] border border-[#443625] animate-badge-glow shadow-sm"
+                    >
                       <span className="text-xs text-[#8c7e6c] font-sans">Ιωνικός:</span>
                       <span className="text-base sm:text-lg font-serif font-bold text-[#e6c670]">
                         {greekNumeral}
@@ -472,7 +554,10 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
 
                 {/* Digital Root & Math Badges */}
                 <div className="flex flex-wrap items-center gap-2 mt-3">
-                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#251e16] border border-[#3e3223] text-xs font-mono text-[#d4af37]">
+                  <div
+                    key={`calc-pythmen-${mathProps.pythmen}`}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#251e16] border border-[#3e3223] text-xs font-mono text-[#d4af37] animate-badge-glow"
+                  >
                     <span className="text-[#8c7e6c]">Πυθμένας (Ρίζα):</span>
                     <span className="font-bold text-[#f5ecd8]">{mathProps.pythmen}</span>
                   </div>
@@ -494,6 +579,20 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                   <span className="px-2 py-0.5 rounded bg-[#1c1813] border border-[#2d251e] text-[#a69680] text-[11px] font-mono">
                     {mathProps.isEven ? "Άρτιος" : "Περιττός"}
                   </span>
+                  {result.finalValue > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const { foldedHz } = foldToAudibleSpectrum(result.finalValue);
+                        pythagoreanSynth.playTone(foldedHz, 2.5, "GOLDEN_BOWL", 0.7);
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#2d1e10] hover:bg-[#3d2a16] border border-[#ffd700]/40 text-[#ffd700] text-[11px] font-mono transition-all cursor-pointer shadow-sm hover:scale-105"
+                      title={`Ακρόαση Πυθαγόρειου Τόνου: ${foldToAudibleSpectrum(result.finalValue).foldedHz} Hz`}
+                    >
+                      <Volume2 className="w-3.5 h-3.5 text-[#ffd700] animate-pulse" />
+                      <span>{foldToAudibleSpectrum(result.finalValue).foldedHz} Hz</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -664,6 +763,24 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
         )}
 
       </div>
+
+      {/* Golden Ratio (Φ = 1.618) Harmonic Analyzer Tool with Gauge */}
+      {result.finalValue > 0 && (
+        <GoldenRatioGaugeTool
+          totalValue={result.finalValue}
+          wordBreakdowns={result.wordBreakdowns}
+          isEnglishSystem={isEnglishSystem}
+        />
+      )}
+
+      {/* Pythagorean Monochord & Symbolic Isopsephy Audio Synthesizer Tool */}
+      {result.finalValue > 0 && (
+        <PythagoreanMonochordAudio
+          totalValue={result.finalValue}
+          wordBreakdowns={result.wordBreakdowns}
+          isEnglishSystem={isEnglishSystem}
+        />
+      )}
 
       {/* Special Highlight for 888 and 666 */}
       {(result.finalValue === 888 || result.finalValue === 666) && (

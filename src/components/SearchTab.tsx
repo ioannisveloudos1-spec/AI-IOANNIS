@@ -944,8 +944,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                   <span>Δική μου Λέξη-Οδηγός (Λέξη ή Φράση-Κλειδί):</span>
                 </label>
                 {customSeedEval.value > 0 && (
-                  <span className="text-xs font-mono font-bold text-amber-300 bg-[#06121f] px-2 py-0.5 rounded border border-amber-500/40 shadow-sm">
-                    {customSeedEval.text} = <strong>{customSeedEval.value}</strong> ({numberToGreekNumeral(customSeedEval.value)})
+                  <span
+                    key={`seed-eval-${customSeedEval.value}-${customSeedEval.text}`}
+                    className="text-xs font-mono font-bold text-amber-300 bg-[#06121f] px-2.5 py-0.5 rounded-lg border border-amber-500/50 shadow-sm animate-lexarithm-result animate-badge-glow"
+                  >
+                    {customSeedEval.text} = <strong className="text-amber-200">{customSeedEval.value}</strong> ({numberToGreekNumeral(customSeedEval.value)})
                   </span>
                 )}
               </div>

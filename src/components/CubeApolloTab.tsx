@@ -36,7 +36,9 @@ import {
   Activity,
   ShieldAlert,
   Disc,
+  Grid,
 } from "lucide-react";
+import { StoneSolarSquare } from "./StoneSolarSquare";
 
 interface CubeApolloTabProps {
   onOpenAiModal?: (text: string, number: number, words: string[]) => void;
@@ -129,6 +131,7 @@ export const CubeApolloTab: React.FC<CubeApolloTabProps> = ({ onOpenAiModal }) =
   const [aktinaVisible, setAktinaVisible] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [is3DCollapsed, setIs3DCollapsed] = useState<boolean>(false);
+  const [mainSubView, setMainSubView] = useState<"both" | "cube3d" | "solarSquare">("both");
   const [viewStyle, setViewStyle] = useState<ViewStyle>("solid");
   const [rayStyle, setRayStyle] = useState<RayStyle>("axes_666");
   const [rayThickness, setRayThickness] = useState<number>(0.008);
@@ -1490,58 +1493,94 @@ export const CubeApolloTab: React.FC<CubeApolloTabProps> = ({ onOpenAiModal }) =
 
   return (
     <div className="space-y-6 animate-fadeIn pb-16">
-      {/* Top Banner Overview */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-[#17120e] via-[#201811] to-[#140f0c] border border-[#3e3020] shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Top Banner Overview & View Mode Switcher */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-[#17120e] via-[#201811] to-[#140f0c] border border-[#3e3020] shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#c89b3c]" />
+            <Sparkles className="w-5 h-5 text-[#ffd700]" />
             <h2 className="font-serif font-bold text-lg md:text-xl text-[#e6c670]">
-              Ο Μέγας Κύβος του Απόλλωνος (11³ = 1331) & Ο Λευκός Πυρήνας 666
+              Ο Μέγας Κύβος του Απόλλωνος (11³ = 1331) & Το Ηλιακό Τετράγωνο 666
             </h2>
           </div>
           <p className="text-xs text-[#a89984] font-serif leading-relaxed max-w-3xl">
             Πλήρης τρισδιάστατη αρίθμηση των <strong>1.331 κυβιδίων</strong> σε <strong>11 Στήλες</strong> (X), <strong>11 Σειρές</strong> (Y) και <strong>11 Βάθη</strong> (Z).
-            Το απόλυτο κέντρο <strong>(6, 6, 6)</strong> είναι ο <strong>666ος Λευκός Πυρήνας (ΧΞϚ)</strong>.
+            Το κέντρο <strong>(6, 6, 6)</strong> είναι ο <strong>666ος Λευκός Πυρήνας (ΧΞϚ)</strong>, συνδεδεμένος με το <strong>Πέτρινο Ηλιακό Τετράγωνο 36 Κελλιών</strong> και τον <strong>Ψυχογονικό Κύβο (6³ = 216)</strong>.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {/* Quick Global Pause Button for Study */}
-          <button
-            onClick={() => setIsPaused(!isPaused)}
-            className={`px-4 py-2 rounded-xl font-serif text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-md ${
-              isPaused
-                ? "bg-[#c89b3c] text-black border border-[#ffd700] ring-2 ring-[#c89b3c]/40 animate-pulse"
-                : "bg-[#251d14] hover:bg-[#34271c] text-[#f5ebd7] border border-[#3e3020]"
-            }`}
-            title="Παύση / Συνέχιση Περιστροφής (Πλήκτρο Space)"
-          >
-            {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-            <span>{isPaused ? "Συνέχιση Περιστροφής" : "⏸️ Παύση για Μελέτη"}</span>
-          </button>
+          {/* Main Subview Switcher Pills */}
+          <div className="flex items-center gap-1 bg-[#0f0b08] p-1 rounded-xl border border-[#3e3020]">
+            <button
+              onClick={() => setMainSubView("both")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer ${
+                mainSubView === "both"
+                  ? "bg-[#c89b3c] text-black shadow"
+                  : "text-[#a69680] hover:text-[#f5ecd8]"
+              }`}
+            >
+              🌟 Πλήρης Όψη
+            </button>
+            <button
+              onClick={() => setMainSubView("solarSquare")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                mainSubView === "solarSquare"
+                  ? "bg-[#c89b3c] text-black shadow"
+                  : "text-[#a69680] hover:text-[#f5ecd8]"
+              }`}
+            >
+              <Sun className="w-3.5 h-3.5" />
+              <span>Πέτρινο 6×6 (666)</span>
+            </button>
+            <button
+              onClick={() => setMainSubView("cube3d")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                mainSubView === "cube3d"
+                  ? "bg-[#c89b3c] text-black shadow"
+                  : "text-[#a69680] hover:text-[#f5ecd8]"
+              }`}
+            >
+              <Box className="w-3.5 h-3.5" />
+              <span>3D Κύβος 11³</span>
+            </button>
+          </div>
 
-          {/* Quick Focus Center 666 */}
-          <button
-            onClick={focusOnCenter}
-            className="px-3.5 py-2 rounded-xl bg-[#2a1f14] hover:bg-[#382b1c] border border-[#c89b3c]/50 text-[#e6c670] font-serif text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
-            title="Αυτόματη εστίαση και πάγωμα στον Κεντρικό Πυρήνα 666"
-          >
-            <Target className="w-4 h-4 text-[#ffd700]" />
-            <span>Εστίαση 666</span>
-          </button>
+          {/* Quick Global Pause Button for Study */}
+          {mainSubView !== "solarSquare" && (
+            <button
+              onClick={() => setIsPaused(!isPaused)}
+              className={`px-3.5 py-1.5 rounded-xl font-serif text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-md ${
+                isPaused
+                  ? "bg-[#c89b3c] text-black border border-[#ffd700] ring-2 ring-[#c89b3c]/40 animate-pulse"
+                  : "bg-[#251d14] hover:bg-[#34271c] text-[#f5ebd7] border border-[#3e3020]"
+              }`}
+              title="Παύση / Συνέχιση Περιστροφής (Πλήκτρο Space)"
+            >
+              {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
+              <span>{isPaused ? "Συνέχιση" : "⏸️ Παύση"}</span>
+            </button>
+          )}
 
           <button
             onClick={() => onOpenAiModal?.("ΑΠΟΛΛΩΝΟΣ", 1331, ["ΑΠΟΛΛΩΝΟΣ", "ΚΥΒΟΣ", "ΧΞϚ", "666"])}
-            className="px-3.5 py-2 rounded-xl bg-[#2a1f14] hover:bg-[#382b1c] border border-[#c89b3c]/50 text-[#e6c670] font-serif text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl bg-[#2a1f14] hover:bg-[#382b1c] border border-[#c89b3c]/50 text-[#e6c670] font-serif text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
           >
-            <Sparkles className="w-4 h-4 text-[#c89b3c]" />
+            <Sparkles className="w-3.5 h-3.5 text-[#c89b3c]" />
             <span>Oracle</span>
           </button>
         </div>
       </div>
 
-      {/* 3D Radial Dispersion / Expansion Controller */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-[#17120e] via-[#1c1510] to-[#120e0b] border border-[#c89b3c]/40 shadow-xl space-y-3">
+      {/* If only Stone Solar Square is selected, render it immediately */}
+      {mainSubView === "solarSquare" && (
+        <StoneSolarSquare onOpenAiModal={onOpenAiModal} />
+      )}
+
+      {/* 3D Apollo Cube Workspace (rendered when 'both' or 'cube3d') */}
+      {mainSubView !== "solarSquare" && (
+        <>
+          {/* 3D Radial Dispersion / Expansion Controller */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-[#17120e] via-[#1c1510] to-[#120e0b] border border-[#c89b3c]/40 shadow-xl space-y-3">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
@@ -2547,6 +2586,15 @@ export const CubeApolloTab: React.FC<CubeApolloTabProps> = ({ onOpenAiModal }) =
           </p>
         </div>
       </div>
+    </>
+  )}
+
+  {/* In 'both' mode, render the full stone-carved solar square and sacred geometry section */}
+  {mainSubView === "both" && (
+    <div className="pt-6 border-t border-[#3e3020]">
+      <StoneSolarSquare onOpenAiModal={onOpenAiModal} />
     </div>
+  )}
+</div>
   );
 };

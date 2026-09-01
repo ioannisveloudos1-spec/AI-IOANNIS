@@ -4,12 +4,16 @@ import { Header } from "./components/Header";
 import { CalculatorTab } from "./components/CalculatorTab";
 import { SearchTab } from "./components/SearchTab";
 import { OnlineFinderTab } from "./components/OnlineFinderTab";
+import { CalendarTab } from "./components/CalendarTab";
+import { CosmicJourneyTab } from "./components/cosmic-journey/CosmicJourneyTab";
 import { BridgesTab } from "./components/BridgesTab";
 import { AnagramsTab } from "./components/AnagramsTab";
 import { GrammatariTab } from "./components/GrammatariTab";
 import { IsopsephicGraphTab } from "./components/IsopsephicGraphTab";
 import { VeloudionTab } from "./components/VeloudionTab";
 import { CubeApolloTab } from "./components/CubeApolloTab";
+import { SolarMagicSquareTab } from "./components/SolarMagicSquareTab";
+import { EnotheismTab } from "./components/EnotheismTab";
 import { GameTab } from "./components/GameTab";
 import { StatsTab } from "./components/StatsTab";
 import { ArchiveTab } from "./components/ArchiveTab";
@@ -19,13 +23,20 @@ import { ApiKeyModal } from "./components/ApiKeyModal";
 import { ExportReportModal } from "./components/ExportReportModal";
 import { PortalGateIntro } from "./components/PortalGateIntro";
 import { GreekFontSelectorModal } from "./components/GreekFontSelectorModal";
+import { ThemeSelectorModal } from "./components/ThemeSelectorModal";
 import {
   getInitialAncientFont,
   saveAncientFont,
   ANCIENT_GREEK_FONTS,
 } from "./utils/greekFonts";
+import {
+  AppTheme,
+  APP_THEMES,
+  getInitialTheme,
+  saveThemePreference,
+} from "./utils/theme";
 import { numberToGreekNumeral } from "./utils/isopsephy";
-import { Calculator, Search, Box, BookMarked, Sparkles } from "lucide-react";
+import { Calculator, Search, Calendar, Box, BookMarked, Sparkles } from "lucide-react";
 
 const LOCAL_STORAGE_KEY = "greek_isopsephy_saved_archive_v3_canonical";
 const API_KEY_STORAGE_KEY = "GEMINI_USER_API_KEY";
@@ -200,10 +211,63 @@ export default function App() {
   const [currentFontId, setCurrentFontId] = useState<string>(getInitialAncientFont);
   const [fontModalOpen, setFontModalOpen] = useState<boolean>(false);
 
+  // Theme state (5 themes: Classic, Parchment, Solar, Ethereal, Cyber-Tech)
+  const [theme, setTheme] = useState<AppTheme>(getInitialTheme);
+  const [themeModalOpen, setThemeModalOpen] = useState<boolean>(false);
+
   // Apply chosen font on mount and change
   useEffect(() => {
     saveAncientFont(currentFontId);
   }, [currentFontId]);
+
+  // Apply theme class to document body on mount and change
+  useEffect(() => {
+    saveThemePreference(theme);
+    // Remove existing theme classes
+    document.body.classList.remove(
+      "theme-parchment",
+      "theme-ancient-calligraphy",
+      "theme-solar",
+      "theme-ethereal",
+      "theme-cyber-tech"
+    );
+
+    // Apply specific theme class if not default dark-ancient
+    if (theme !== "dark-ancient") {
+      document.body.classList.add(`theme-${theme}`);
+    }
+  }, [theme]);
+
+  const handleSelectTheme = (newTheme: AppTheme) => {
+    setTheme(newTheme);
+    saveThemePreference(newTheme);
+    const themeMeta = APP_THEMES.find((t) => t.id === newTheme);
+    if (themeMeta) {
+      showToast(`Ενεργοποιήθηκε η εμφάνιση: ${themeMeta.name}`);
+    }
+    setThemeModalOpen(false);
+  };
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => {
+      const themeOrder: AppTheme[] = [
+        "dark-ancient",
+        "parchment",
+        "ancient-calligraphy",
+        "solar",
+        "ethereal",
+        "cyber-tech",
+      ];
+      const currentIndex = themeOrder.indexOf(prev);
+      const nextIndex = (currentIndex + 1) % themeOrder.length;
+      const nextTheme = themeOrder[nextIndex];
+      const themeMeta = APP_THEMES.find((t) => t.id === nextTheme);
+      if (themeMeta) {
+        showToast(`Εμφάνιση: ${themeMeta.name}`);
+      }
+      return nextTheme;
+    });
+  };
 
   const handleSelectFont = (fontId: string) => {
     setCurrentFontId(fontId);
@@ -303,7 +367,19 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0c0a] text-[#e8dfd1] flex flex-col font-sans selection:bg-[#c89b3c]/30 selection:text-[#f4e2b7] pt-[env(safe-area-inset-top,0px)]">
+    <div
+      className={`min-h-screen flex flex-col font-sans selection:bg-[#c89b3c]/30 selection:text-[#f4e2b7] pt-[env(safe-area-inset-top,0px)] pb-16 md:pb-0 ${
+        theme === "parchment" || theme === "ancient-calligraphy"
+          ? "bg-[#f8f4ec] text-[#382109]"
+          : theme === "solar"
+          ? "bg-[#fffdf5] text-[#451a03]"
+          : theme === "ethereal"
+          ? "bg-[#060913] text-[#e0f2fe]"
+          : theme === "cyber-tech"
+          ? "bg-[#080c14] text-[#ecfeff]"
+          : "bg-[#0d0c0a] text-[#e8dfd1]"
+      }`}
+    >
       
       {/* App Header */}
       <Header
@@ -315,8 +391,11 @@ export default function App() {
         onOpenPortalGate={() => setShowPortalGate(true)}
         onOpenExportReport={() => setExportReportOpen(true)}
         onOpenFontModal={() => setFontModalOpen(true)}
+        onOpenThemeModal={() => setThemeModalOpen(true)}
         currentFontName={ANCIENT_GREEK_FONTS.find((f) => f.id === currentFontId)?.name}
         onOpenAiAssistant={() => handleOpenAiModal("ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ", 2368, ["ΙΗΣΟΥΣ", "ΧΡΙΣΤΟΣ"])}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* Main Content Area */}
@@ -326,6 +405,9 @@ export default function App() {
             onSaveItem={handleSaveItem}
             onOpenAiModal={handleOpenAiModal}
             savedItems={savedItems}
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
+            onOpenThemeModal={() => setThemeModalOpen(true)}
           />
         )}
 
@@ -341,6 +423,23 @@ export default function App() {
           <OnlineFinderTab
             onSaveItem={handleSaveItem}
             onOpenAiModal={handleOpenAiModal}
+          />
+        )}
+
+        {currentTab === "calendar" && (
+          <CalendarTab
+            theme={theme}
+            onSelectWord={(word) => {
+              setCurrentTab("calculator");
+            }}
+          />
+        )}
+
+        {currentTab === "cosmic-journey" && (
+          <CosmicJourneyTab
+            onSelectWordForCalculator={(word) => {
+              setCurrentTab("calculator");
+            }}
           />
         )}
 
@@ -389,6 +488,20 @@ export default function App() {
           />
         )}
 
+        {currentTab === "solar-square" && (
+          <SolarMagicSquareTab
+            onOpenAiModal={handleOpenAiModal}
+            onSaveItem={handleSaveItem}
+          />
+        )}
+
+        {currentTab === "enotheism" && (
+          <EnotheismTab
+            onOpenAiModal={handleOpenAiModal}
+            onSaveItem={handleSaveItem}
+          />
+        )}
+
         {currentTab === "game" && <GameTab />}
 
         {currentTab === "stats" && (
@@ -418,17 +531,58 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[#241d16] bg-[#12100d] py-6 text-center text-xs font-serif text-[#7a6e5e]">
+      <footer
+        className={`border-t py-6 text-center text-xs font-serif transition-colors ${
+          theme === "parchment" || theme === "ancient-calligraphy"
+            ? "border-[#bfa37c] bg-[#f2e7d5] text-[#634324]"
+            : theme === "solar"
+            ? "border-[#e0bf7a] bg-[#faecd0] text-[#78350f]"
+            : theme === "ethereal"
+            ? "border-[#1e3a8a] bg-[#070e24] text-[#7dd3fc]"
+            : theme === "cyber-tech"
+            ? "border-[#065f46] bg-[#061418] text-[#6ee7b7]"
+            : "border-[#241d16] bg-[#12100d] text-[#7a6e5e]"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 space-y-2">
-          <p className="tracking-wide text-[#a69680]">
+          <p
+            className={`tracking-wide ${
+              theme === "parchment" || theme === "ancient-calligraphy"
+                ? "text-[#4a2808]"
+                : "text-[#a69680]"
+            }`}
+          >
             <strong>Λεξάριθμος</strong> • Αρχαία Ελληνική Ιωνική Ισοψηφία, Στατιστική & Πολυτονική Ανάλυση Κειμένων
           </p>
-          <p className="text-[11px] text-[#5e5345]">
+          <p
+            className={`text-[11px] ${
+              theme === "parchment" || theme === "ancient-calligraphy"
+                ? "text-[#6e4e2a]"
+                : "text-[#5e5345]"
+            }`}
+          >
             Υποστηρίζει 27 Ιωνικά ψηφία (Μονάδες, Δεκάδες, Εκατοντάδες, Ϛ=6, Ϟ=90, Ϡ=900), Πυθαγόρειο Πυθμένα & Εξαγωγή CSV.
           </p>
-          <div className="pt-2 border-t border-[#1e1913] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-[11px] text-[#8c7e6c]">
-            <p>© {new Date().getFullYear()} <strong className="text-[#e6c670]">Ιωάννης Βελούδος</strong></p>
-            <span className="hidden sm:inline text-[#4a4034]">•</span>
+          <div
+            className={`pt-2 border-t flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-[11px] ${
+              theme === "parchment" || theme === "ancient-calligraphy"
+                ? "border-[#bfa37c]/60 text-[#634324]"
+                : "border-[#1e1913] text-[#8c7e6c]"
+            }`}
+          >
+            <p>
+              © {new Date().getFullYear()}{" "}
+              <strong
+                className={
+                  theme === "parchment" || theme === "ancient-calligraphy"
+                    ? "text-[#8c5307]"
+                    : "text-[#e6c670]"
+                }
+              >
+                Ιωάννης Βελούδος
+              </strong>
+            </p>
+            <span className="hidden sm:inline text-inherit">•</span>
             <p>Όλα τα πνευματικά δικαιώματα κατοχυρωμένα (All Rights Reserved)</p>
           </div>
         </div>
@@ -467,6 +621,14 @@ export default function App() {
         onSelectFont={handleSelectFont}
       />
 
+      {/* 5-Theme Selector Modal */}
+      <ThemeSelectorModal
+        isOpen={themeModalOpen}
+        onClose={() => setThemeModalOpen(false)}
+        currentTheme={theme}
+        onSelectTheme={handleSelectTheme}
+      />
+
       {/* Mystical Portal Gate Intro (Lavreion / Velos + Oudos) */}
       {showPortalGate && (
         <PortalGateIntro
@@ -476,29 +638,58 @@ export default function App() {
       )}
 
       {/* Mobile Quick Bottom Navigation Bar (Direct Access to Key Views) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#120f0c]/95 backdrop-blur-md border-t border-[#33261a] px-2 py-1.5 flex items-center justify-around shadow-2xl pb-[max(0.375rem,env(safe-area-inset-bottom))]">
+      <nav
+        id="mobile-bottom-nav"
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 backdrop-blur-md border-t px-2 py-1.5 flex items-center justify-around shadow-2xl pb-[max(0.375rem,env(safe-area-inset-bottom))] transition-colors ${
+          theme === "parchment" || theme === "ancient-calligraphy"
+            ? "bg-[#f8f4ec]/98 border-[#bfa37c] text-[#4a2808] shadow-[0_-4px_20px_rgba(90,60,25,0.12)]"
+            : theme === "solar"
+            ? "bg-[#fffdf5]/98 border-[#e0bf7a] text-[#b45309] shadow-[0_-4px_20px_rgba(217,119,6,0.12)]"
+            : theme === "ethereal"
+            ? "bg-[#070e24]/95 border-[#1e3a8a] text-[#38bdf8]"
+            : theme === "cyber-tech"
+            ? "bg-[#061418]/95 border-[#065f46] text-[#10b981]"
+            : "bg-[#120f0c]/95 border-[#33261a] text-[#e8dfd1]"
+        }`}
+      >
         {[
           { id: "calculator" as TabType, label: "Υπολογισμός", icon: Calculator },
           { id: "search" as TabType, label: "Αναζήτηση", icon: Search },
+          { id: "calendar" as TabType, label: "Ημερολόγιο", icon: Calendar },
           { id: "cube-apollo" as TabType, label: "Κύβος 1331", icon: Box },
           { id: "archive" as TabType, label: "Θησαυρός", icon: BookMarked, badge: savedItems.length },
         ].map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
+          const isLight = theme === "parchment" || theme === "ancient-calligraphy" || theme === "solar";
           return (
             <button
               key={item.id}
               onClick={() => setCurrentTab(item.id)}
               className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer touch-manipulation min-h-[44px] ${
                 isActive
-                  ? "text-[#e6c670] font-bold"
+                  ? isLight
+                    ? "text-[#8c5307] font-bold bg-[#ebdcc5]/60"
+                    : "text-[#ffd700] font-bold bg-[#241c14]/70"
+                  : isLight
+                  ? "text-[#634324] hover:text-[#382109]"
                   : "text-[#8c7e6c] hover:text-[#d6c7b2]"
               }`}
             >
               <div className="relative">
-                <Icon className={`w-5 h-5 ${isActive ? "text-[#e6c670]" : "text-[#736553]"}`} />
+                <Icon
+                  className={`w-5 h-5 ${
+                    isActive
+                      ? isLight ? "text-[#8c5307]" : "text-[#ffd700]"
+                      : isLight ? "text-[#634324]" : "text-[#736553]"
+                  }`}
+                />
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 text-[9px] px-1 py-0.2 rounded-full font-bold bg-[#c89b3c] text-black">
+                  <span
+                    className={`absolute -top-1.5 -right-2.5 text-[9px] px-1 py-0.2 rounded-full font-bold ${
+                      isLight ? "bg-[#8c5307] text-[#fff]" : "bg-[#c89b3c] text-black"
+                    }`}
+                  >
                     {item.badge}
                   </span>
                 )}
@@ -509,10 +700,28 @@ export default function App() {
         })}
         <button
           onClick={() => handleOpenAiModal("ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ", 2368, ["ΙΗΣΟΥΣ", "ΧΡΙΣΤΟΣ"])}
-          className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[#f5ecd8] transition-all cursor-pointer min-h-[44px]"
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer min-h-[44px] ${
+            theme === "parchment" || theme === "ancient-calligraphy" || theme === "solar"
+              ? "text-[#8c5307] hover:bg-[#ebdcc5]/50"
+              : "text-[#f5ecd8] hover:bg-[#241c14]/70"
+          }`}
         >
-          <Sparkles className="w-5 h-5 text-[#ffd700] animate-pulse" />
-          <span className="text-[10px] font-serif mt-0.5 text-[#e6c670] font-bold">AI</span>
+          <Sparkles
+            className={`w-5 h-5 animate-pulse ${
+              theme === "parchment" || theme === "ancient-calligraphy" || theme === "solar"
+                ? "text-[#8c5307]"
+                : "text-[#ffd700]"
+            }`}
+          />
+          <span
+            className={`text-[10px] font-serif mt-0.5 font-bold ${
+              theme === "parchment" || theme === "ancient-calligraphy" || theme === "solar"
+                ? "text-[#8c5307]"
+                : "text-[#e6c670]"
+            }`}
+          >
+            AI
+          </span>
         </button>
       </nav>
 
