@@ -8,6 +8,7 @@ import {
 import { SavedIsopsephyItem, NumberingSystem } from "../types";
 import { GoldenRatioGaugeTool } from "./GoldenRatioGaugeTool";
 import { PythagoreanMonochordAudio } from "./PythagoreanMonochordAudio";
+import { ExportCardImageModal } from "./ExportCardImageModal";
 import { pythagoreanSynth, foldToAudibleSpectrum } from "../utils/pythagoreanAudio";
 import {
   Bookmark,
@@ -32,6 +33,8 @@ import {
   Sun,
   Palette,
   Cpu,
+  Share2,
+  Image as ImageIcon,
 } from "lucide-react";
 
 interface CalculatorTabProps {
@@ -57,6 +60,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [showAlphabetChart, setShowAlphabetChart] = useState<boolean>(false);
   const [showLetterBreakdown, setShowLetterBreakdown] = useState<boolean>(false);
+  const [isExportImageModalOpen, setIsExportImageModalOpen] = useState<boolean>(false);
   const [recentHistory, setRecentHistory] = useState<string[]>([
     "ΙΩΑΝΝΗΣ",
     "ΑΓΙΑ ΘΕΟΦΑΝΕΙΑ",
@@ -601,7 +605,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                 <button
                   onClick={handleSave}
                   id="btn-save-calculator-result"
-                  className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-md ${
+                  className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-md cursor-pointer ${
                     isAlreadySaved || saveSuccess
                       ? "bg-emerald-900/60 text-emerald-200 border border-emerald-500/50"
                       : "bg-gradient-to-r from-[#8a6825] to-[#c89b3c] hover:from-[#a0792c] hover:to-[#dbaa42] text-[#14120f] font-bold"
@@ -620,11 +624,22 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                   )}
                 </button>
 
+                {/* Export Card as PNG / Social Card Button */}
+                <button
+                  onClick={() => setIsExportImageModalOpen(true)}
+                  id="btn-export-png-calculator-result"
+                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#2b2114] hover:bg-[#3d2e1b] border border-[#d4af37]/60 hover:border-[#ffd700] text-xs sm:text-sm font-serif font-bold text-[#ffd700] transition-all shadow-sm hover:shadow-[#ffd700]/20 cursor-pointer"
+                  title="Εξαγωγή κάρτας αποτελέσματος ως αρχείο εικόνας PNG για κοινοποίηση στα Social Media"
+                >
+                  <ImageIcon className="w-4 h-4 text-[#ffd700]" />
+                  <span>Εξαγωγή PNG / Κοινοποίηση</span>
+                </button>
+
                 <div className="flex gap-2">
                   <button
                     onClick={handleCopy}
                     id="btn-copy-calculator-result"
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#231d17] hover:bg-[#30271e] border border-[#3e3223] text-xs text-[#d6c7b2] font-medium transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#231d17] hover:bg-[#30271e] border border-[#3e3223] text-xs text-[#d6c7b2] font-medium transition-colors cursor-pointer"
                   >
                     {copied ? (
                       <>
@@ -648,7 +663,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                       )
                     }
                     id="btn-ai-analyze-calculator"
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#282116] hover:bg-[#382d1c] border border-[#c89b3c]/40 text-xs text-[#e6c670] font-medium transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#282116] hover:bg-[#382d1c] border border-[#c89b3c]/40 text-xs text-[#e6c670] font-medium transition-colors cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>AI Ερμηνεία</span>
@@ -1026,6 +1041,22 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
             })}
           </div>
         </div>
+      )}
+
+      {/* Export Card as PNG Image Modal */}
+      {result.finalValue > 0 && (
+        <ExportCardImageModal
+          isOpen={isExportImageModalOpen}
+          onClose={() => setIsExportImageModalOpen(false)}
+          expression={inputExpression}
+          totalValue={result.finalValue}
+          greekNumeral={greekNumeral}
+          system={selectedSystem}
+          systemName={getSystemName(selectedSystem)}
+          mathProps={mathProps}
+          wordBreakdowns={result.wordBreakdowns}
+          stepsExplanation={result.stepsExplanation}
+        />
       )}
     </div>
   );

@@ -115,10 +115,10 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
         </button>
         <button
           onClick={onOpenCodex}
-          className="px-4 py-2 rounded-xl bg-zinc-900/70 hover:bg-zinc-800 border border-zinc-700/60 hover:border-amber-500/50 text-amber-300 flex items-center gap-2 transition-all cursor-pointer"
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/30 hover:from-amber-500/30 hover:to-amber-600/40 border border-amber-500/60 text-amber-200 font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10"
         >
-          <BookOpen className="w-4 h-4" />
-          Μεταφυσικός Κώδικας
+          <BookOpen className="w-4 h-4 text-amber-300" />
+          📖 Κώδικας & Ανθολόγιο Σοφών
         </button>
       </div>
     </div>

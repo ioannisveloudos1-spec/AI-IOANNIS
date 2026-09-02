@@ -93,14 +93,14 @@ export const CosmicGreatYearPanel: React.FC<CosmicGreatYearPanelProps> = ({
 
   // Quick jump historical milestones
   const PRESETS = [
-    { label: "10.960 π.Χ. (Λέων / Κατακλυσμός & Σφίγγα)", year: -10960, sign: "leo" },
-    { label: "4.480 π.Χ. (Ταύρος / Μινωικός Πολιτισμός)", year: -4480, sign: "taurus" },
-    { label: "2.320 π.Χ. (Κριός / Χρυσόμαλλο Δέρας)", year: -2320, sign: "aries" },
-    { label: "160 π.Χ. (Εκκίνηση Εποχής Ιχθύων)", year: -160, sign: "pisces" },
-    { label: "1 μ.Χ. (Γέννηση Χριστού / 160ό έτος Ιχθύων)", year: 1, sign: "pisces" },
-    { label: "2000 μ.Χ. (Μετάβαση στον Υδροχόο / Millennium)", year: 2000, sign: "aquarius" },
-    { label: "2026 μ.Χ. (Τρέχον: 26ο έτος Υδροχόου / 0° 21' 40'')", year: 2026, sign: "aquarius" },
-    { label: "4.160 μ.Χ. (Αιγόκερως / Μέλλον)", year: 4160, sign: "capricorn" },
+    { label: "10.960 π.κ.χ. (π.Χ.) — Λέων / Κατακλυσμός & Σφίγγα", year: -10960, sign: "leo" },
+    { label: "4.480 π.κ.χ. (π.Χ.) — Ταύρος / Μινωικός Πολιτισμός", year: -4480, sign: "taurus" },
+    { label: "2.320 π.κ.χ. (π.Χ.) — Κριός / Χρυσόμαλλο Δέρας", year: -2320, sign: "aries" },
+    { label: "160 π.κ.χ. (π.Χ.) — Εκκίνηση Εποχής Ιχθύων", year: -160, sign: "pisces" },
+    { label: "1 μ.κ.χ. (μ.Χ.) — Γέννηση Χριστού / 160ό έτος Ιχθύων", year: 1, sign: "pisces" },
+    { label: "2000 μ.κ.χ. (μ.Χ.) — Μετάβαση στον Υδροχόο / Millennium", year: 2000, sign: "aquarius" },
+    { label: "2026 μ.κ.χ. (μ.Χ.) — Τρέχον: 26ο έτος Υδροχόου / 0° 21' 40''", year: 2026, sign: "aquarius" },
+    { label: "4.160 μ.κ.χ. (μ.Χ.) — Αιγόκερως / Μέλλον", year: 4160, sign: "capricorn" },
   ];
 
   // Calculate precessional angle on the 360 wheel
@@ -176,7 +176,7 @@ export const CosmicGreatYearPanel: React.FC<CosmicGreatYearPanelProps> = ({
           <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-zinc-900/90 border border-amber-500/30 text-xs">
             <span className="text-zinc-400">Έτος:</span>
             <span className="font-mono font-bold text-amber-400 text-sm">
-              {currentYear < 0 ? `${Math.abs(currentYear)} π.Χ.` : `${currentYear} μ.Χ.`}
+              {currentYear < 0 ? `${Math.abs(currentYear)} π.κ.χ. (π.Χ.)` : `${currentYear} μ.κ.χ. (μ.Χ.)`}
             </span>
             <span className="text-zinc-500 font-mono">|</span>
             <span className="text-sky-300 font-semibold truncate max-w-[150px]">
@@ -485,7 +485,7 @@ export const CosmicGreatYearPanel: React.FC<CosmicGreatYearPanelProps> = ({
                     {/* Timeline Slider & Manual Year Input */}
                     <div className="space-y-2 pt-1">
                       <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
-                        <span>12.000 π.Χ.</span>
+                        <span>12.000 π.κ.χ. (π.Χ.)</span>
                         <div className="flex items-center gap-2">
                           <label className="text-zinc-400 text-xs">Επιλογή Έτους:</label>
                           <input
@@ -495,10 +495,10 @@ export const CosmicGreatYearPanel: React.FC<CosmicGreatYearPanelProps> = ({
                             className="w-24 px-2 py-1 rounded bg-zinc-900 border border-amber-500/40 text-amber-300 font-mono font-bold text-xs text-center focus:outline-none focus:border-amber-400"
                           />
                           <span className="text-amber-400 font-bold">
-                            {currentYear < 0 ? `(${Math.abs(currentYear)} π.Χ.)` : `(${currentYear} μ.Χ.)`}
+                            {currentYear < 0 ? `(${Math.abs(currentYear)} π.κ.χ. [π.Χ.])` : `(${currentYear} μ.κ.χ. [μ.Χ.])`}
                           </span>
                         </div>
-                        <span>12.000 μ.Χ.</span>
+                        <span>12.000 μ.κ.χ. (μ.Χ.)</span>
                       </div>
                       <input
                         type="range"
@@ -775,7 +775,7 @@ export const CosmicGreatYearPanel: React.FC<CosmicGreatYearPanelProps> = ({
                 <div className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-2">
                   <div className="flex items-center gap-2 text-sky-400 text-xs font-bold uppercase tracking-wider">
                     <Compass className="w-4 h-4" />
-                    Ίππαρχος ο Ρόδιος (190–120 π.Χ.)
+                    Ίππαρχος ο Ρόδιος (190–120 π.κ.χ. [π.Χ.])
                   </div>
                   <p className="text-xs text-zinc-300 leading-relaxed">
                     {GREAT_YEAR_COSMOLOGY.hipparchusDiscovery}

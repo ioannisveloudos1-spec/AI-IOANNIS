@@ -55,6 +55,12 @@ export const HISTORICAL_ISOPSEPHIES: HistoricalIsopsephyEntry[] = [
         category: "classical",
       },
       {
+        word: "ΙΑΠΕΤΟΣ",
+        breakdown: "10 + 1 + 80 + 5 + 300 + 70 + 200 = 666",
+        description: "Ο Τιτάνας πατέρας του Προμηθέα και πρόγονος της ανθρωπότητας (Ιωνική αρίθμηση: Ι=10, Α=1, Π=80, Ε=5, Τ=300, Ο=70, Σ=200).",
+        category: "classical",
+      },
+      {
         word: "Η ΦΡΗΝ",
         breakdown: "8 + 500 + 100 + 8 + 50 = 666",
         description: "Ο νους, η νόηση και η διάνοια στην ομηρική και κλασική φιλοσοφία.",
