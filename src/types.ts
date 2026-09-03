@@ -12,6 +12,7 @@ export type TabType =
   | "cube-apollo"
   | "solar-square"
   | "enotheism"
+  | "seed-of-light"
   | "game"
   | "stats" 
   | "archive" 
@@ -190,6 +191,7 @@ export interface PresetText {
   era: string;
   category: "classical" | "biblical" | "philosophical" | "poetry";
   text: string;
+  translation?: string;
   description: string;
   suggestedTargets?: number[];
 }

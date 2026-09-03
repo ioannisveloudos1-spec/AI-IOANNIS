@@ -1,5 +1,6 @@
 import React from "react";
-import { Sparkles, Compass, Map, BookOpen, Play, Shield, Sun, Orbit } from "lucide-react";
+import { Sparkles, Compass, Map, BookOpen, Play, Shield, Sun, Orbit, Brain } from "lucide-react";
+import { MindGeometryCard } from "./MindGeometryCard";
 
 interface IntroScreenProps {
   onStartJourney: () => void;
@@ -7,6 +8,8 @@ interface IntroScreenProps {
   onOpenPantheon: () => void;
   onOpenCodex: () => void;
   onOpenGreatYear: () => void;
+  onOpenMindGeometry: () => void;
+  onSelectWordForCalculator?: (word: string) => void;
   hasSavedProgress: boolean;
   savedSceneIndex: number;
   onContinueJourney: () => void;
@@ -18,6 +21,8 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
   onOpenPantheon,
   onOpenCodex,
   onOpenGreatYear,
+  onOpenMindGeometry,
+  onSelectWordForCalculator,
   hasSavedProgress,
   savedSceneIndex,
   onContinueJourney,
@@ -91,35 +96,47 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
       </div>
 
       {/* Secondary Panels Buttons */}
-      <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs mb-8 w-full max-w-4xl mx-auto px-2">
+        <button
+          onClick={onOpenMindGeometry}
+          className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/25 to-amber-600/30 hover:from-amber-500/30 hover:to-amber-600/40 border border-amber-500/60 text-amber-200 font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/15 min-h-[42px] touch-manipulation"
+        >
+          <Brain className="w-4 h-4 text-amber-300 animate-pulse" />
+          <span>Γεωμετρία Νου (6! = 720)</span>
+        </button>
         <button
           onClick={onOpenMap}
-          className="px-4 py-2 rounded-xl bg-zinc-900/70 hover:bg-zinc-800 border border-zinc-700/60 hover:border-sky-500/50 text-sky-300 flex items-center gap-2 transition-all cursor-pointer"
+          className="px-3.5 py-2.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 hover:border-sky-500/50 text-sky-300 font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[42px] touch-manipulation"
         >
           <Map className="w-4 h-4" />
-          Κοσμικός Χάρτης
+          <span>Κοσμικός Χάρτης</span>
         </button>
         <button
           onClick={onOpenGreatYear}
-          className="px-4 py-2 rounded-xl bg-zinc-900/70 hover:bg-zinc-800 border border-zinc-700/60 hover:border-amber-500/50 text-amber-300 flex items-center gap-2 transition-all cursor-pointer shadow-md shadow-amber-500/10"
+          className="px-3.5 py-2.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 hover:border-amber-500/50 text-amber-300 font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-amber-500/10 min-h-[42px] touch-manipulation"
         >
-          <Orbit className="w-4 h-4 animate-spin" style={{ animationDuration: "15s" }} />
-          Μέγας Ενιαυτός (25.920ε.)
+          <Orbit className="w-4 h-4 text-amber-400 animate-spin" style={{ animationDuration: "15s" }} />
+          <span>Μέγας Ενιαυτός (25.920ε.)</span>
         </button>
         <button
           onClick={onOpenPantheon}
-          className="px-4 py-2 rounded-xl bg-zinc-900/70 hover:bg-zinc-800 border border-zinc-700/60 hover:border-purple-500/50 text-purple-300 flex items-center gap-2 transition-all cursor-pointer"
+          className="px-3.5 py-2.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 hover:border-purple-500/50 text-purple-300 font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[42px] touch-manipulation"
         >
           <Compass className="w-4 h-4" />
-          Πάνθεον (35 Θεοί)
+          <span>Πάνθεον (35 Θεοί)</span>
         </button>
         <button
           onClick={onOpenCodex}
-          className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/30 hover:from-amber-500/30 hover:to-amber-600/40 border border-amber-500/60 text-amber-200 font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10"
+          className="px-3.5 py-2.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 hover:border-amber-500/50 text-amber-300 font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[42px] touch-manipulation"
         >
           <BookOpen className="w-4 h-4 text-amber-300" />
-          📖 Κώδικας & Ανθολόγιο Σοφών
+          <span>Κώδικας & Ενότητα Όντος</span>
         </button>
+      </div>
+
+      {/* Embedded Mind Geometry Section on Intro */}
+      <div className="w-full text-left">
+        <MindGeometryCard onSelectWordForCalculator={onSelectWordForCalculator} />
       </div>
     </div>
   );

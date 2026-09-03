@@ -728,6 +728,7 @@ export const GuideTab: React.FC = () => {
             </h4>
             <ul className="space-y-1.5 text-[#c5b59e] leading-relaxed">
               <li>• <strong>Κορυφή Αετώματος (Παρθενών):</strong> Γωνία <strong>144°</strong> = 72° + 72° (Ο.Β. = 72).</li>
+              <li>• <strong>Ο.Β. (72) &amp; ΝΟΥΣ = 720 = 6!:</strong> 144 / 2 = 72 = <strong>Ο.Β.</strong> (Ουρανία Βασίλειος). <strong>Ο.Β. × Ι (10 - Ιωάννης) = 720 = ΝΟΥΣ</strong>! Επίσης <strong>6! = 720</strong> (6 παραγοντικό: 1×2×3×4×5×6 = 720 = ΝΟΥΣ).</li>
               <li>• <strong>Βάσεις Αετώματος:</strong> Δύο γωνίες των <strong>18°</strong> (18 + 18 = 36).</li>
               <li>• <strong>ΙΗ = 18:</strong> Ιερά γράμματα Ηλίου / Απόλλωνος (<em>«ΙΗ Παιάν»</em>, <em>ΙΗΣΟΥΣ</em>).</li>
               <li>• <strong>36 ➔ 72 ➔ 144:</strong> Το 36 διπλασιαζόμενο δίνει 72, και το 72 διπλασιαζόμενο επιστρέφει στο 144.</li>

@@ -8,6 +8,7 @@ import { CosmicMap } from "./CosmicMap";
 import { PantheonPanel } from "./PantheonPanel";
 import { CodexPanel } from "./CodexPanel";
 import { CosmicGreatYearPanel } from "./CosmicGreatYearPanel";
+import { MindGeometryPanel } from "./MindGeometryPanel";
 import { COSMIC_STORY_ACTS, StoryScene, StoryChoice } from "../../data/cosmicStory";
 
 interface CosmicJourneyTabProps {
@@ -46,6 +47,7 @@ export const CosmicJourneyTab: React.FC<CosmicJourneyTabProps> = ({
   const [pantheonOpen, setPantheonOpen] = useState<boolean>(false);
   const [codexOpen, setCodexOpen] = useState<boolean>(false);
   const [greatYearOpen, setGreatYearOpen] = useState<boolean>(false);
+  const [mindGeometryOpen, setMindGeometryOpen] = useState<boolean>(false);
 
   // Load saved state on mount
   useEffect(() => {
@@ -196,6 +198,7 @@ export const CosmicJourneyTab: React.FC<CosmicJourneyTabProps> = ({
           onOpenPantheon={() => setPantheonOpen(true)}
           onOpenCodex={() => setCodexOpen(true)}
           onOpenGreatYear={() => setGreatYearOpen(true)}
+          onOpenMindGeometry={() => setMindGeometryOpen(true)}
           onRestartJourney={handleRestartJourney}
         />
       )}
@@ -209,6 +212,8 @@ export const CosmicJourneyTab: React.FC<CosmicJourneyTabProps> = ({
             onOpenPantheon={() => setPantheonOpen(true)}
             onOpenCodex={() => setCodexOpen(true)}
             onOpenGreatYear={() => setGreatYearOpen(true)}
+            onOpenMindGeometry={() => setMindGeometryOpen(true)}
+            onSelectWordForCalculator={onSelectWordForCalculator}
             hasSavedProgress={completedSceneIds.length > 0}
             savedSceneIndex={currentSceneIndex}
             onContinueJourney={handleContinueJourney}
@@ -233,11 +238,19 @@ export const CosmicJourneyTab: React.FC<CosmicJourneyTabProps> = ({
             onOpenPantheon={() => setPantheonOpen(true)}
             onOpenCodex={() => setCodexOpen(true)}
             onOpenGreatYear={() => setGreatYearOpen(true)}
+            onOpenMindGeometry={() => setMindGeometryOpen(true)}
           />
         )}
       </div>
 
       {/* Modals */}
+      {mindGeometryOpen && (
+        <MindGeometryPanel
+          onClose={() => setMindGeometryOpen(false)}
+          onSelectWordForCalculator={onSelectWordForCalculator}
+        />
+      )}
+
       {mapOpen && (
         <CosmicMap
           currentSceneId={currentScene.id}

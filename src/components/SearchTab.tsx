@@ -72,7 +72,10 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   savedItems,
 }) => {
   const [selectedPresetId, setSelectedPresetId] = useState<string>("delphi-pythagorean-147");
-  const [inputText, setInputText] = useState<string>(PRESET_TEXTS[0].text);
+  const [inputText, setInputText] = useState<string>(() => {
+    const init = PRESET_TEXTS[0].text;
+    return init.endsWith("\n\n") ? init : init.trimEnd() + "\n\n";
+  });
   const [isExpandedTextarea, setIsExpandedTextarea] = useState<boolean>(false);
   const [showExplanationSection, setShowExplanationSection] = useState<boolean>(false);
   const [showLetterFrequencies, setShowLetterFrequencies] = useState<boolean>(false);
@@ -112,9 +115,12 @@ export const SearchTab: React.FC<SearchTabProps> = ({
 
   // Active view tab inside search
   const [viewMode, setViewMode] = useState<"matches" | "interactive-flow" | "interactive-list" | "sentences" | "anywhere-combos" | "seed-combos" | "lexicon">("interactive-flow");
-  const [topTextViewMode, setTopTextViewMode] = useState<"edit" | "highlighted">("edit");
+  const [topTextViewMode, setTopTextViewMode] = useState<"edit" | "highlighted" | "translation">("edit");
   const [dismissedMatchIds, setDismissedMatchIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Selected preset object
+  const selectedPreset = useMemo(() => PRESET_TEXTS.find((p) => p.id === selectedPresetId), [selectedPresetId]);
 
   // Lexicon sort state
   const [lexiconSort, setLexiconSort] = useState<"freq" | "alpha" | "val-desc" | "val-asc">("freq");
@@ -151,7 +157,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     setSelectedPresetId(pId);
     const found = PRESET_TEXTS.find((p) => p.id === pId);
     if (found) {
-      setInputText(cleanAndNormalizePolytonic(found.text));
+      const formatted = found.text.endsWith("\n\n") ? found.text : found.text.trimEnd() + "\n\n";
+      setInputText(cleanAndNormalizePolytonic(formatted));
       if (found.suggestedTargets && found.suggestedTargets.length > 0) {
         setSingleWordTarget(found.suggestedTargets[0].toString());
         setPhraseTarget(found.suggestedTargets[0].toString());
@@ -704,8 +711,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
               <span>Κείμενο προς Ανάλυση & Αναζήτηση</span>
             </label>
 
-            {/* Mode Switcher: Edit vs Yellow Highlight View */}
-            <div className="flex items-center bg-[#0d0c0a] p-1 rounded-lg border border-[#2d241a] ml-1">
+            {/* Mode Switcher: Edit vs Purple Highlight View vs Modern Greek Translation */}
+            <div className="flex items-center bg-[#0d0c0a] p-1 rounded-lg border border-[#2d241a] ml-1 flex-wrap gap-1">
               <button
                 type="button"
                 onClick={() => setTopTextViewMode("edit")}
@@ -715,7 +722,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     : "text-[#8c7e6c] hover:text-[#e8dfd1]"
                 }`}
               >
-                ✍️ Επεξεργασία
+                ✍️ Αρχαίο (Επεξεργασία)
               </button>
               <button
                 type="button"
@@ -734,6 +741,18 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     {totalFoundMatches}
                   </span>
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTopTextViewMode("translation")}
+                className={`px-2.5 py-1 rounded text-xs font-serif transition-all flex items-center gap-1.5 ${
+                  topTextViewMode === "translation"
+                    ? "bg-amber-900/60 text-amber-200 font-bold border border-amber-500/60 shadow-md shadow-amber-900/30"
+                    : "text-[#b09e86] hover:text-amber-300"
+                }`}
+                title="Προβολή της πλήρους Νεοελληνικής μετάφρασης του επιλεγμένου κειμένου"
+              >
+                <span>📖 Νεοελληνική Μετάφραση</span>
               </button>
             </div>
           </div>
@@ -815,20 +834,23 @@ export const SearchTab: React.FC<SearchTabProps> = ({
 
         {/* Text Viewer or Textarea */}
         {topTextViewMode === "edit" ? (
-          <div className="relative">
-            <textarea
-              id="polytonic-textarea-input"
-              value={inputText}
-              onChange={(e) => setInputText(cleanAndNormalizePolytonic(e.target.value))}
-              rows={isExpandedTextarea ? 18 : 8}
-              placeholder="Επικολλήστε ή πληκτρολογήστε ολόκληρο αρχαίο ή νεότερο ελληνικό κείμενο, κεφάλαια, ψαλμούς ή παραγράφους..."
-              className="w-full p-4 sm:p-5 bg-[#0e0c0a] border border-[#382d20] focus:border-[#c89b3c] focus:ring-1 focus:ring-[#c89b3c]/25 rounded-xl text-sm sm:text-base font-serif text-[#f5ecd8] placeholder-[#5c5144] resize-y outline-none transition-all leading-relaxed gold-scrollbar"
-            />
-            <div className="absolute bottom-3 right-3 text-[10px] font-sans text-[#706251] bg-[#14120e]/80 px-2 py-0.5 rounded border border-[#2d2419] pointer-events-none">
-              Σύρετε τη δεξιά κάτω γωνία για αυξομείωση ύψους
+          <div className="space-y-1">
+            <div className="relative">
+              <textarea
+                id="polytonic-textarea-input"
+                value={inputText}
+                onChange={(e) => setInputText(cleanAndNormalizePolytonic(e.target.value))}
+                rows={isExpandedTextarea ? 18 : 8}
+                placeholder="Επικολλήστε ή πληκτρολογήστε ολόκληρο αρχαίο ή νεότερο ελληνικό κείμενο, κεφάλαια, ψαλμούς ή παραγράφους..."
+                className="w-full p-4 sm:p-5 pb-16 bg-[#0e0c0a] border border-[#382d20] focus:border-[#c89b3c] focus:ring-1 focus:ring-[#c89b3c]/25 rounded-xl text-sm sm:text-base font-serif text-[#f5ecd8] placeholder-[#5c5144] resize-y outline-none transition-all leading-relaxed gold-scrollbar"
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-[#706251] px-1">
+              <span>💡 Συμβουλή: Έχουν αφεθεί 2 κενές γραμμές στο τέλος για ανεμπόδιστη ανάγνωση της τελευταίας γραμμής.</span>
+              <span className="font-sans">Σύρετε τη δεξιά κάτω γωνία για αυξομείωση ύψους</span>
             </div>
           </div>
-        ) : (
+        ) : topTextViewMode === "highlighted" ? (
           /* Purple Highlighted Full Text Box */
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs font-serif px-1 text-[#d6c7b2]">
@@ -847,45 +869,122 @@ export const SearchTab: React.FC<SearchTabProps> = ({
               </span>
             </div>
 
-            <div className={`p-4 sm:p-5 bg-[#0e0c0a] rounded-xl border border-[#382d20] leading-loose text-base sm:text-lg font-serif text-[#e8dfd1] overflow-y-auto gold-scrollbar ${
+            <div className={`p-4 sm:p-5 pb-16 bg-[#0e0c0a] rounded-xl border border-[#382d20] leading-loose text-base sm:text-lg font-serif text-[#e8dfd1] overflow-y-auto gold-scrollbar ${
               isExpandedTextarea ? "max-h-[500px]" : "max-h-[260px]"
             }`}>
               {analysis.words.length > 0 ? (
-                <div className="flex flex-wrap gap-x-2 gap-y-2.5">
-                  {analysis.words.map((w, idx) => {
-                    const isSingleMatch = singleMatchIndices.has(w.indexInText!);
-                    const phrases = phraseMatchWordMap.get(w.indexInText!) || [];
-                    const isPhraseMatch = phrases.length > 0;
-                    const isTargetMatch = isSingleMatch || isPhraseMatch;
-                    const isSelected = selectedWordObj?.indexInText === w.indexInText;
+                <div>
+                  <div className="flex flex-wrap gap-x-2 gap-y-2.5">
+                    {analysis.words.map((w, idx) => {
+                      const isSingleMatch = singleMatchIndices.has(w.indexInText!);
+                      const phrases = phraseMatchWordMap.get(w.indexInText!) || [];
+                      const isPhraseMatch = phrases.length > 0;
+                      const isTargetMatch = isSingleMatch || isPhraseMatch;
+                      const isSelected = selectedWordObj?.indexInText === w.indexInText;
 
-                    return (
-                      <span
-                        key={idx}
-                        onClick={() => setSelectedWordObj(w)}
-                        className={`cursor-pointer transition-all inline-flex items-center gap-1.5 rounded ${
-                          isTargetMatch
-                            ? "bg-purple-600 text-white font-black px-2 py-0.5 rounded shadow-[0_0_12px_rgba(168,85,247,0.75)] ring-2 ring-purple-300 scale-105"
-                            : isSelected
-                            ? "bg-[#c89b3c] text-black font-bold px-1.5 py-0.5 rounded"
-                            : "hover:bg-[#251e17] hover:text-[#f5ecd8] px-1 py-0.5"
-                        }`}
-                        title={`Λέξη #${idx + 1}: ${w.rawWord} (Ισοψηφία: ${w.value}, Πυθμένας: ${w.root})${
-                          isSingleMatch ? " - ΣΤΟΧΟΣ ΛΕΞΗΣ" : ""
-                        }${isPhraseMatch ? ` - ΜΕΡΟΣ ΣΥΝΔΥΑΣΜΟΥ ΦΡΑΣΗΣ (${phrases[0].value})` : ""}`}
-                      >
-                        <span className={isTargetMatch ? "text-white font-black" : ""}>{w.rawWord}</span>
-                        {isTargetMatch && (
-                          <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-purple-950 text-white font-bold border border-purple-400/40">
-                            {w.value}
-                          </span>
-                        )}
-                      </span>
-                    );
-                  })}
+                      return (
+                        <span
+                          key={idx}
+                          onClick={() => setSelectedWordObj(w)}
+                          className={`cursor-pointer transition-all inline-flex items-center gap-1.5 rounded ${
+                            isTargetMatch
+                              ? "bg-purple-600 text-white font-black px-2 py-0.5 rounded shadow-[0_0_12px_rgba(168,85,247,0.75)] ring-2 ring-purple-300 scale-105"
+                              : isSelected
+                              ? "bg-[#c89b3c] text-black font-bold px-1.5 py-0.5 rounded"
+                              : "hover:bg-[#251e17] hover:text-[#f5ecd8] px-1 py-0.5"
+                          }`}
+                          title={`Λέξη #${idx + 1}: ${w.rawWord} (Ισοψηφία: ${w.value}, Πυθμένας: ${w.root})${
+                            isSingleMatch ? " - ΣΤΟΧΟΣ ΛΕΞΗΣ" : ""
+                          }${isPhraseMatch ? ` - ΜΕΡΟΣ ΣΥΝΔΥΑΣΜΟΥ ΦΡΑΣΗΣ (${phrases[0].value})` : ""}`}
+                        >
+                          <span className={isTargetMatch ? "text-white font-black" : ""}>{w.rawWord}</span>
+                          {isTargetMatch && (
+                            <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-purple-950 text-white font-bold border border-purple-400/40">
+                              {w.value}
+                            </span>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  {/* Two empty lines spacing at the bottom so final line is never cut off */}
+                  <div className="h-16" aria-hidden="true" />
                 </div>
               ) : (
                 <p className="text-xs text-[#8c7e6c] italic">Δεν υπάρχει κείμενο προς προβολή.</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Modern Greek Translation View */
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-gradient-to-r from-[#17120c] via-[#241a10] to-[#17120c] border border-amber-600/50 shadow-md">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-amber-950 border border-amber-500/40 text-amber-400">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-serif font-bold text-amber-100 flex items-center gap-2 flex-wrap">
+                    <span>{selectedPreset?.title || "Νεοελληνική Μετάφραση"}</span>
+                    {selectedPreset?.author && (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/30">
+                        {selectedPreset.author}
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-xs text-[#cbb698] font-sans mt-0.5">
+                    {selectedPreset?.era ? `Εποχή: ${selectedPreset.era} • ` : ""}Πλήρης απόδοση στα Νέα Ελληνικά
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedPreset?.translation) {
+                      handleCopyText(selectedPreset.translation, "preset-translation-copy");
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#251a0e] hover:bg-[#382613] text-amber-200 border border-amber-500/40 text-xs font-serif font-bold transition-all shadow-sm cursor-pointer"
+                  title="Αντιγραφή του κειμένου της μετάφρασης"
+                >
+                  {copiedId === "preset-translation-copy" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
+                  <span>{copiedId === "preset-translation-copy" ? "Αντιγράφηκε!" : "Αντιγραφή"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedPreset?.translation) {
+                      setInputText(cleanAndNormalizePolytonic(selectedPreset.translation) + "\n\n");
+                      setTopTextViewMode("edit");
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-black font-serif text-xs font-black transition-all shadow-[0_0_12px_rgba(245,158,11,0.35)] cursor-pointer"
+                  title="Φόρτωση της νεοελληνικής μετάφρασης στο πεδίο ανάλυσης για υπολογισμό λεξαρίθμων"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-black" />
+                  <span>Ανάλυση Μετάφρασης</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Translation Content Box with Two Empty Lines at the end */}
+            <div className={`p-4 sm:p-6 pb-20 bg-[#0c0a08] rounded-xl border border-amber-900/40 leading-relaxed text-sm sm:text-base font-serif text-[#f2e7d7] overflow-y-auto gold-scrollbar whitespace-pre-line shadow-inner ${
+              isExpandedTextarea ? "max-h-[500px]" : "max-h-[300px]"
+            }`}>
+              {selectedPreset?.translation ? (
+                <div>
+                  {selectedPreset.translation}
+                  {/* Two empty lines spacer so user can read the very last line without being cut off */}
+                  <div className="h-16" aria-hidden="true" />
+                </div>
+              ) : (
+                <div className="py-8 text-center text-[#8c7e6c] italic space-y-2">
+                  <p>Δεν υπάρχει διαθέσιμη μετάφραση για το συγκεκριμένο κείμενο.</p>
+                  <p className="text-xs text-[#6e5f4e]">Επιλέξτε ένα από τα διαθέσιμα έτοιμα κείμενα από το μενού παραπάνω.</p>
+                </div>
               )}
             </div>
           </div>
@@ -2300,6 +2399,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                   </div>
                 );
               })}
+              {/* Extra spacing at bottom so the last item is never obscured */}
+              <div className="h-16" aria-hidden="true" />
             </div>
           </div>
         )}
@@ -2317,7 +2418,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                 </span>
               </div>
               
-              <div className="p-5 bg-[#0f0e0c] rounded-xl border border-[#211b15] leading-loose text-base sm:text-lg font-serif text-[#e8dfd1] flex flex-wrap gap-x-2.5 gap-y-3.5 max-h-[550px] overflow-y-auto gold-scrollbar">
+              <div className="p-5 pb-20 bg-[#0f0e0c] rounded-xl border border-[#211b15] leading-loose text-base sm:text-lg font-serif text-[#e8dfd1] flex flex-wrap gap-x-2.5 gap-y-3.5 max-h-[550px] overflow-y-auto gold-scrollbar">
                 {analysis.words.map((w, idx) => {
                   const isSingleMatch = singleMatchIndices.has(w.indexInText!);
                   const phrases = phraseMatchWordMap.get(w.indexInText!) || [];
@@ -2368,6 +2469,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     </button>
                   );
                 })}
+                {/* Extra bottom spacer so the final lines can be comfortably read */}
+                <div className="w-full h-16" aria-hidden="true" />
               </div>
             </div>
           </div>
@@ -3204,6 +3307,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       </div>
                     );
                   })}
+                  {/* Extra bottom spacer so the final sentence card is never obscured */}
+                  <div className="h-16" aria-hidden="true" />
                 </div>
               </div>
             ) : (

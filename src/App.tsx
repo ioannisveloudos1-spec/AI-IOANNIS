@@ -13,6 +13,7 @@ import { IsopsephicGraphTab } from "./components/IsopsephicGraphTab";
 import { VeloudionTab } from "./components/VeloudionTab";
 import { CubeApolloTab } from "./components/CubeApolloTab";
 import { SolarMagicSquareTab } from "./components/SolarMagicSquareTab";
+import { SeedOfLightTab } from "./components/SeedOfLightTab";
 import { EnotheismTab } from "./components/EnotheismTab";
 import { GameTab } from "./components/GameTab";
 import { StatsTab } from "./components/StatsTab";
@@ -368,7 +369,7 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col font-sans selection:bg-[#c89b3c]/30 selection:text-[#f4e2b7] pt-[env(safe-area-inset-top,0px)] pb-16 md:pb-0 ${
+      className={`min-h-screen flex flex-col font-sans selection:bg-[#c89b3c]/30 selection:text-[#f4e2b7] pt-[env(safe-area-inset-top,0px)] pb-16 md:pb-0 w-full max-w-full overflow-x-hidden ${
         theme === "parchment" || theme === "ancient-calligraphy"
           ? "bg-[#f8f4ec] text-[#382109]"
           : theme === "solar"
@@ -399,7 +400,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-2.5 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-x-hidden">
         {currentTab === "calculator" && (
           <CalculatorTab
             onSaveItem={handleSaveItem}
@@ -492,6 +493,14 @@ export default function App() {
           <SolarMagicSquareTab
             onOpenAiModal={handleOpenAiModal}
             onSaveItem={handleSaveItem}
+          />
+        )}
+
+        {currentTab === "seed-of-light" && (
+          <SeedOfLightTab
+            onSelectTab={setCurrentTab}
+            onSaveItem={handleSaveItem}
+            onOpenAiModal={handleOpenAiModal}
           />
         )}
 
@@ -640,7 +649,7 @@ export default function App() {
       {/* Mobile Quick Bottom Navigation Bar (Direct Access to Key Views) */}
       <nav
         id="mobile-bottom-nav"
-        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 backdrop-blur-md border-t px-2 py-1.5 flex items-center justify-around shadow-2xl pb-[max(0.375rem,env(safe-area-inset-bottom))] transition-colors ${
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 backdrop-blur-md border-t px-1 py-1 grid grid-cols-6 w-full shadow-2xl pb-[max(0.375rem,env(safe-area-inset-bottom))] transition-colors ${
           theme === "parchment" || theme === "ancient-calligraphy"
             ? "bg-[#f8f4ec]/98 border-[#bfa37c] text-[#4a2808] shadow-[0_-4px_20px_rgba(90,60,25,0.12)]"
             : theme === "solar"
@@ -666,7 +675,7 @@ export default function App() {
             <button
               key={item.id}
               onClick={() => setCurrentTab(item.id)}
-              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer touch-manipulation min-h-[44px] ${
+              className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition-all cursor-pointer touch-manipulation min-h-[44px] w-full min-w-0 overflow-hidden ${
                 isActive
                   ? isLight
                     ? "text-[#8c5307] font-bold bg-[#ebdcc5]/60"
@@ -676,9 +685,9 @@ export default function App() {
                   : "text-[#8c7e6c] hover:text-[#d6c7b2]"
               }`}
             >
-              <div className="relative">
+              <div className="relative flex items-center justify-center">
                 <Icon
-                  className={`w-5 h-5 ${
+                  className={`w-4.5 h-4.5 sm:w-5 sm:h-5 shrink-0 ${
                     isActive
                       ? isLight ? "text-[#8c5307]" : "text-[#ffd700]"
                       : isLight ? "text-[#634324]" : "text-[#736553]"
@@ -686,35 +695,44 @@ export default function App() {
                 />
                 {item.badge !== undefined && item.badge > 0 && (
                   <span
-                    className={`absolute -top-1.5 -right-2.5 text-[9px] px-1 py-0.2 rounded-full font-bold ${
+                    className={`absolute -top-1.5 -right-2 text-[8px] px-1 py-0.1 rounded-full font-bold leading-none ${
                       isLight ? "bg-[#8c5307] text-[#fff]" : "bg-[#c89b3c] text-black"
                     }`}
                   >
-                    {item.badge}
+                    {item.badge > 999 ? "999+" : item.badge}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-serif mt-0.5 tracking-tight">{item.label}</span>
+              <span className="text-[8px] xs:text-[9px] font-serif mt-0.5 tracking-tighter text-center w-full truncate block leading-tight">
+                {item.label === "Κύβος 1331" ? (
+                  <>
+                    <span className="xs:hidden">Κύβος</span>
+                    <span className="hidden xs:inline">Κύβος 1331</span>
+                  </>
+                ) : (
+                  item.label
+                )}
+              </span>
             </button>
           );
         })}
         <button
           onClick={() => handleOpenAiModal("ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ", 2368, ["ΙΗΣΟΥΣ", "ΧΡΙΣΤΟΣ"])}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer min-h-[44px] ${
+          className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition-all cursor-pointer touch-manipulation min-h-[44px] w-full min-w-0 overflow-hidden ${
             theme === "parchment" || theme === "ancient-calligraphy" || theme === "solar"
               ? "text-[#8c5307] hover:bg-[#ebdcc5]/50"
               : "text-[#f5ecd8] hover:bg-[#241c14]/70"
           }`}
         >
           <Sparkles
-            className={`w-5 h-5 animate-pulse ${
+            className={`w-4.5 h-4.5 sm:w-5 sm:h-5 shrink-0 animate-pulse ${
               theme === "parchment" || theme === "ancient-calligraphy" || theme === "solar"
                 ? "text-[#8c5307]"
                 : "text-[#ffd700]"
             }`}
           />
           <span
-            className={`text-[10px] font-serif mt-0.5 font-bold ${
+            className={`text-[8px] xs:text-[9px] font-serif mt-0.5 font-bold tracking-tighter text-center w-full truncate block leading-tight ${
               theme === "parchment" || theme === "ancient-calligraphy" || theme === "solar"
                 ? "text-[#8c5307]"
                 : "text-[#e6c670]"

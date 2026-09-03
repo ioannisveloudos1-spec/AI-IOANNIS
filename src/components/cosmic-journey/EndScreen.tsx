@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, Trophy, RotateCcw, Compass, Map, BookOpen, Sun, Award, CheckCircle2, Orbit } from "lucide-react";
+import { Sparkles, Trophy, RotateCcw, Compass, Map, BookOpen, Sun, Award, CheckCircle2, Orbit, Brain } from "lucide-react";
 import { TOTAL_MAX_AWARENESS } from "../../data/cosmicStory";
 
 interface EndScreenProps {
@@ -9,6 +9,7 @@ interface EndScreenProps {
   onOpenPantheon: () => void;
   onOpenCodex: () => void;
   onOpenGreatYear: () => void;
+  onOpenMindGeometry: () => void;
 }
 
 export const EndScreen: React.FC<EndScreenProps> = ({
@@ -18,6 +19,7 @@ export const EndScreen: React.FC<EndScreenProps> = ({
   onOpenPantheon,
   onOpenCodex,
   onOpenGreatYear,
+  onOpenMindGeometry,
 }) => {
   const percentage = Math.round((finalAwarenessScore / TOTAL_MAX_AWARENESS) * 100);
 
@@ -111,45 +113,53 @@ export const EndScreen: React.FC<EndScreenProps> = ({
       </div>
 
       {/* Buttons */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center pt-2">
+      <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 w-full max-w-4xl mx-auto pt-2">
         <button
           onClick={onRestartJourney}
-          className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs sm:text-sm transition-all shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
+          className="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs sm:text-sm transition-all shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2 min-h-[44px] touch-manipulation"
         >
           <RotateCcw className="w-4 h-4" />
-          Επανεκκίνηση Ταξιδιού
+          <span>Επανεκκίνηση Ταξιδιού</span>
         </button>
 
         <button
           onClick={onOpenMap}
-          className="w-full sm:w-auto px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-sky-300 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2"
+          className="px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-sky-300 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[44px] touch-manipulation"
         >
           <Map className="w-4 h-4" />
-          Επισκόπηση Χάρτη
+          <span>Επισκόπηση Χάρτη</span>
         </button>
 
         <button
           onClick={onOpenGreatYear}
-          className="w-full sm:w-auto px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-amber-300 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-amber-500/10"
+          className="px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-amber-300 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-amber-500/10 min-h-[44px] touch-manipulation"
         >
-          <Orbit className="w-4 h-4 animate-spin" style={{ animationDuration: "15s" }} />
-          Μέγας Ενιαυτός (25.920ε.)
+          <Orbit className="w-4 h-4 text-amber-400 animate-spin" style={{ animationDuration: "15s" }} />
+          <span>Μέγας Ενιαυτός (25.920ε.)</span>
         </button>
 
         <button
           onClick={onOpenPantheon}
-          className="w-full sm:w-auto px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-purple-300 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2"
+          className="px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-purple-300 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[44px] touch-manipulation"
         >
           <Compass className="w-4 h-4" />
-          Πάνθεον (35 Θεοί)
+          <span>Πάνθεον (35 Θεοί)</span>
         </button>
 
         <button
           onClick={onOpenCodex}
-          className="w-full sm:w-auto px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-amber-300 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2"
+          className="px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-amber-300 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[44px] touch-manipulation"
         >
           <BookOpen className="w-4 h-4" />
-          Κώδικας
+          <span>Κώδικας & Ενότητα Όντος</span>
+        </button>
+
+        <button
+          onClick={onOpenMindGeometry}
+          className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/25 hover:from-amber-500/30 hover:to-orange-500/35 border border-amber-500/50 text-amber-200 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-amber-500/15 min-h-[44px] touch-manipulation"
+        >
+          <Brain className="w-4 h-4 text-amber-300 animate-pulse" />
+          <span>Γεωμετρία Νου (720)</span>
         </button>
       </div>
     </div>

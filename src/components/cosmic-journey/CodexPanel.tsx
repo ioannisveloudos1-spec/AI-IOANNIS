@@ -15,6 +15,7 @@ import {
 import { COSMIC_CODEX_ENTRIES, CodexEntry } from "../../data/cosmicCodex";
 import { GreekAnthologyView } from "./GreekAnthologyView";
 import { EleaticParadoxesView } from "./EleaticParadoxesView";
+import { UnityOfBeingView } from "./UnityOfBeingView";
 
 interface CodexPanelProps {
   onClose: () => void;
@@ -25,7 +26,7 @@ export const CodexPanel: React.FC<CodexPanelProps> = ({
   onClose,
   onSelectWordForCalculator,
 }) => {
-  const [mainTab, setMainTab] = useState<"anthology" | "eleatic" | "lexicon">("anthology");
+  const [mainTab, setMainTab] = useState<"unity" | "anthology" | "eleatic" | "lexicon">("unity");
 
   // Lexicon state
   const [searchQuery, setSearchQuery] = useState<string>("" );
@@ -75,48 +76,64 @@ export const CodexPanel: React.FC<CodexPanelProps> = ({
         </div>
 
         {/* Main Section Navigation Tabs */}
-        <div className="px-6 py-2.5 bg-zinc-950/50 border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="px-4 sm:px-6 py-2.5 bg-zinc-950/50 border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setMainTab("unity")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                mainTab === "unity"
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-amber-500/25"
+                  : "bg-zinc-900/80 text-amber-300/90 hover:text-amber-200 border border-amber-500/30"
+              }`}
+            >
+              <Flame className="w-4 h-4 text-amber-400" />
+              <span>Ενότητα του Όντος (1318, 2368 & 432 Hz)</span>
+            </button>
+
             <button
               onClick={() => setMainTab("anthology")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 mainTab === "anthology"
                   ? "bg-amber-500 text-black shadow-lg shadow-amber-500/20"
                   : "bg-zinc-900/80 text-zinc-400 hover:text-zinc-200 border border-zinc-800"
               }`}
             >
               <Quote className="w-4 h-4" />
-              Ανθολόγιο Ελληνικού Πνεύματος (Θεοί, Ήρωες, Φιλόσοφοι)
+              <span>Ανθολόγιο Ελληνικού Πνεύματος</span>
             </button>
 
             <button
               onClick={() => setMainTab("eleatic")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 mainTab === "eleatic"
                   ? "bg-amber-500 text-black shadow-lg shadow-amber-500/20"
                   : "bg-zinc-900/80 text-zinc-400 hover:text-zinc-200 border border-zinc-800"
               }`}
             >
               <Atom className="w-4 h-4" />
-              Ελεατικά Παράδοξα & Παρμενίδης
+              <span>Ελεατικά Παράδοξα & Παρμενίδης</span>
             </button>
 
             <button
               onClick={() => setMainTab("lexicon")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 mainTab === "lexicon"
                   ? "bg-amber-500 text-black shadow-lg shadow-amber-500/20"
                   : "bg-zinc-900/80 text-zinc-400 hover:text-zinc-200 border border-zinc-800"
               }`}
             >
               <Scroll className="w-4 h-4" />
-              Μεταφυσικά & Ετυμολογικά Λήμματα
+              <span>Μεταφυσικά & Ετυμολογικά Λήμματα</span>
             </button>
           </div>
         </div>
 
         {/* Content Area */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar">
+          {mainTab === "unity" && (
+            <UnityOfBeingView onSelectWordForCalculator={onSelectWordForCalculator} />
+          )}
+
           {mainTab === "anthology" && (
             <GreekAnthologyView onSelectWordForCalculator={onSelectWordForCalculator} />
           )}

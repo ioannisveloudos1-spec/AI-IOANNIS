@@ -1357,12 +1357,13 @@ export const StoneSolarSquare: React.FC<StoneSolarSquareProps> = ({
                 </h4>
                 <p className="text-xs font-serif text-[#ebd8c5] leading-relaxed">
                   Στην κορυφή του τριγώνου του αετώματος του Παρθενώνα σχηματίζεται γωνία <strong>144 μοιρών</strong>.
-                  Το 144 αναλύεται στο άθροισμα <strong>72 + 72</strong> (Ο.Β. = 72).
+                  Το 144 αναλύεται στο άθροισμα <strong>72 + 72</strong> (Ο.Β. = 72 = Ουρανία Βασίλειος).
+                  Και <strong>Ο.Β. (72) × Ι (10) = 720 = ΝΟΥΣ</strong>! Ταυτόχρονα, το 6 παραγοντικό είναι <strong>6! = 1×2×3×4×5×6 = 720 = ΝΟΥΣ</strong>!
                   Στις δύο βάσεις απομένουν γωνίες <strong>18 μοιρών</strong> δεξιά και αριστερά.
                   Το <strong>18</strong> αντιστοιχεί στα ιερά γράμματα <strong>ΙΗ</strong> (Ήλιος / Απόλλων / ΙΗΣΟΥΣ), ενώ το άθροισμά τους μας δίνει ξανά το <strong>36</strong> ($18+18=36$).
                 </p>
                 <div className="p-2.5 rounded-xl bg-[#0c0804] border border-[#ffd700]/50 text-center font-mono text-xs font-bold text-[#ffd700]">
-                  144° (Κορυφή) + 18° + 18° = 180° (Τρίγωνο) | 18 + 18 = 36 (Ηλιακό Τετράγωνο)
+                  144 / 2 = 72 (Ο.Β.) ➔ Ο.Β. × Ι (10) = 720 = ΝΟΥΣ = 6! (6×5×4×3×2×1)
                 </div>
               </div>
 

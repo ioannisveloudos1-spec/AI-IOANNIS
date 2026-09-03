@@ -157,10 +157,10 @@ export const SceneView: React.FC<SceneViewProps> = ({
             «{selectedChoice.echo}»
           </p>
 
-          <div className="pt-3 flex justify-end">
+          <div className="pt-3 flex flex-col sm:flex-row justify-end">
             <button
               onClick={onAdvanceScene}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition-all transform hover:scale-[1.02] cursor-pointer flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[44px] touch-manipulation"
             >
               <span>{isLastScene ? "Ολοκλήρωση & Τελική Ετυμηγορία" : "Συνέχιση στο Επόμενο Στάδιο"}</span>
               <ArrowRight className="w-4 h-4" />

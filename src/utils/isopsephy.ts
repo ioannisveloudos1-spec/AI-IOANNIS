@@ -588,28 +588,51 @@ export function evaluateIsopsephyExpression(
   
   let convertedExpression = "";
   const explanationParts: string[] = [];
+  let lastTokenType: "operator" | "operand" | null = null;
+  let wordCounter = 0;
 
   for (const token of matches) {
-    const trimmedToken = token.trim();
+    let trimmedToken = token.trim();
     if (!trimmedToken) continue;
 
     if (["+", "-", "*", "×", "/", "÷", "(", ")"].includes(trimmedToken)) {
       const op = trimmedToken === "×" ? "*" : trimmedToken === "÷" ? "/" : trimmedToken;
       convertedExpression += ` ${op} `;
       explanationParts.push(trimmedToken);
+      if (op !== ")") {
+        lastTokenType = "operator";
+      } else {
+        lastTokenType = "operand";
+      }
     } else if (/^\d+$/.test(trimmedToken)) {
       const numVal = parseInt(trimmedToken, 10);
+      if (lastTokenType === "operand") {
+        convertedExpression += " + ";
+        explanationParts.push("+");
+      }
       convertedExpression += ` ${numVal} `;
       explanationParts.push(trimmedToken);
+      lastTokenType = "operand";
     } else {
-      // It's a word/phrase
-      const wordRes = calculateWordIsopsephy(trimmedToken, 0, system);
+      // It's a word/phrase - strip surrounding punctuation (commas, periods, quotes, etc.)
+      const cleanWord = trimmedToken.replace(/^[.,;:!?"'«»()—–[\]{}]+|[.,;:!?"'«»()—–[\]{}]+$/g, "");
+      if (!cleanWord) continue;
+
+      wordCounter++;
+      const wordRes = calculateWordIsopsephy(cleanWord, 0, system);
+      wordRes.indexInText = wordCounter;
+
       if (wordRes.value > 0) {
         wordBreakdowns.push(wordRes);
+        if (lastTokenType === "operand") {
+          convertedExpression += " + ";
+          explanationParts.push("+");
+        }
         convertedExpression += ` ${wordRes.value} `;
-        explanationParts.push(`${trimmedToken} (${wordRes.value})`);
+        explanationParts.push(`${cleanWord} (${wordRes.value})`);
+        lastTokenType = "operand";
       } else {
-        explanationParts.push(trimmedToken);
+        explanationParts.push(cleanWord);
       }
     }
   }
@@ -648,7 +671,7 @@ export function evaluateIsopsephyExpression(
     return {
       success: true,
       finalValue: fallbackSum,
-      stepsExplanation: wordBreakdowns.map(w => `${w.rawWord} = ${w.value}`).join(", "),
+      stepsExplanation: wordBreakdowns.map(w => `${w.rawWord} (${w.value})`).join(" + ") + (wordBreakdowns.length > 1 ? ` = ${fallbackSum}` : ""),
       wordBreakdowns,
     };
   }

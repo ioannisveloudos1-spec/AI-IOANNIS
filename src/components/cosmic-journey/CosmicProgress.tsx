@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, Map, Compass, BookOpen, RotateCcw, Award, Orbit } from "lucide-react";
+import { Sparkles, Map, Compass, BookOpen, RotateCcw, Award, Orbit, Brain } from "lucide-react";
 import { TOTAL_MAX_AWARENESS } from "../../data/cosmicStory";
 
 interface CosmicProgressProps {
@@ -12,6 +12,7 @@ interface CosmicProgressProps {
   onOpenPantheon: () => void;
   onOpenCodex: () => void;
   onOpenGreatYear: () => void;
+  onOpenMindGeometry: () => void;
   onRestartJourney?: () => void;
 }
 
@@ -25,6 +26,7 @@ export const CosmicProgress: React.FC<CosmicProgressProps> = ({
   onOpenPantheon,
   onOpenCodex,
   onOpenGreatYear,
+  onOpenMindGeometry,
   onRestartJourney,
 }) => {
   const sceneProgressPct = Math.min(
@@ -67,38 +69,46 @@ export const CosmicProgress: React.FC<CosmicProgressProps> = ({
           </div>
 
           {/* Quick Nav Tools */}
-          <div className="flex items-center gap-1.5 md:ml-4">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2 md:mt-0 md:ml-3">
             <button
               onClick={onOpenMap}
               title="Κοσμικός Χάρτης"
-              className="px-2.5 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 hover:border-sky-500/50 text-sky-300 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/60 hover:border-sky-500/50 text-sky-300 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer min-h-[34px] touch-manipulation"
             >
-              <Map className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Χάρτης</span>
+              <Map className="w-3.5 h-3.5 text-sky-400" />
+              <span>Χάρτης</span>
             </button>
             <button
               onClick={onOpenGreatYear}
               title="Μέγας Ενιαυτός (25.920 έτη & 12 Ζώδια)"
-              className="px-2.5 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 hover:border-amber-500/50 text-amber-300 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/60 hover:border-amber-500/50 text-amber-300 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer min-h-[34px] touch-manipulation"
             >
-              <Orbit className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: "12s" }} />
-              <span className="hidden sm:inline">25.920ε.</span>
+              <Orbit className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: "12s" }} />
+              <span>25.920ε.</span>
             </button>
             <button
               onClick={onOpenPantheon}
               title="Πάνθεον 35 Θεών & Τιτάνων"
-              className="px-2.5 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 hover:border-purple-500/50 text-purple-300 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/60 hover:border-purple-500/50 text-purple-300 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer min-h-[34px] touch-manipulation"
             >
-              <Compass className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Πάνθεον</span>
+              <Compass className="w-3.5 h-3.5 text-purple-400" />
+              <span>Πάνθεον</span>
             </button>
             <button
               onClick={onOpenCodex}
               title="Μεταφυσικός Κώδικας & Ετυμολογία"
-              className="px-2.5 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 hover:border-amber-500/50 text-amber-300 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/60 hover:border-amber-500/50 text-amber-300 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer min-h-[34px] touch-manipulation"
             >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Κώδικας</span>
+              <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+              <span>Κώδικας</span>
+            </button>
+            <button
+              onClick={onOpenMindGeometry}
+              title="Γεωμετρία του Νου (6! = 720 & 72 × 10 = 720 = ΝΟΥΣ)"
+              className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/60 text-amber-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-amber-500/15 min-h-[34px] touch-manipulation"
+            >
+              <Brain className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+              <span>ΝΟΥΣ (720)</span>
             </button>
           </div>
         </div>

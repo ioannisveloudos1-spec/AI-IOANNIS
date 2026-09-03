@@ -35,6 +35,8 @@ import {
   Cpu,
   Share2,
   Image as ImageIcon,
+  ListOrdered,
+  AlignLeft,
 } from "lucide-react";
 
 interface CalculatorTabProps {
@@ -215,7 +217,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Top System Selector Navigation Bar */}
       <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#2d251e] shadow-lg space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full">
           <div>
             <h2 className="text-base sm:text-lg font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
               <Hash className="w-5 h-5 text-[#c89b3c]" />
@@ -225,63 +227,9 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
               Επιλέξτε σύστημα αρίθμησης με την ακόλουθη σειρά:
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {(onOpenThemeModal || onToggleTheme) && (
-              <button
-                type="button"
-                onClick={onOpenThemeModal || onToggleTheme}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-serif transition-all shadow-sm cursor-pointer ${
-                  theme === "parchment"
-                    ? "bg-[#e8dcbf] hover:bg-[#decfae] border-[#925f11] text-[#4a3310]"
-                    : theme === "ancient-calligraphy"
-                    ? "bg-[#f5ebd8] hover:bg-[#ebdcc5] border-[#b59263] text-[#543216]"
-                    : theme === "solar"
-                    ? "bg-[#fff4d1] hover:bg-[#fae09e] border-[#d97706] text-[#b45309]"
-                    : theme === "ethereal"
-                    ? "bg-[#0b1736] hover:bg-[#122452] border-[#38bdf8] text-[#38bdf8]"
-                    : theme === "cyber-tech"
-                    ? "bg-[#0a1f24] hover:bg-[#0f2d33] border-[#10b981] text-[#10b981]"
-                    : "bg-[#251d15] hover:bg-[#34271c] border-[#ffd700]/60 text-[#ffd700]"
-                }`}
-                title="Επιλογή Εμφάνισης (6 Θέματα)"
-              >
-                {theme === "parchment" ? (
-                  <>
-                    <Scroll className="w-3.5 h-3.5 text-[#825313]" />
-                    <span className="text-[11px] font-sans font-semibold">Περγαμηνή</span>
-                  </>
-                ) : theme === "ancient-calligraphy" ? (
-                  <>
-                    <Feather className="w-3.5 h-3.5 text-[#7a491e]" />
-                    <span className="text-[11px] font-sans font-semibold">Καλλιγραφία</span>
-                  </>
-                ) : theme === "solar" ? (
-                  <>
-                    <Sun className="w-3.5 h-3.5 text-[#d97706]" />
-                    <span className="text-[11px] font-sans font-semibold">Ηλιακή</span>
-                  </>
-                ) : theme === "ethereal" ? (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5 text-[#38bdf8]" />
-                    <span className="text-[11px] font-sans font-semibold">Αιθέρικη</span>
-                  </>
-                ) : theme === "cyber-tech" ? (
-                  <>
-                    <Cpu className="w-3.5 h-3.5 text-[#10b981]" />
-                    <span className="text-[11px] font-sans font-semibold">Tech</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-3.5 h-3.5 text-[#ffd700]" />
-                    <span className="text-[11px] font-sans font-semibold">Κλασικό</span>
-                  </>
-                )}
-                <Palette className="w-3 h-3 opacity-60 ml-0.5" />
-              </button>
-            )}
-            <div className="shrink-0 text-xs font-mono text-[#c89b3c] px-2.5 py-1 rounded-lg bg-[#241c14] border border-[#3e3020]">
-              {getSystemName(selectedSystem)}
-            </div>
+          <div className="text-xs font-mono text-[#e6c670] px-3 py-1.5 rounded-xl bg-[#221a12] border border-[#3e3020] flex items-center gap-2 shadow-sm self-start sm:self-auto max-w-full">
+            <span className="w-2 h-2 rounded-full bg-[#c89b3c] animate-pulse shrink-0" />
+            <span className="font-semibold break-words">{getSystemName(selectedSystem)}</span>
           </div>
         </div>
 
@@ -343,7 +291,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                     {sys.badge}
                   </span>
                 </div>
-                <div className="text-[10px] font-mono text-[#8c7e6c] mt-1 truncate">
+                <div className="text-[10px] font-mono text-[#8c7e6c] mt-1 break-words leading-tight">
                   {sys.detail}
                 </div>
               </button>
@@ -413,20 +361,20 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
         
         {/* Input Bar */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label htmlFor="isopsephy-main-input" className="text-xs font-medium uppercase tracking-wider text-[#a69680] font-serif flex items-center gap-1.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+            <label htmlFor="isopsephy-main-input" className="text-xs font-medium uppercase tracking-wider text-[#a69680] font-serif flex items-center gap-1.5 flex-wrap">
               <span>{isEnglishSystem ? "Λατινικη Λεξη, Φραση η Πραξη (English Gematria)" : "Ελληνικη Λεξη, Φραση η Πραξη (Ισοψηφια)"}</span>
               <span className="text-[10px] font-mono text-[#c89b3c]">({getSystemName(selectedSystem)})</span>
             </label>
             
             {/* Quick insert helper keypad */}
-            <div className="flex items-center gap-1 bg-[#12100e] px-2 py-1 rounded-lg border border-[#2a2218]">
+            <div className="flex items-center gap-1 bg-[#12100e] px-2 py-1 rounded-lg border border-[#2a2218] shrink-0 self-start sm:self-auto overflow-x-auto max-w-full">
               {selectedSystem === NumberingSystem.IONIAN && (
                 <>
                   <button
                     onClick={() => handleInsertChar("Ϛ")}
                     id="btn-insert-stigma"
-                    className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e6c670] text-xs font-serif font-bold transition-colors"
+                    className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e6c670] text-xs font-serif font-bold transition-colors cursor-pointer"
                     title="Στίγμα / Δίγαμμα = 6"
                   >
                     Ϛ(6)
@@ -434,7 +382,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                   <button
                     onClick={() => handleInsertChar("Ϟ")}
                     id="btn-insert-koppa"
-                    className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e6c670] text-xs font-serif font-bold transition-colors"
+                    className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e6c670] text-xs font-serif font-bold transition-colors cursor-pointer"
                     title="Κόππα = 90"
                   >
                     Ϟ(90)
@@ -442,7 +390,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                   <button
                     onClick={() => handleInsertChar("Ϡ")}
                     id="btn-insert-sampi"
-                    className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e6c670] text-xs font-serif font-bold transition-colors"
+                    className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e6c670] text-xs font-serif font-bold transition-colors cursor-pointer"
                     title="Σαμπί = 900"
                   >
                     Ϡ(900)
@@ -452,21 +400,21 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
               )}
               <button
                 onClick={() => handleInsertChar(" + ")}
-                className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e8dfd1] text-xs font-mono font-bold"
+                className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e8dfd1] text-xs font-mono font-bold cursor-pointer"
                 title="Πρόσθεση"
               >
                 +
               </button>
               <button
                 onClick={() => handleInsertChar(" - ")}
-                className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e8dfd1] text-xs font-mono font-bold"
+                className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e8dfd1] text-xs font-mono font-bold cursor-pointer"
                 title="Αφαίρεση"
               >
                 -
               </button>
               <button
                 onClick={() => handleInsertChar(" × ")}
-                className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e8dfd1] text-xs font-mono font-bold"
+                className="px-1.5 py-0.5 rounded bg-[#231d17] hover:bg-[#342b20] text-[#e8dfd1] text-xs font-mono font-bold cursor-pointer"
                 title="Πολλαπλασιασμός"
               >
                 ×
@@ -475,30 +423,39 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
           </div>
 
           <div className="relative">
-            <input
+            <textarea
               id="isopsephy-main-input"
-              type="text"
+              rows={inputExpression.length > 30 || inputExpression.includes(" ") ? 2 : 1}
               value={inputExpression}
               onChange={(e) => setInputExpression(e.target.value)}
               placeholder={
                 selectedSystem === NumberingSystem.ENGLISH_BASE6 || selectedSystem === NumberingSystem.ENGLISH_SIMPLE
-                  ? "e.g. John True, Jesus, Lucifer..."
-                  : "π.χ. ΙΗΣΟΥΣ, ΛΟΓΟΣ, 888 + 1480, ΙΩΑΝΝΗΣ - ΑΜΑΡΤΙΑ..."
+                  ? "e.g. John True, Jesus, Lucifer, 888 + 1480..."
+                  : "π.χ. ΙΗΣΟΥΣ, Ο ΣΠΟΡΟΣ ΤΟΥ ΦΩΤΟΣ, 888 + 1480, ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ..."
               }
-              className="w-full px-4 py-3.5 bg-[#0f0e0c] border border-[#3d3224] focus:border-[#c89b3c] focus:ring-2 focus:ring-[#c89b3c]/20 rounded-xl text-lg sm:text-2xl font-ancient-greek text-[#f5ecd8] placeholder-[#5c5144] transition-all outline-none"
+              className="w-full pl-3.5 pr-10 py-3 bg-[#0f0e0c] border border-[#3d3224] focus:border-[#c89b3c] focus:ring-2 focus:ring-[#c89b3c]/20 rounded-xl text-base sm:text-2xl font-ancient-greek text-[#f5ecd8] placeholder-[#5c5144] transition-all outline-none resize-none break-words leading-relaxed"
               autoFocus
             />
             {inputExpression && (
               <button
                 onClick={() => setInputExpression("")}
                 id="btn-clear-input"
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#7d7061] hover:text-[#e8dfd1] p-1 rounded-lg transition-colors"
+                className="absolute right-2.5 top-3 text-[#7d7061] hover:text-[#e8dfd1] p-1.5 rounded-lg transition-colors cursor-pointer"
                 title="Εκκαθάριση πεδίου"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
           </div>
+
+          {result.wordBreakdowns.length > 1 && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-serif text-[#e6c670] bg-[#1a1510] px-3 py-1.5 rounded-lg border border-[#3e3020]">
+              <ListOrdered className="w-3.5 h-3.5 text-[#c89b3c] shrink-0" />
+              <span>
+                Πρόταση σε σειρά: <strong>{result.wordBreakdowns.length}</strong> λέξεις • Συνολικό άθροισμα: <strong>{result.finalValue}</strong>
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Quick Preset Chips */}
@@ -675,9 +632,9 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
 
             {/* Expression Steps Explanation if Math used */}
             {result.stepsExplanation && (
-              <div className="mt-4 pt-4 border-t border-[#231d16] text-xs font-mono text-[#c4b59f] flex items-center gap-2">
-                <span className="text-[#8c7e6c] font-sans">Μαθηματική Ανάλυση:</span>
-                <span className="text-[#f5ecd8] font-bold bg-[#1a1611] px-2.5 py-1 rounded-md border border-[#2d2419]">
+              <div className="mt-4 pt-4 border-t border-[#231d16] text-xs font-mono text-[#c4b59f] flex flex-col sm:flex-row sm:items-center gap-2 break-words">
+                <span className="text-[#8c7e6c] font-sans shrink-0">Μαθηματική Ανάλυση:</span>
+                <span className="text-[#f5ecd8] font-bold bg-[#1a1611] px-2.5 py-1.5 rounded-md border border-[#2d2419] break-words max-w-full leading-relaxed">
                   {result.stepsExplanation}
                 </span>
               </div>
@@ -688,6 +645,112 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
             {isEnglishSystem
               ? "Εισάγετε λατινικούς/αγγλικούς χαρακτήρες για να υπολογιστεί το Gematria."
               : "Εισάγετε ελληνικούς χαρακτήρες για να υπολογιστεί ο λεξάριθμος."}
+          </div>
+        )}
+
+        {/* Dedicated Sentence Analysis in Series (Όταν γράφεις μια πρόταση να είναι σε σειρά) */}
+        {result.wordBreakdowns.length > 1 && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#161310] border border-[#c89b3c]/40 shadow-lg space-y-4 animate-fadeIn">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#2d2419] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#2a2014] border border-[#c89b3c]/50 flex items-center justify-center text-[#e6c670] shrink-0">
+                  <AlignLeft className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-serif font-bold text-[#f5ecd8]">
+                    Ανάλυση Πρότασης σε Σειρά ({result.wordBreakdowns.length} λέξεις)
+                  </h3>
+                  <p className="text-[11px] text-[#a69680]">
+                    Διαδοχική ροή και προοδευτικό άθροισμα λέξεων με τη σειρά που γράφτηκαν
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="text-xs font-mono px-3 py-1 rounded-lg bg-[#231b13] border border-[#3e3020] text-[#e6c670]">
+                  Σύνολο: <strong>{result.finalValue}</strong> (Πυθμ. {mathProps.pythmen})
+                </span>
+              </div>
+            </div>
+
+            {/* 1. Sequential Word-by-Word Chain Flow (Σε Σειρά) */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] uppercase tracking-wider font-mono text-[#8c7e6c]">
+                1. Διαδοχική Σειρά Λέξεων:
+              </span>
+              <div className="p-3 rounded-xl bg-[#100e0b] border border-[#261f17] flex flex-wrap items-center gap-2">
+                {result.wordBreakdowns.map((wordObj, idx) => (
+                  <React.Fragment key={`seq-chain-${idx}`}>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1a1510] border border-[#382b1d] hover:border-[#c89b3c]/60 transition-colors">
+                      <span className="text-[10px] font-mono text-[#8c7e6c] bg-[#241c14] px-1.5 py-0.2 rounded border border-[#3a2e20]">
+                        {idx + 1}η
+                      </span>
+                      <span className="text-sm font-ancient-greek font-bold text-[#f5ecd8]">
+                        {wordObj.rawWord}
+                      </span>
+                      <span className="text-xs font-mono font-semibold text-[#e6c670]">
+                        = {wordObj.value}
+                      </span>
+                    </div>
+                    {idx < result.wordBreakdowns.length - 1 && (
+                      <span className="text-[#8c7e6c] font-bold text-xs">➔</span>
+                    )}
+                  </React.Fragment>
+                ))}
+                <span className="text-[#c89b3c] font-bold text-sm ml-1">
+                  = {result.finalValue}
+                </span>
+              </div>
+            </div>
+
+            {/* 2. Detailed Ordered Rows in Series with Running Sum */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] uppercase tracking-wider font-mono text-[#8c7e6c]">
+                2. Αναλυτικός Πίνακας Λέξεων σε Σειρά & Προοδευτικό Άθροισμα:
+              </span>
+              <div className="space-y-2">
+                {result.wordBreakdowns.map((wordObj, idx) => {
+                  const runningSum = result.wordBreakdowns
+                    .slice(0, idx + 1)
+                    .reduce((acc, w) => acc + w.value, 0);
+                  return (
+                    <div
+                      key={`seq-row-${idx}`}
+                      className="p-3 rounded-xl bg-[#12100d] border border-[#2b2218] hover:border-[#c89b3c]/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="w-6 h-6 rounded-full bg-[#241c14] border border-[#3d3021] text-[11px] font-mono text-[#c89b3c] flex items-center justify-center shrink-0 font-bold">
+                          {idx + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-base sm:text-lg font-ancient-greek font-bold text-[#f5ecd8]">
+                              {wordObj.rawWord}
+                            </span>
+                            <span className="text-xs font-mono text-[#8c7e6c]">
+                              (Πυθμένας: {wordObj.root})
+                            </span>
+                          </div>
+                          <div className="text-[11px] font-mono text-[#8c7e6c] break-words">
+                            {wordObj.letters.map((l) => `${l.char}(${l.value})`).join(" + ")}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
+                        <div className="text-right">
+                          <div className="text-sm font-serif font-bold text-[#e6c670]">
+                            {wordObj.value}
+                          </div>
+                          <div className="text-[10px] font-mono text-[#8c7e6c]">
+                            Τρέχον Σύνολο: <span className="text-[#d6c7b2] font-semibold">{runningSum}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 
