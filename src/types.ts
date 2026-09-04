@@ -106,6 +106,7 @@ export interface SavedIsopsephyItem {
   notes?: string;
   category?: string;
   createdAt: string;
+  system?: NumberingSystem;
 }
 
 export interface GrammatariSavedRecord {

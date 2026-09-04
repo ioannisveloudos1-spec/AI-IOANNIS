@@ -19,6 +19,7 @@ import {
   WordCombinationMatch,
   SeedWordCombinationMatch,
   SentenceIsopsephyMatch,
+  NumberingSystem,
 } from "../types";
 import {
   Search,
@@ -66,11 +67,62 @@ interface SearchTabProps {
   savedItems: SavedIsopsephyItem[];
 }
 
+export const SEARCH_GEMATRIA_SYSTEMS = [
+  {
+    id: NumberingSystem.IONIAN,
+    name: "1. Ιωνική Αρίθμηση",
+    shortName: "Ιωνική (1-900)",
+    desc: "Μονάδες (1-9), Δεκάδες (10-90), Εκατοντάδες (100-900) - 27 Γράμματα",
+    badge: "🇬🇷 Κλασική",
+    isEnglish: false,
+    example: "888, 666, 1480, 2368",
+  },
+  {
+    id: NumberingSystem.GREEK_SIMPLE,
+    name: "2. Ελληνική Απλή (×1)",
+    shortName: "Ελληνική ×1 (1-24)",
+    desc: "Α=1, Β=2, Γ=3 ... Ω=24",
+    badge: "🇬🇷 × 1",
+    isEnglish: false,
+    example: "Α=1, Ω=24",
+  },
+  {
+    id: NumberingSystem.GREEK_MULT6,
+    name: "3. Ελληνική × 6",
+    shortName: "Ελληνική ×6 (6-144)",
+    desc: "Α=6, Β=12, Γ=18 ... Ω=144",
+    badge: "🇬🇷 × 6",
+    isEnglish: false,
+    example: "Α=6, Ω=144",
+  },
+  {
+    id: NumberingSystem.ENGLISH_SIMPLE,
+    name: "4. Αγγλική Απλή (×1)",
+    shortName: "English ×1 (1-26)",
+    desc: "A=1, B=2, C=3 ... Z=26",
+    badge: "🔤 Simple ×1",
+    isEnglish: true,
+    example: "GOD=26, LIGHT=56",
+  },
+  {
+    id: NumberingSystem.ENGLISH_BASE6,
+    name: "5. Αγγλική × 6 (Base 6)",
+    shortName: "English ×6 (Base 6)",
+    desc: "A=6, B=12 ... Z=156 (Sumerian / Gematrix)",
+    badge: "🔤 Base 6 / 666",
+    isEnglish: true,
+    example: "COMPUTER=666, JESUS=444",
+  },
+];
+
 export const SearchTab: React.FC<SearchTabProps> = ({
   onSaveItem,
   onOpenAiModal,
   savedItems,
 }) => {
+  const [selectedSystem, setSelectedSystem] = useState<NumberingSystem>(NumberingSystem.IONIAN);
+  const isEnglishSystem = selectedSystem === NumberingSystem.ENGLISH_SIMPLE || selectedSystem === NumberingSystem.ENGLISH_BASE6;
+
   const [selectedPresetId, setSelectedPresetId] = useState<string>("delphi-pythagorean-147");
   const [inputText, setInputText] = useState<string>(() => {
     const init = PRESET_TEXTS[0].text;
@@ -134,23 +186,28 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   const minRangeNum = minRange ? parseInt(minRange, 10) : undefined;
   const maxRangeNum = maxRange ? parseInt(maxRange, 10) : undefined;
 
-  // Run analysis
+  // Run analysis with selected numbering system
   const analysis = useMemo(() => {
-    return analyzeGreekText(inputText, {
-      singleWordTarget: singleTargetNum,
-      wordSearchQuery: wordQuery,
-      phraseTarget: phraseTargetNum,
-      phraseLengthMin,
-      phraseLengthMax,
-      minRange: minRangeNum,
-      maxRange: maxRangeNum,
-    });
-  }, [inputText, singleTargetNum, wordQuery, phraseTargetNum, phraseLengthMin, phraseLengthMax, minRangeNum, maxRangeNum]);
+    return analyzeGreekText(
+      inputText,
+      {
+        singleWordTarget: singleTargetNum,
+        wordSearchQuery: wordQuery,
+        phraseTarget: phraseTargetNum,
+        phraseLengthMin,
+        phraseLengthMax,
+        minRange: minRangeNum,
+        maxRange: maxRangeNum,
+        system: selectedSystem,
+      },
+      selectedSystem
+    );
+  }, [inputText, singleTargetNum, wordQuery, phraseTargetNum, phraseLengthMin, phraseLengthMax, minRangeNum, maxRangeNum, selectedSystem]);
 
-  // Alphabet & Text breakdown calculation
+  // Alphabet & Text breakdown calculation with selected system
   const letterBreakdown = useMemo(() => {
-    return getAlphabetAndTextLetterBreakdown(inputText);
-  }, [inputText]);
+    return getAlphabetAndTextLetterBreakdown(inputText, selectedSystem);
+  }, [inputText, selectedSystem]);
 
   const handleSelectPreset = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const pId = e.target.value;
@@ -173,34 +230,38 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   };
 
   const handleSaveWordMatch = (wordObj: WordIsopsephy) => {
-    const greekNum = numberToGreekNumeral(wordObj.value);
+    const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(wordObj.value) || `${wordObj.value}`) : `${wordObj.value}`;
+    const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
       text: wordObj.rawWord,
       normalized: wordObj.normalizedWord,
       value: wordObj.value,
       root: wordObj.root,
-      greekNumeral: greekNum || `${wordObj.value}`,
+      greekNumeral: greekNum,
       isPhrase: false,
       wordCount: 1,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Αποθηκευμένη λέξη (Ισοψηφία: ${wordObj.value}, Πυθμένας: ${wordObj.root})`,
+      notes: `Αποθηκευμένη λέξη [${sysObj?.shortName || "Ισοψηφία"}]: ${wordObj.rawWord} = ${wordObj.value} (Πυθμένας: ${wordObj.root})`,
       category: "Μεμονωμένη Λέξη",
+      system: selectedSystem,
     });
   };
 
   const handleSavePhraseMatch = (phraseObj: PhraseMatch) => {
-    const greekNum = numberToGreekNumeral(phraseObj.value);
+    const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(phraseObj.value) || `${phraseObj.value}`) : `${phraseObj.value}`;
+    const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
       text: phraseObj.phrase,
       normalized: phraseObj.phrase.toUpperCase(),
       value: phraseObj.value,
       root: phraseObj.root,
-      greekNumeral: greekNum || `${phraseObj.value}`,
+      greekNumeral: greekNum,
       isPhrase: true,
       wordCount: phraseObj.wordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Συνδυασμός ${phraseObj.wordCount} λέξεων: ${phraseObj.words.map((w) => `${w.rawWord}(${w.value})`).join(" + ")} = ${phraseObj.value}`,
+      notes: `Συνδυασμός ${phraseObj.wordCount} λέξεων [${sysObj?.shortName || "Ισοψηφία"}]: ${phraseObj.words.map((w) => `${w.rawWord}(${w.value})`).join(" + ")} = ${phraseObj.value}`,
       category: "Συνδυασμός Φράσεων",
+      system: selectedSystem,
     });
   };
 
@@ -252,10 +313,10 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   // Seed Word / Phrase Combinations calculation (Anchor + Text Words)
   const customSeedEval = useMemo(() => {
     if (!customSeedPhrase.trim()) return { value: 0, text: "" };
-    const evalRes = evaluateIsopsephyExpression(customSeedPhrase.trim());
-    const val = evalRes.finalValue > 0 ? evalRes.finalValue : calculateWordIsopsephy(customSeedPhrase.trim()).value;
+    const evalRes = evaluateIsopsephyExpression(customSeedPhrase.trim(), selectedSystem);
+    const val = evalRes.finalValue > 0 ? evalRes.finalValue : calculateWordIsopsephy(customSeedPhrase.trim(), 0, selectedSystem).value;
     return { value: val, text: customSeedPhrase.trim() };
-  }, [customSeedPhrase]);
+  }, [customSeedPhrase, selectedSystem]);
 
   const customSeedTargetNum = customSeedTarget ? parseInt(customSeedTarget, 10) : 0;
   const customSeedNeededValue = customSeedTargetNum > customSeedEval.value ? customSeedTargetNum - customSeedEval.value : 0;
@@ -268,8 +329,9 @@ export const SearchTab: React.FC<SearchTabProps> = ({
       textWordCounts: seedTextWordCounts,
       mode: seedMode,
       maxResults: 250,
+      system: selectedSystem,
     });
-  }, [analysis.words, customSeedEval.text, customSeedTargetNum, seedTextWordCounts, seedMode]);
+  }, [analysis.words, customSeedEval.text, customSeedTargetNum, seedTextWordCounts, seedMode, selectedSystem]);
 
   const filteredSeedCombos = useMemo(() => {
     if (seedFilterLength === "all") return seedCombos;
@@ -288,18 +350,20 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   };
 
   const handleSaveSeedCombo = (comboObj: SeedWordCombinationMatch) => {
-    const greekNum = numberToGreekNumeral(comboObj.totalValue);
+    const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(comboObj.totalValue) || `${comboObj.totalValue}`) : `${comboObj.totalValue}`;
+    const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
       text: comboObj.fullPhrase,
       normalized: comboObj.fullPhrase.toUpperCase(),
       value: comboObj.totalValue,
       root: comboObj.totalRoot,
-      greekNumeral: greekNum || `${comboObj.totalValue}`,
+      greekNumeral: greekNum,
       isPhrase: true,
       wordCount: comboObj.totalWordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Συνδυασμός με Δική μου Λέξη «${comboObj.seedPhrase}» (${comboObj.seedValue}) + ${comboObj.textWordCount} λέξεις κειμένου: ${comboObj.fullEquation}`,
+      notes: `Συνδυασμός με Λέξη-Κλειδί [${sysObj?.shortName || "Gematria"}]: «${comboObj.seedPhrase}» (${comboObj.seedValue}) + ${comboObj.textWordCount} λέξεις: ${comboObj.fullEquation}`,
       category: "Συνδυασμός με Λέξη-Κλειδί",
+      system: selectedSystem,
     });
   };
 
@@ -372,18 +436,20 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   };
 
   const handleSaveAnywhereCombo = (comboObj: WordCombinationMatch) => {
-    const greekNum = numberToGreekNumeral(comboObj.value);
+    const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(comboObj.value) || `${comboObj.value}`) : `${comboObj.value}`;
+    const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
       text: comboObj.phrase,
       normalized: comboObj.phrase.toUpperCase(),
       value: comboObj.value,
       root: comboObj.root,
-      greekNumeral: greekNum || `${comboObj.value}`,
+      greekNumeral: greekNum,
       isPhrase: true,
       wordCount: comboObj.wordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Ελεύθερος συνδυασμός ${comboObj.wordCount} λέξεων (${comboObj.isUniqueMode ? "Μοναδικές" : "Κείμενο"}): ${comboObj.words.map((w) => `${w.rawWord}(${w.value})`).join(" + ")} = ${comboObj.value}`,
+      notes: `Ελεύθερος συνδυασμός ${comboObj.wordCount} λέξεων [${sysObj?.shortName || "Ισοψηφία"}] (${comboObj.isUniqueMode ? "Μοναδικές" : "Κείμενο"}): ${comboObj.words.map((w) => `${w.rawWord}(${w.value})`).join(" + ")} = ${comboObj.value}`,
       category: "Συνδυασμός Λέξεων Κειμένου",
+      system: selectedSystem,
     });
   };
 
@@ -522,8 +588,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
 
   // Sentence-level analysis (Clauses ending in . ; ! ? · :)
   const sentences = useMemo(() => {
-    return extractSentencesWithIsopsephy(inputText);
-  }, [inputText]);
+    return extractSentencesWithIsopsephy(inputText, selectedSystem);
+  }, [inputText, selectedSystem]);
 
   const filteredSentences = useMemo(() => {
     const targetVal = sentenceTarget.trim() ? parseInt(sentenceTarget.trim(), 10) : null;
@@ -552,18 +618,20 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   }, [sentences, sentenceTarget, sentenceSearchQuery, sentenceMinWords, sentenceMaxWords, sentenceRootFilter, sentenceSortOption]);
 
   const handleSaveSentence = (sentenceObj: SentenceIsopsephyMatch) => {
-    const greekNum = numberToGreekNumeral(sentenceObj.value);
+    const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(sentenceObj.value) || `${sentenceObj.value}`) : `${sentenceObj.value}`;
+    const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
       text: sentenceObj.text,
       normalized: sentenceObj.normalizedText,
       value: sentenceObj.value,
       root: sentenceObj.root,
-      greekNumeral: greekNum || `${sentenceObj.value}`,
+      greekNumeral: greekNum,
       isPhrase: true,
       wordCount: sentenceObj.wordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Πρόταση #${sentenceObj.sentenceIndex} (${sentenceObj.wordCount} λέξεις, ${sentenceObj.charCount} γράμματα): ${sentenceObj.words.slice(0, 6).map(w => `${w.rawWord}(${w.value})`).join(" + ")}${sentenceObj.words.length > 6 ? " + ..." : ""} = ${sentenceObj.value}`,
+      notes: `Πρόταση #${sentenceObj.sentenceIndex} [${sysObj?.shortName || "Ισοψηφία"}] (${sentenceObj.wordCount} λέξεις, ${sentenceObj.charCount} γράμματα): ${sentenceObj.words.slice(0, 6).map(w => `${w.rawWord}(${w.value})`).join(" + ")}${sentenceObj.words.length > 6 ? " + ..." : ""} = ${sentenceObj.value}`,
       category: "Πρόταση / Φράση Κειμένου",
+      system: selectedSystem,
     });
   };
 
@@ -665,25 +733,25 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   }, [analysis.uniqueWordsMap, lexiconSearch, lexiconSort]);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 w-full max-w-6xl mx-auto px-1 sm:px-2 overflow-x-hidden break-words">
       
       {/* Top Header Card */}
       <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#2d251e] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
+          <h2 className="text-lg font-serif font-bold text-[#f5ecd8] flex items-center gap-2 flex-wrap">
             <span>Αναζήτηση & Ανάλυση Μεγάλων Κειμένων</span>
             <span className="text-xs px-2 py-0.5 rounded bg-[#2a2219] text-[#c89b3c] border border-[#4a3a29] font-mono">
               Στόχοι & Συνδυασμοί 2-6 Λέξεων
             </span>
           </h2>
           <p className="text-xs text-[#a69680] mt-0.5 font-serif">
-            Εκτενής ανάλυση κλασικών κειμένων: Διαδραστική προβολή ανά σειρά, υπολογισμός λεξαρίθμων και αυτόματο μαρκάρισμα στόχων.
+            Εκτενής ανάλυση κλασικών & σύγχρονων κειμένων: Επιλογή αριθμητικού συστήματος (Ελληνικά/Αγγλικά), διαδραστική προβολή ανά σειρά, υπολογισμός λεξαρίθμων και αυτόματο μαρκάρισμα στόχων.
           </p>
         </div>
 
         {/* Preset Selector */}
-        <div className="flex items-center gap-2 bg-[#12100e] p-2 rounded-xl border border-[#2d251e] self-start md:self-auto">
-          <BookOpen className="w-4 h-4 text-[#c89b3c]" />
+        <div className="flex items-center gap-2 bg-[#12100e] p-2 rounded-xl border border-[#2d251e] self-start md:self-auto shrink-0 max-w-full">
+          <BookOpen className="w-4 h-4 text-[#c89b3c] shrink-0" />
           <label htmlFor="select-preset-text" className="text-xs text-[#8c7e6c] font-serif whitespace-nowrap">
             Έτοιμα Κείμενα:
           </label>
@@ -691,7 +759,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             id="select-preset-text"
             value={selectedPresetId}
             onChange={handleSelectPreset}
-            className="bg-[#1c1813] border border-[#3d3224] rounded-lg px-2.5 py-1 text-xs font-serif text-[#f5ecd8] focus:border-[#c89b3c] outline-none cursor-pointer max-w-[230px] truncate"
+            className="bg-[#1c1813] border border-[#3d3224] rounded-lg px-2.5 py-1 text-xs font-serif text-[#f5ecd8] focus:border-[#c89b3c] outline-none cursor-pointer max-w-[210px] sm:max-w-[240px] truncate"
           >
             {PRESET_TEXTS.map((preset) => (
               <option key={preset.id} value={preset.id}>
@@ -699,6 +767,132 @@ export const SearchTab: React.FC<SearchTabProps> = ({
               </option>
             ))}
           </select>
+        </div>
+      </div>
+
+      {/* Interactive Numbering System Selector Bar (Greek & English Gematria Systems) */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#17130f] via-[#201912] to-[#17130f] border-2 border-[#3d2f1f] shadow-lg shadow-black/30 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#2d2318]">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            <span className="text-xs uppercase tracking-wider font-serif font-bold text-amber-300">
+              Επιλογή Συστήματος Αρίθμησης (Ελληνικά & Αγγλικά)
+            </span>
+          </div>
+
+          <div className="text-xs font-serif text-[#a69680] flex items-center gap-1.5 flex-wrap">
+            <span>Ενεργό Σύστημα:</span>
+            <span className="text-amber-200 font-mono font-bold px-2 py-0.5 rounded bg-[#100d09] border border-amber-500/30">
+              {SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem)?.name}
+            </span>
+          </div>
+        </div>
+
+        {/* System Buttons Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+          {SEARCH_GEMATRIA_SYSTEMS.map((sys) => {
+            const isSelected = selectedSystem === sys.id;
+            return (
+              <button
+                key={sys.id}
+                type="button"
+                onClick={() => setSelectedSystem(sys.id)}
+                className={`flex flex-col text-left p-3 rounded-xl border transition-all cursor-pointer touch-manipulation relative ${
+                  isSelected
+                    ? "bg-gradient-to-b from-[#2e2112] to-[#20170d] border-amber-400 text-[#f5ecd8] shadow-md shadow-amber-500/20 ring-1 ring-amber-400/50"
+                    : "bg-[#120f0c] hover:bg-[#1c1711] border-[#2e2419] hover:border-[#4a3928] text-[#a69680] hover:text-[#d6c7b2]"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className={`text-xs font-serif font-bold ${isSelected ? "text-amber-300" : "text-[#d6c7b2]"}`}>
+                    {sys.shortName}
+                  </span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-semibold ${
+                    isSelected ? "bg-amber-950 text-amber-200 border border-amber-600/40" : "bg-[#181410] text-[#8c7e6c]"
+                  }`}>
+                    {sys.badge}
+                  </span>
+                </div>
+                <div className="text-[11px] text-[#8c7e6c] font-sans leading-tight line-clamp-2">
+                  {sys.desc}
+                </div>
+                <div className="text-[10px] text-amber-400/80 font-mono mt-1 font-medium">
+                  {sys.example}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Informative Note & Quick Presets */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs font-serif text-[#a69680]">
+          <div className="flex items-center gap-1.5">
+            <span>💡 Όλες οι αναζητήσεις (στόχοι, φράσεις, συνδυασμοί 2-6 λέξεων, seed words & προτάσεις) υπολογίζονται στο επιλεγμένο σύστημα.</span>
+          </div>
+
+          {isEnglishSystem ? (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-amber-300 text-[11px] font-bold">Δοκιμή Αγγλικού Κειμένου:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = PRESET_TEXTS.find((x) => x.id === "english-genesis-creation");
+                  if (p) {
+                    setSelectedPresetId(p.id);
+                    setInputText(p.text);
+                  }
+                }}
+                className="px-2 py-0.5 rounded bg-[#2a1e12] hover:bg-[#3d2c1a] border border-amber-500/40 text-amber-200 text-[11px] font-mono cursor-pointer transition-colors"
+                title="Φόρτωση Genesis 1:1 στα Αγγλικά"
+              >
+                Genesis 1:1
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = PRESET_TEXTS.find((x) => x.id === "english-sacred-tech");
+                  if (p) {
+                    setSelectedPresetId(p.id);
+                    setInputText(p.text);
+                  }
+                }}
+                className="px-2 py-0.5 rounded bg-[#2a1e12] hover:bg-[#3d2c1a] border border-amber-500/40 text-amber-200 text-[11px] font-mono cursor-pointer transition-colors"
+                title="Φόρτωση Sacred Technology (COMPUTER=666)"
+              >
+                Sacred Code (666)
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-amber-400/80 text-[11px]">Δοκιμή Ελληνικού Κειμένου:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = PRESET_TEXTS.find((x) => x.id === "delphi-pythagorean-147");
+                  if (p) {
+                    setSelectedPresetId(p.id);
+                    setInputText(p.text);
+                  }
+                }}
+                className="px-2 py-0.5 rounded bg-[#201810] hover:bg-[#302214] border border-[#3e3020] text-amber-300 text-[11px] font-serif cursor-pointer transition-colors"
+              >
+                147 Δελφικά
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = PRESET_TEXTS.find((x) => x.id === "pythagorean-golden-verses");
+                  if (p) {
+                    setSelectedPresetId(p.id);
+                    setInputText(p.text);
+                  }
+                }}
+                className="px-2 py-0.5 rounded bg-[#201810] hover:bg-[#302214] border border-[#3e3020] text-amber-300 text-[11px] font-serif cursor-pointer transition-colors"
+              >
+                Χρυσά Έπη
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -841,8 +1035,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                 value={inputText}
                 onChange={(e) => setInputText(cleanAndNormalizePolytonic(e.target.value))}
                 rows={isExpandedTextarea ? 18 : 8}
-                placeholder="Επικολλήστε ή πληκτρολογήστε ολόκληρο αρχαίο ή νεότερο ελληνικό κείμενο, κεφάλαια, ψαλμούς ή παραγράφους..."
-                className="w-full p-4 sm:p-5 pb-16 bg-[#0e0c0a] border border-[#382d20] focus:border-[#c89b3c] focus:ring-1 focus:ring-[#c89b3c]/25 rounded-xl text-sm sm:text-base font-serif text-[#f5ecd8] placeholder-[#5c5144] resize-y outline-none transition-all leading-relaxed gold-scrollbar"
+                placeholder="Επικολλήστε ή πληκτρολογήστε κείμενο προς ανάλυση (αρχαίο/νεότερο ελληνικό ή αγγλικό). Οι προτάσεις και οι λέξεις διατηρούνται σε ακριβή σειρά χωρίς περικοπή..."
+                className="w-full p-4 sm:p-5 pb-16 bg-[#0e0c0a] border border-[#382d20] focus:border-[#c89b3c] focus:ring-1 focus:ring-[#c89b3c]/25 rounded-xl text-sm sm:text-base font-serif text-[#f5ecd8] placeholder-[#5c5144] resize-y outline-none transition-all leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] gold-scrollbar max-w-full"
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-[#706251] px-1">
@@ -1047,7 +1241,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     key={`seed-eval-${customSeedEval.value}-${customSeedEval.text}`}
                     className="text-xs font-mono font-bold text-amber-300 bg-[#06121f] px-2.5 py-0.5 rounded-lg border border-amber-500/50 shadow-sm animate-lexarithm-result animate-badge-glow"
                   >
-                    {customSeedEval.text} = <strong className="text-amber-200">{customSeedEval.value}</strong> ({numberToGreekNumeral(customSeedEval.value)})
+                    {customSeedEval.text} = <strong className="text-amber-200">{customSeedEval.value}</strong>
+                    {!isEnglishSystem && ` (${numberToGreekNumeral(customSeedEval.value)})`}
                   </span>
                 )}
               </div>
@@ -1062,7 +1257,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                       handleTriggerGuideWordSearch();
                     }
                   }}
-                  placeholder="π.χ. ΙΩΑΝΝΗΣ, ΛΑΥΡΕΙΟΝ, ΑΓΑΠΗ, ΦΩΣ, ΣΟΦΙΑ..."
+                  placeholder={
+                    isEnglishSystem
+                      ? "e.g. LIGHT, TRUTH, WISDOM, COMPUTER, JESUS..."
+                      : "π.χ. ΙΩΑΝΝΗΣ, ΛΑΥΡΕΙΟΝ, ΑΓΑΠΗ, ΦΩΣ, ΣΟΦΙΑ..."
+                  }
                   className="w-full px-4 py-3 bg-[#030c17] border-2 border-cyan-400 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-400/40 rounded-xl text-base sm:text-lg font-serif font-black text-cyan-50 placeholder-cyan-600/60 shadow-[0_0_18px_rgba(6,182,212,0.45)] outline-none transition-all"
                 />
                 {customSeedPhrase && (
@@ -1080,16 +1279,19 @@ export const SearchTab: React.FC<SearchTabProps> = ({
               {/* Quick Guide Word Presets */}
               <div className="flex flex-wrap items-center gap-1 pt-1">
                 <span className="text-[10px] text-cyan-400/80 font-serif mr-1">Προτάσεις:</span>
-                {[
-                  "ΙΩΑΝΝΗΣ",
-                  "ΛΑΥΡΕΙΟΝ",
-                  "ΑΓΑΠΗ",
-                  "ΦΩΣ",
-                  "ΛΟΓΟΣ",
-                  "Η ΑΛΗΘΕΙΑ",
-                  "ΘΕΟΣ",
-                  "ΣΟΦΙΑ",
-                ].map((presetSeed) => (
+                {(isEnglishSystem
+                  ? ["LIGHT", "TRUTH", "WISDOM", "LOVE", "GOD", "COMPUTER", "JESUS"]
+                  : [
+                      "ΙΩΑΝΝΗΣ",
+                      "ΛΑΥΡΕΙΟΝ",
+                      "ΑΓΑΠΗ",
+                      "ΦΩΣ",
+                      "ΛΟΓΟΣ",
+                      "Η ΑΛΗΘΕΙΑ",
+                      "ΘΕΟΣ",
+                      "ΣΟΦΙΑ",
+                    ]
+                ).map((presetSeed) => (
                   <button
                     key={presetSeed}
                     type="button"
@@ -1147,14 +1349,24 @@ export const SearchTab: React.FC<SearchTabProps> = ({
 
               {/* Quick Target Presets */}
               <div className="flex flex-wrap gap-1 pt-0.5">
-                {[
-                  { label: "2368 (Ι.Χ.)", val: "2368" },
-                  { label: "1480 (Χριστός)", val: "1480" },
-                  { label: "888 (Ιησούς)", val: "888" },
-                  { label: "3168 (Κύριος)", val: "3168" },
-                  { label: "666", val: "666" },
-                  { label: "1572", val: "1572" },
-                ].map((preset) => (
+                {(isEnglishSystem
+                  ? [
+                      { label: "666 (COMPUTER)", val: "666" },
+                      { label: "888 (MESSIAH)", val: "888" },
+                      { label: "777", val: "777" },
+                      { label: "444 (JESUS)", val: "444" },
+                      { label: "522 (TRUTH)", val: "522" },
+                      { label: "432 (HARMONY)", val: "432" },
+                    ]
+                  : [
+                      { label: "2368 (Ι.Χ.)", val: "2368" },
+                      { label: "1480 (Χριστός)", val: "1480" },
+                      { label: "888 (Ιησούς)", val: "888" },
+                      { label: "3168 (Κύριος)", val: "3168" },
+                      { label: "666", val: "666" },
+                      { label: "1572", val: "1572" },
+                    ]
+                ).map((preset) => (
                   <button
                     key={preset.val}
                     type="button"

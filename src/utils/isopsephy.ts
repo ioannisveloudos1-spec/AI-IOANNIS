@@ -678,7 +678,7 @@ export function evaluateIsopsephyExpression(
 }
 
 /**
- * Ανάλυση πλήρους κειμένου για ισοψηφία
+ * Ανάλυση πλήρους κειμένου για ισοψηφία/λεξαριθμική αναζήτηση
  */
 export function analyzeGreekText(
   text: string,
@@ -690,8 +690,12 @@ export function analyzeGreekText(
     phraseLengthMax?: number;
     minRange?: number;
     maxRange?: number;
-  } = {}
+    system?: NumberingSystem;
+  } = {},
+  systemParam: NumberingSystem = NumberingSystem.IONIAN
 ): TextAnalysisResult {
+  const activeSystem = options.system || systemParam || NumberingSystem.IONIAN;
+
   if (!text || !text.trim()) {
     return {
       stats: {
@@ -718,17 +722,17 @@ export function analyzeGreekText(
   const uniqueWordsMap = new Map<string, UniqueWordStat>();
   
   let totalSum = 0;
-  let totalGreekChars = 0;
+  let totalValidLetters = 0;
 
   for (let i = 0; i < rawTokens.length; i++) {
     const token = rawTokens[i].trim();
     if (!token) continue;
 
-    const wordObj = calculateWordIsopsephy(token, words.length);
+    const wordObj = calculateWordIsopsephy(token, words.length, activeSystem);
     if (wordObj.value > 0 && wordObj.letters.length > 0) {
       words.push(wordObj);
       totalSum += wordObj.value;
-      totalGreekChars += wordObj.letters.length;
+      totalValidLetters += wordObj.letters.length;
 
       const normKey = wordObj.normalizedWord;
       const existing = uniqueWordsMap.get(normKey);
@@ -760,7 +764,7 @@ export function analyzeGreekText(
 
   const stats: TextAnalysisStats = {
     totalChars: text.length,
-    totalGreekChars,
+    totalGreekChars: totalValidLetters,
     totalWords,
     uniqueWords: uniqueWordsMap.size,
     totalSum,
@@ -942,7 +946,7 @@ export interface LetterOccurrenceBreakdown {
   char: string;
   name: string;
   value: number;
-  category: "monas" | "dekas" | "ekatontas";
+  category: "monas" | "dekas" | "ekatontas" | string;
   greekNumeral: string;
   count: number;
   totalValue: number;
@@ -969,48 +973,120 @@ export interface AlphabetAndTextBreakdown {
  * Υπολογισμός αναλυτικής κατανομής γραμμάτων του ελληνικού κειμένου
  * και συσχέτιση με το πλήρες σύστημα των 27 γραμμάτων της Ιωνικής Αρίθμησης (Συνολικό Άθροισμα: 4995).
  */
-export function getAlphabetAndTextLetterBreakdown(text: string): AlphabetAndTextBreakdown {
+export function getAlphabetAndTextLetterBreakdown(
+  text: string,
+  system: NumberingSystem = NumberingSystem.IONIAN
+): AlphabetAndTextBreakdown {
   const cleaned = cleanAndNormalizePolytonic(text || "");
   const normalized = normalizePolytonicGreek(cleaned);
-  
-  // Count frequency of normalized uppercase letters
-  const counts: Record<string, number> = {};
-  for (const letter of IONIC_ALPHABET) {
-    counts[letter.char] = 0;
+
+  // If classic Ionian
+  if (system === NumberingSystem.IONIAN) {
+    // Count frequency of normalized uppercase letters
+    const counts: Record<string, number> = {};
+    for (const letter of IONIC_ALPHABET) {
+      counts[letter.char] = 0;
+    }
+    // Handle sigma variants
+    let textLettersCount = 0;
+    for (let i = 0; i < normalized.length; i++) {
+      const ch = normalized[i];
+      if (counts[ch] !== undefined) {
+        counts[ch]++;
+        textLettersCount++;
+      } else if (ch === 'Σ' || ch === 'σ' || ch === 'ς') {
+        counts['Σ'] = (counts['Σ'] || 0) + 1;
+        textLettersCount++;
+      }
+    }
+
+    let textTotalSum = 0;
+    let monadesPresentSum = 0;
+    let dekadesPresentSum = 0;
+    let ekatontadesPresentSum = 0;
+
+    const all27Letters: LetterOccurrenceBreakdown[] = IONIC_ALPHABET.map((letter) => {
+      const count = counts[letter.char] || 0;
+      const totalVal = count * letter.value;
+      textTotalSum += totalVal;
+
+      if (letter.category === "monas") monadesPresentSum += totalVal;
+      else if (letter.category === "dekas") dekadesPresentSum += totalVal;
+      else if (letter.category === "ekatontas") ekatontadesPresentSum += totalVal;
+
+      return {
+        char: letter.char,
+        name: letter.name,
+        value: letter.value,
+        category: letter.category,
+        greekNumeral: letter.greekNumeral,
+        count,
+        totalValue: totalVal,
+        percentageOfSum: 0,
+        percentageOfLetters: 0,
+      };
+    });
+
+    for (const item of all27Letters) {
+      item.percentageOfSum = textTotalSum > 0 ? (item.totalValue / textTotalSum) * 100 : 0;
+      item.percentageOfLetters = textLettersCount > 0 ? (item.count / textLettersCount) * 100 : 0;
+    }
+
+    const presentLetters = all27Letters.filter((l) => l.count > 0);
+
+    return {
+      totalAlphabetSum: 4995,
+      monadesSum: 45,
+      dekadesSum: 450,
+      ekatontadesSum: 4500,
+      alphabetTotalLetters: 27,
+      textTotalSum,
+      textTotalLetters: textLettersCount,
+      all27Letters,
+      presentLetters,
+      monadesPresentSum,
+      dekadesPresentSum,
+      ekatontadesPresentSum,
+    };
   }
-  // Handle sigma variants
+
+  // Generic or English systems
+  const chart = getAlphabetChart(system);
+  const counts: Record<string, number> = {};
+  for (const item of chart) {
+    counts[item.letter] = 0;
+  }
+
+  const upperText = (text || "").toUpperCase();
   let textLettersCount = 0;
-  for (let i = 0; i < normalized.length; i++) {
-    const ch = normalized[i];
+
+  for (let i = 0; i < upperText.length; i++) {
+    const ch = upperText[i];
     if (counts[ch] !== undefined) {
       counts[ch]++;
       textLettersCount++;
     } else if (ch === 'Σ' || ch === 'σ' || ch === 'ς') {
-      counts['Σ'] = (counts['Σ'] || 0) + 1;
-      textLettersCount++;
+      if (counts['Σ'] !== undefined) {
+        counts['Σ']++;
+        textLettersCount++;
+      }
     }
   }
 
   let textTotalSum = 0;
-  let monadesPresentSum = 0;
-  let dekadesPresentSum = 0;
-  let ekatontadesPresentSum = 0;
+  const totalAlphabetSum = chart.reduce((acc, c) => acc + c.value, 0);
 
-  const all27Letters: LetterOccurrenceBreakdown[] = IONIC_ALPHABET.map((letter) => {
-    const count = counts[letter.char] || 0;
-    const totalVal = count * letter.value;
+  const all27Letters: LetterOccurrenceBreakdown[] = chart.map((c) => {
+    const count = counts[c.letter] || 0;
+    const totalVal = count * c.value;
     textTotalSum += totalVal;
 
-    if (letter.category === "monas") monadesPresentSum += totalVal;
-    else if (letter.category === "dekas") dekadesPresentSum += totalVal;
-    else if (letter.category === "ekatontas") ekatontadesPresentSum += totalVal;
-
     return {
-      char: letter.char,
-      name: letter.name,
-      value: letter.value,
-      category: letter.category,
-      greekNumeral: letter.greekNumeral,
+      char: c.letter,
+      name: c.letter,
+      value: c.value,
+      category: c.category || "Γράμματα",
+      greekNumeral: c.secondary || `${c.value}`,
       count,
       totalValue: totalVal,
       percentageOfSum: 0,
@@ -1018,7 +1094,6 @@ export function getAlphabetAndTextLetterBreakdown(text: string): AlphabetAndText
     };
   });
 
-  // Calculate percentages
   for (const item of all27Letters) {
     item.percentageOfSum = textTotalSum > 0 ? (item.totalValue / textTotalSum) * 100 : 0;
     item.percentageOfLetters = textLettersCount > 0 ? (item.count / textLettersCount) * 100 : 0;
@@ -1027,18 +1102,18 @@ export function getAlphabetAndTextLetterBreakdown(text: string): AlphabetAndText
   const presentLetters = all27Letters.filter((l) => l.count > 0);
 
   return {
-    totalAlphabetSum: 4995,
-    monadesSum: 45,
-    dekadesSum: 450,
-    ekatontadesSum: 4500,
-    alphabetTotalLetters: 27,
+    totalAlphabetSum,
+    monadesSum: 0,
+    dekadesSum: 0,
+    ekatontadesSum: 0,
+    alphabetTotalLetters: chart.length,
     textTotalSum,
     textTotalLetters: textLettersCount,
     all27Letters,
     presentLetters,
-    monadesPresentSum,
-    dekadesPresentSum,
-    ekatontadesPresentSum,
+    monadesPresentSum: 0,
+    dekadesPresentSum: 0,
+    ekatontadesPresentSum: 0,
   };
 }
 
@@ -1237,6 +1312,7 @@ export interface FindSeedCombinationsOptions {
   textWordCounts?: number[]; // e.g. [1], [2], [3], [4], [5]
   mode?: "uniqueWords" | "allOccurrences";
   maxResults?: number;
+  system?: NumberingSystem;
 }
 
 /**
@@ -1254,6 +1330,7 @@ export function findSeedWordCombinations(
     textWordCounts = [1, 2, 3, 4, 5],
     mode = "uniqueWords",
     maxResults = 150,
+    system = NumberingSystem.IONIAN,
   } = options;
 
   if (!words || words.length === 0 || !seedPhrase || !seedPhrase.trim() || !targetTotalSum || targetTotalSum <= 0) {
@@ -1261,8 +1338,8 @@ export function findSeedWordCombinations(
   }
 
   const cleanSeed = seedPhrase.trim();
-  const seedEval = evaluateIsopsephyExpression(cleanSeed);
-  const seedValue = seedEval.finalValue > 0 ? seedEval.finalValue : calculateWordIsopsephy(cleanSeed).value;
+  const seedEval = evaluateIsopsephyExpression(cleanSeed, system);
+  const seedValue = seedEval.finalValue > 0 ? seedEval.finalValue : calculateWordIsopsephy(cleanSeed, 0, system).value;
   if (seedValue <= 0) return [];
 
   const neededSum = targetTotalSum - seedValue;
@@ -1903,7 +1980,10 @@ export function decodeVeloudionCode(codeString: string): { text: string; error?:
  * Διαχωρισμός κειμένου σε πλήρεις προτάσεις/φράσεις (μέχρι τελεία, άνω τελεία, ερωτηματικό ή θαυμαστικό)
  * και υπολογισμός πλήρους ισοψηφίας για κάθε πρόταση.
  */
-export function extractSentencesWithIsopsephy(text: string): SentenceIsopsephyMatch[] {
+export function extractSentencesWithIsopsephy(
+  text: string,
+  system: NumberingSystem = NumberingSystem.IONIAN
+): SentenceIsopsephyMatch[] {
   if (!text || !text.trim()) return [];
 
   // Match sentences ending in ., ;, ;, !, ?, ·, ·, :, or end of text/double newline
@@ -1940,7 +2020,7 @@ export function extractSentencesWithIsopsephy(text: string): SentenceIsopsephyMa
 
     for (let wIdx = 0; wIdx < wordTokens.length; wIdx++) {
       const rawW = wordTokens[wIdx];
-      const wordObj = calculateWordIsopsephy(rawW, wIdx);
+      const wordObj = calculateWordIsopsephy(rawW, wIdx, system);
       if (wordObj.value > 0) {
         words.push(wordObj);
         sentenceTotalValue += wordObj.value;
@@ -1950,7 +2030,9 @@ export function extractSentencesWithIsopsephy(text: string): SentenceIsopsephyMa
     if (words.length > 0 && sentenceTotalValue > 0) {
       sIndex++;
       const root = calculatePythmen(sentenceTotalValue);
-      const greekNumeral = numberToGreekNumeral(sentenceTotalValue) || `${sentenceTotalValue}`;
+      const greekNumeral = system === NumberingSystem.IONIAN 
+        ? (numberToGreekNumeral(sentenceTotalValue) || `${sentenceTotalValue}`)
+        : `${sentenceTotalValue}`;
       const startIndex = globalCharCursor;
       const endIndex = globalCharCursor + rawSeg.length;
 

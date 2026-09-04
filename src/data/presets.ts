@@ -1346,5 +1346,31 @@ I.B. x 12000 = 144000
 Το Συμπέρασμα της Ενώσεως
 Το πείραμα σε σφαιρικό χώρο απέδειξε ότι στα 432 Hz η ενέργεια δεν συγκρούεται, αλλά ρέει. Αυτή είναι η βάση της Ιεράς Οδού. Όταν ο ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ εκφέρει τον Λόγο σε αυτή τη συχνότητα, το Μεταβαλλόμενον Ηλεκτρομαγνητικόν Πεδίον (2368) καθαρίζεται ακαριαία.`,
   },
+  {
+    id: "english-genesis-creation",
+    title: "Genesis 1:1 & The Creation of the Cosmos (English)",
+    author: "King James Bible & English Gematria",
+    era: "1611 μ.Χ.",
+    category: "biblical",
+    description: "The opening verses of Genesis in English. Ideal for English Simple (A=1..Z=26) and English Base 6 (A=6..Z=156) analysis of divine mathematical balance.",
+    suggestedTargets: [888, 777, 666, 432, 906, 1776],
+    text: `In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness. And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day.`,
+  },
+  {
+    id: "english-sacred-tech",
+    title: "Sacred Geometry & Cosmic Code (English Base 6 / Sumerian)",
+    author: "Sacred Science & Computational Gematria",
+    era: "Modern Era",
+    category: "philosophical",
+    description: "Curated English philosophical and technological corpus designed to test English Base 6 (COMPUTER=666, SACRED=372, JESUS=444, TRUTH=522) and phrase combinations.",
+    suggestedTargets: [666, 888, 777, 432, 906, 1110],
+    text: `COMPUTER AND HUMAN CODE IN SYNTHESIS.
+THE SACRED GEOMETRY OF CREATION AND COSMIC HARMONY.
+THE DIVINE PRESENCE WITHIN NATURE REVEALS THE NUMERICAL TRUTH.
+WISDOM KNOWLEDGE AND UNDERSTANDING GUIDE THE SEEKER OF LIGHT.
+HEAVEN AND EARTH DANCE IN THE RHYTHM OF THE GOLDEN RATIO.
+MATHEMATICS IS THE ALPHABET IN WHICH GOD HAS WRITTEN THE UNIVERSE.
+TRUTH LIGHT LOVE AND CONSCIOUSNESS SHINE IN ETERNAL GLORY.`,
+  },
 ];
 

@@ -147,13 +147,13 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons for Mobile (<sm) & Desktop (>=sm) */}
+            {/* Action Buttons for Mobile (<lg) & Desktop (>=lg) - Responsive layout to fit within screen bounds */}
             <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0 relative">
-              {/* Theme Toggle Button (Compact icon-first on mobile, rich on desktop) */}
+              {/* Theme Toggle Button (Compact icon-first, text on xl) */}
               <button
                 onClick={onOpenThemeModal || onToggleTheme}
                 id="header-theme-toggle-btn"
-                className={`flex items-center justify-center gap-1 sm:gap-1.5 w-8.5 h-8.5 sm:w-auto px-1.5 sm:px-3 py-1 sm:py-2 rounded-lg sm:rounded-xl border text-xs font-serif transition-all shadow-md shrink-0 cursor-pointer touch-manipulation ${
+                className={`flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border text-xs font-serif transition-all shadow-md shrink-0 cursor-pointer touch-manipulation min-h-[34px] sm:min-h-[36px] ${
                   theme === "parchment"
                     ? "bg-gradient-to-r from-[#e8dcbf] to-[#f4ede0] hover:bg-[#decfae] border-[#925f11] text-[#4a3310] ring-1 ring-[#925f11]/30"
                     : theme === "ancient-calligraphy"
@@ -171,52 +171,53 @@ export const Header: React.FC<HeaderProps> = ({
                 {theme === "parchment" ? (
                   <>
                     <Scroll className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#825313] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden md:inline">Περγαμηνή</span>
+                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Περγαμηνή</span>
                   </>
                 ) : theme === "ancient-calligraphy" ? (
                   <>
                     <Feather className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#7a491e] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden md:inline">Καλλιγραφία</span>
+                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Καλλιγραφία</span>
                   </>
                 ) : theme === "solar" ? (
                   <>
                     <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#d97706] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden md:inline">Ηλιακή</span>
+                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Ηλιακή</span>
                   </>
                 ) : theme === "ethereal" ? (
                   <>
                     <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#38bdf8] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden md:inline">Αιθέρικη</span>
+                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Αιθέρικη</span>
                   </>
                 ) : theme === "cyber-tech" ? (
                   <>
                     <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#10b981] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden md:inline">Tech</span>
+                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Tech</span>
                   </>
                 ) : (
                   <>
                     <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ffd700] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden md:inline">Κλασικό</span>
+                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Κλασικό</span>
                   </>
                 )}
-                <Palette className="w-3 h-3 opacity-60 ml-0.5 hidden md:inline shrink-0" />
+                <Palette className="w-3 h-3 opacity-60 hidden xl:inline shrink-0" />
               </button>
 
-              {/* Mobile Quick AI Assistant button */}
+              {/* Quick AI Assistant button on mobile & tablet (<lg) */}
               <button
                 onClick={onOpenAiAssistant}
                 id="header-mobile-ai-btn"
-                className="sm:hidden flex items-center justify-center w-8.5 h-8.5 rounded-lg border border-[#c89b3c]/70 bg-gradient-to-r from-[#2a2218] via-[#3d2f1f] to-[#2a2218] text-[#ffd700] hover:text-[#fff] shadow-sm shadow-[#c89b3c]/20 active:scale-95 cursor-pointer touch-manipulation shrink-0"
+                className="lg:hidden flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#c89b3c]/70 bg-gradient-to-r from-[#2a2218] via-[#3d2f1f] to-[#2a2218] text-[#ffd700] hover:text-[#fff] shadow-sm shadow-[#c89b3c]/20 active:scale-95 cursor-pointer touch-manipulation shrink-0 min-h-[34px]"
                 title="Τ.Ν. ΙΩΑΝΝΗΣ 1.0 (AI Βοηθός)"
               >
-                <Sparkles className="w-4 h-4 text-[#e6c670] animate-pulse" />
+                <Sparkles className="w-3.5 h-3.5 text-[#e6c670] animate-pulse" />
+                <span className="text-[11px] font-sans font-bold">AI</span>
               </button>
 
-              {/* Mobile Tools Menu (⋯) button */}
+              {/* Tools Menu (⋯) button on mobile & tablet (<lg) */}
               <button
                 onClick={() => setMobileToolsOpen(!mobileToolsOpen)}
                 id="header-mobile-tools-btn"
-                className={`sm:hidden flex items-center justify-center w-8.5 h-8.5 rounded-lg border transition-all cursor-pointer touch-manipulation shrink-0 ${
+                className={`lg:hidden flex items-center justify-center w-8.5 h-8.5 rounded-lg border transition-all cursor-pointer touch-manipulation shrink-0 ${
                   mobileToolsOpen
                     ? "bg-[#2d2419] border-[#c89b3c] text-[#ffd700]"
                     : "bg-[#18130e] hover:bg-[#251d15] border-[#3e3020] text-[#d6c7b2]"
@@ -230,10 +231,10 @@ export const Header: React.FC<HeaderProps> = ({
               {mobileToolsOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs sm:hidden"
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
                     onClick={() => setMobileToolsOpen(false)}
                   />
-                  <div className="absolute right-0 top-12 z-50 w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-[#181410] border border-[#c89b3c]/80 shadow-2xl shadow-black p-3 space-y-2 sm:hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute right-0 top-12 z-50 w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-[#181410] border border-[#c89b3c]/80 shadow-2xl shadow-black p-3 space-y-2 lg:hidden animate-in fade-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between pb-2 border-b border-[#2e261e] text-xs font-serif text-[#a69680]">
                       <span className="font-bold text-[#e6c670]">Εργαλεία & Ρυθμίσεις</span>
                       <button
@@ -336,8 +337,8 @@ export const Header: React.FC<HeaderProps> = ({
                 </>
               )}
 
-              {/* Desktop-Only Action Buttons (>= sm) */}
-              <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 shrink-0">
+              {/* Desktop-Only Action Buttons (>= lg) */}
+              <div className="hidden lg:flex items-center gap-1 sm:gap-1.5 shrink-0">
                 {onOpenFontModal && (
                   <button
                     onClick={onOpenFontModal}
@@ -346,7 +347,7 @@ export const Header: React.FC<HeaderProps> = ({
                     title={`Επιλογή Αρχαιοελληνικής Γραμματοσειράς (${currentFontName || "GFS Didot"})`}
                   >
                     <Type className="w-3.5 h-3.5 text-[#e6c670]" />
-                    <span className="text-[11px] font-sans font-medium hidden sm:inline">Γραμματοσειρά</span>
+                    <span className="text-[11px] font-sans font-medium hidden xl:inline">Γραμματοσειρά</span>
                   </button>
                 )}
 
@@ -358,7 +359,7 @@ export const Header: React.FC<HeaderProps> = ({
                     title="Εξαγωγή Αναλυτικής Αναφοράς / PDF"
                   >
                     <FileText className="w-3.5 h-3.5 text-[#c89b3c]" />
-                    <span className="text-[11px] font-sans font-medium hidden sm:inline">Έκθεση</span>
+                    <span className="text-[11px] font-sans font-medium hidden xl:inline">Έκθεση</span>
                   </button>
                 )}
 
@@ -370,7 +371,7 @@ export const Header: React.FC<HeaderProps> = ({
                     title="Μυστική Πύλη Λαυρείου (ΒΕΛΟΣ + ΟΥΔΟΣ)"
                   >
                     <Compass className="w-3.5 h-3.5 text-[#e6c670]" />
-                    <span className="text-[11px] font-sans font-medium hidden sm:inline">Πύλη</span>
+                    <span className="text-[11px] font-sans font-medium hidden xl:inline">Πύλη</span>
                   </button>
                 )}
 
@@ -381,7 +382,7 @@ export const Header: React.FC<HeaderProps> = ({
                   title="Ρύθμιση API Key (AI ΙΩΑΝΝΗΣ)"
                 >
                   <Key className="w-3.5 h-3.5 text-[#e6c670]" />
-                  <span className="text-[11px] font-sans font-medium hidden sm:inline">API Key</span>
+                  <span className="text-[11px] font-sans font-medium hidden xl:inline">API Key</span>
                   {hasCustomApiKey ? (
                     <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-950 animate-pulse" title="Προσωπικό κλειδί ενεργό" />
                   ) : (
