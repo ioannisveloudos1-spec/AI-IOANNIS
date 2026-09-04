@@ -31,6 +31,7 @@ import {
   Palette,
   Cpu,
   SlidersHorizontal,
+  LayoutGrid,
 } from "lucide-react";
 import appLogoImg from "../assets/images/ego_eimi_logo_1787417709332.jpg";
 
@@ -91,6 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [canScrollLeft, setCanScrollLeft] = useState<boolean>(false);
   const [canScrollRight, setCanScrollRight] = useState<boolean>(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState<boolean>(false);
+  const [tabMenuOpen, setTabMenuOpen] = useState<boolean>(false);
 
   const checkScroll = () => {
     if (navScrollRef.current) {
@@ -108,9 +110,25 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener("resize", checkScroll);
   }, []);
 
+  useEffect(() => {
+    if (navScrollRef.current) {
+      const activeEl = navScrollRef.current.querySelector(`#nav-tab-${currentTab}`) as HTMLElement;
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      }
+    }
+    checkScroll();
+  }, [currentTab]);
+
+  const handleNavWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (navScrollRef.current && Math.abs(e.deltaY) > 0) {
+      navScrollRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
   const handleScroll = (direction: "left" | "right") => {
     if (navScrollRef.current) {
-      const scrollAmount = direction === "left" ? -180 : 180;
+      const scrollAmount = direction === "left" ? -220 : 220;
       navScrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
       setTimeout(checkScroll, 300);
     }
@@ -119,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="border-b border-[#2d251e] bg-[#14120f]/95 backdrop-blur-md sticky top-0 z-40 pt-1 sm:pt-0 w-full max-w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 w-full">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between py-2 sm:py-3 gap-2 sm:gap-3 w-full">
+        <div className="flex flex-col py-2 sm:py-2.5 gap-2 w-full">
           
           {/* Logo & Classical Title */}
           <div className="flex items-center justify-between gap-1.5 sm:gap-4 w-full">
@@ -403,31 +421,117 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Navigation Bar with Luxury Gold Controls */}
-          <div className="flex items-center gap-1 sm:gap-2 relative w-full pt-1 sm:pt-0">
-            
-            {/* Left Scroll Button (Gold Arrow) */}
-            {showScrollControls && (
+          {/* Navigation Bar with Luxury Gold Controls & Full Screen Width */}
+          <div className="flex items-center gap-1.5 sm:gap-2 relative w-full">
+            {/* Quick Tabs Dropdown Selector (Direct Access to all 18 Tabs) */}
+            <div className="relative shrink-0">
               <button
                 type="button"
-                onClick={() => handleScroll("left")}
-                disabled={!canScrollLeft}
-                aria-label="Κύλιση αριστερά"
-                className={`p-1.5 sm:p-2 rounded-lg border transition-all shrink-0 z-10 min-h-[38px] min-w-[38px] flex items-center justify-center touch-manipulation ${
-                  canScrollLeft
-                    ? "bg-gradient-to-r from-[#2d2215] to-[#3a2c1b] border-[#c89b3c] text-[#e6c670] hover:text-[#fff] hover:border-[#e6c670] shadow-md shadow-[#c89b3c]/20 active:scale-95 cursor-pointer"
-                    : "bg-[#181410] border-[#2d2419] text-[#554637] opacity-40 cursor-not-allowed"
+                id="header-all-tabs-dropdown-btn"
+                onClick={() => setTabMenuOpen(!tabMenuOpen)}
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border text-xs font-serif transition-all shrink-0 cursor-pointer min-h-[38px] touch-manipulation ${
+                  tabMenuOpen
+                    ? "bg-gradient-to-r from-[#3a2c1b] to-[#2d2215] border-[#c89b3c] text-[#ffd700] ring-1 ring-[#c89b3c]"
+                    : "bg-[#181410] hover:bg-[#231b13] border-[#382d20] hover:border-[#c89b3c] text-[#d6c7b2] hover:text-[#ffd700]"
                 }`}
-                title="Κύλιση αριστερά"
+                title="Προβολή Όλων των Καρτελών (18)"
               >
-                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#e6c670]" />
+                <span className="text-[11px] sm:text-xs font-bold font-sans whitespace-nowrap">
+                  Καρτέλες <span className="hidden sm:inline font-mono font-normal opacity-75">(18)</span>
+                </span>
               </button>
-            )}
+
+              {/* Dropdown Menu Modal for All Tabs */}
+              {tabMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs"
+                    onClick={() => setTabMenuOpen(false)}
+                  />
+                  <div className="absolute left-0 top-11 sm:top-12 z-50 w-[320px] sm:w-[520px] max-w-[calc(100vw-1.5rem)] rounded-2xl bg-[#16120e] border-2 border-[#c89b3c] shadow-2xl shadow-black p-3.5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#2e2418]">
+                      <div className="flex items-center gap-2">
+                        <LayoutGrid className="w-4 h-4 text-[#e6c670]" />
+                        <span className="font-serif font-bold text-sm text-[#f5ecd8]">
+                          Όλες οι Καρτέλες ({tabs.length})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setTabMenuOpen(false)}
+                        className="text-xs px-2 py-1 rounded bg-[#241c14] hover:bg-[#382b1e] text-[#a69680] hover:text-[#f5ecd8] border border-[#3e3020] cursor-pointer"
+                      >
+                        ✕ Κλείσιμο
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-[60vh] overflow-y-auto gold-scrollbar pr-1">
+                      {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = currentTab === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => {
+                              onSelectTab(tab.id);
+                              setTabMenuOpen(false);
+                            }}
+                            className={`flex items-start gap-2.5 p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                              isActive
+                                ? "bg-gradient-to-r from-[#332616] to-[#42331f] border-[#c89b3c] text-[#f5ecd8] shadow-md ring-1 ring-[#c89b3c]/50"
+                                : "bg-[#110e0b] hover:bg-[#201912] border-[#292015] hover:border-[#4a3a29] text-[#c4b5a0] hover:text-[#f5ecd8]"
+                            }`}
+                          >
+                            <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${isActive ? "bg-[#c89b3c] text-black" : "bg-[#1f1913] text-[#e6c670]"}`}>
+                              <Icon className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className={`text-xs font-serif font-bold truncate ${isActive ? "text-[#ffd700]" : "text-[#e8dfd1]"}`}>
+                                  {tab.label}
+                                </span>
+                                {tab.badge !== undefined && tab.badge > 0 && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-[#c89b3c] text-black shrink-0">
+                                    {tab.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-[#8c7e6c] font-sans line-clamp-1">
+                                {tab.desc}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Left Scroll Button (Gold Arrow) */}
+            <button
+              type="button"
+              onClick={() => handleScroll("left")}
+              disabled={!canScrollLeft}
+              aria-label="Κύλιση αριστερά"
+              className={`p-1.5 sm:p-2 rounded-lg border transition-all shrink-0 z-10 min-h-[38px] min-w-[38px] flex items-center justify-center touch-manipulation ${
+                canScrollLeft
+                  ? "bg-gradient-to-r from-[#2d2215] to-[#3a2c1b] border-[#c89b3c] text-[#e6c670] hover:text-[#fff] hover:border-[#e6c670] shadow-md shadow-[#c89b3c]/20 active:scale-95 cursor-pointer"
+                  : "bg-[#181410] border-[#2d2419] text-[#554637] opacity-40 cursor-not-allowed"
+              }`}
+              title="Κύλιση αριστερά"
+            >
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
 
             {/* Scrollable Tabs Wrapper */}
             <div
               ref={navScrollRef}
               onScroll={checkScroll}
+              onWheel={handleNavWheel}
               className="flex items-center space-x-1 p-1 bg-[#191511] rounded-xl border border-[#33271c] w-full overflow-x-auto gold-scrollbar scroll-smooth shadow-inner shadow-black/40"
             >
               {tabs.map((tab) => {
@@ -459,22 +563,20 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Right Scroll Button (Gold Arrow) */}
-            {showScrollControls && (
-              <button
-                type="button"
-                onClick={() => handleScroll("right")}
-                disabled={!canScrollRight}
-                aria-label="Κύλιση δεξιά"
-                className={`p-1.5 sm:p-2 rounded-lg border transition-all shrink-0 z-10 min-h-[38px] min-w-[38px] flex items-center justify-center touch-manipulation ${
-                  canScrollRight
-                    ? "bg-gradient-to-r from-[#3a2c1b] to-[#2d2215] border-[#c89b3c] text-[#e6c670] hover:text-[#fff] hover:border-[#e6c670] shadow-md shadow-[#c89b3c]/20 active:scale-95 cursor-pointer"
-                    : "bg-[#181410] border-[#2d2419] text-[#554637] opacity-40 cursor-not-allowed"
-                }`}
-                title="Κύλιση δεξιά"
-              >
-                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => handleScroll("right")}
+              disabled={!canScrollRight}
+              aria-label="Κύλιση δεξιά"
+              className={`p-1.5 sm:p-2 rounded-lg border transition-all shrink-0 z-10 min-h-[38px] min-w-[38px] flex items-center justify-center touch-manipulation ${
+                canScrollRight
+                  ? "bg-gradient-to-r from-[#3a2c1b] to-[#2d2215] border-[#c89b3c] text-[#e6c670] hover:text-[#fff] hover:border-[#e6c670] shadow-md shadow-[#c89b3c]/20 active:scale-95 cursor-pointer"
+                  : "bg-[#181410] border-[#2d2419] text-[#554637] opacity-40 cursor-not-allowed"
+              }`}
+              title="Κύλιση δεξιά"
+            >
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
           </div>
 
         </div>
