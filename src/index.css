@@ -78,14 +78,16 @@ body.theme-cyber-tech {
 }
 
 /* =========================================================================
-   1. THEME: PARCHMENT & ANCIENT CALLIGRAPHY (Αρχαιοελληνική Περγαμηνή & Καλλιγραφία - 100% Χωρίς Μαύρα Πεδία)
+   1. THEME: PARCHMENT & ANCIENT CALLIGRAPHY (Αρχαιοελληνική Περγαμηνή & Καλλιγραφία - 100% Ευανάγνωστα Κείμενα)
    ========================================================================= */
+body.theme-parchment,
+body.theme-ancient-calligraphy,
 .theme-parchment,
 .theme-ancient-calligraphy {
-  --tw-prose-body: #4a2c0d;
-  --tw-prose-headings: #381e05;
+  --tw-prose-body: #241203;
+  --tw-prose-headings: #190a00;
   background-color: #f8f4ec !important;
-  color: #382109 !important;
+  color: #241203 !important;
 }
 
 /* Force GFS Didot for all typography in Ancient Calligraphy theme */
@@ -115,85 +117,373 @@ body.theme-cyber-tech {
 .theme-ancient-calligraphy body,
 .theme-ancient-calligraphy main {
   background-color: #f8f4ec !important;
-  color: #382109 !important;
+  color: #241203 !important;
 }
 
-/* Transform ALL dark backgrounds (any hex starting with 0, 1, 2, 3, 4) into bright warm parchment/papyrus */
-.theme-parchment [class*="bg-[#0"],
-.theme-parchment [class*="bg-[#1"],
-.theme-parchment [class*="bg-[#2"],
-.theme-parchment [class*="bg-[#3"],
-.theme-parchment [class*="bg-[#4"],
-.theme-parchment [class*="bg-stone-9"],
-.theme-parchment [class*="bg-stone-8"],
-.theme-parchment [class*="bg-zinc-9"],
-.theme-parchment [class*="bg-black"],
-.theme-ancient-calligraphy [class*="bg-[#0"],
-.theme-ancient-calligraphy [class*="bg-[#1"],
-.theme-ancient-calligraphy [class*="bg-[#2"],
-.theme-ancient-calligraphy [class*="bg-[#3"],
-.theme-ancient-calligraphy [class*="bg-[#4"],
-.theme-ancient-calligraphy [class*="bg-stone-9"],
-.theme-ancient-calligraphy [class*="bg-stone-8"],
-.theme-ancient-calligraphy [class*="bg-zinc-9"],
-.theme-ancient-calligraphy [class*="bg-black"] {
+/* Prevent text clipping & gradient transparency on light themes (Eliminates invisible/bleached text) */
+.theme-parchment [class*="bg-clip-text"],
+.theme-ancient-calligraphy [class*="bg-clip-text"],
+.theme-solar [class*="bg-clip-text"],
+.theme-parchment .bg-clip-text,
+.theme-ancient-calligraphy .bg-clip-text,
+.theme-solar .bg-clip-text {
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #1f0f02 !important;
+  color: #1f0f02 !important;
+  background-image: none !important;
+  background: transparent !important;
+  font-weight: 800 !important;
+}
+
+/* Headings (h1, h2, h3, h4, h5, h6) - Deepest rich dark ink for absolute readability */
+.theme-parchment h1,
+.theme-parchment h2,
+.theme-parchment h3,
+.theme-parchment h4,
+.theme-parchment h5,
+.theme-parchment h6,
+.theme-ancient-calligraphy h1,
+.theme-ancient-calligraphy h2,
+.theme-ancient-calligraphy h3,
+.theme-ancient-calligraphy h4,
+.theme-ancient-calligraphy h5,
+.theme-ancient-calligraphy h6 {
+  color: #1a0b00 !important;
+  -webkit-text-fill-color: #1a0b00 !important;
+  font-weight: 700 !important;
+}
+
+/* Transform ALL dark card backgrounds into bright warm parchment */
+.theme-parchment div[class*="bg-[#0"],
+.theme-parchment div[class*="bg-[#1"],
+.theme-parchment div[class*="bg-stone-9"],
+.theme-parchment div[class*="bg-stone-8"],
+.theme-parchment div[class*="bg-zinc-9"],
+.theme-parchment div[class*="bg-black"],
+.theme-parchment section[class*="bg-[#"],
+.theme-parchment article[class*="bg-[#"],
+.theme-parchment aside[class*="bg-[#"],
+.theme-parchment header[class*="bg-[#"],
+.theme-ancient-calligraphy div[class*="bg-[#0"],
+.theme-ancient-calligraphy div[class*="bg-[#1"],
+.theme-ancient-calligraphy div[class*="bg-stone-9"],
+.theme-ancient-calligraphy div[class*="bg-stone-8"],
+.theme-ancient-calligraphy div[class*="bg-zinc-9"],
+.theme-ancient-calligraphy div[class*="bg-black"],
+.theme-ancient-calligraphy section[class*="bg-[#"],
+.theme-ancient-calligraphy article[class*="bg-[#"],
+.theme-ancient-calligraphy aside[class*="bg-[#"],
+.theme-ancient-calligraphy header[class*="bg-[#"] {
   background-color: #f3ebd9 !important;
 }
 
-/* Nested sub-cards and inner buttons: slightly deeper warm parchment */
-.theme-parchment [class*="bg-[#2"],
-.theme-parchment [class*="bg-[#3"],
-.theme-parchment [class*="bg-[#4"],
-.theme-ancient-calligraphy [class*="bg-[#2"],
-.theme-ancient-calligraphy [class*="bg-[#3"],
-.theme-ancient-calligraphy [class*="bg-[#4"] {
+/* Nested sub-cards and inner panels: slightly deeper warm parchment */
+.theme-parchment div[class*="bg-[#2"],
+.theme-parchment div[class*="bg-[#3"],
+.theme-parchment div[class*="bg-[#4"],
+.theme-ancient-calligraphy div[class*="bg-[#2"],
+.theme-ancient-calligraphy div[class*="bg-[#3"],
+.theme-ancient-calligraphy div[class*="bg-[#4"] {
   background-color: #ebdcc5 !important;
 }
 
-/* Active or highlighted cards */
-.theme-parchment [class*="bg-[#2d2216]"],
-.theme-parchment [class*="bg-[#45331e]"],
-.theme-ancient-calligraphy [class*="bg-[#2d2216]"],
-.theme-ancient-calligraphy [class*="bg-[#45331e]"] {
-  background-color: #e2d1b7 !important;
+/* Container gradients only (excluding buttons and tags) */
+.theme-parchment div.bg-gradient-to-b,
+.theme-parchment div.bg-gradient-to-r,
+.theme-parchment div.bg-gradient-to-br,
+.theme-parchment div.bg-gradient-to-tr,
+.theme-parchment section.bg-gradient-to-b,
+.theme-parchment section.bg-gradient-to-r,
+.theme-parchment section.bg-gradient-to-br,
+.theme-parchment section.bg-gradient-to-tr,
+.theme-parchment aside.bg-gradient-to-b,
+.theme-parchment aside.bg-gradient-to-r,
+.theme-parchment aside.bg-gradient-to-br,
+.theme-parchment aside.bg-gradient-to-tr,
+.theme-ancient-calligraphy div.bg-gradient-to-b,
+.theme-ancient-calligraphy div.bg-gradient-to-r,
+.theme-ancient-calligraphy div.bg-gradient-to-br,
+.theme-ancient-calligraphy div.bg-gradient-to-tr,
+.theme-ancient-calligraphy section.bg-gradient-to-b,
+.theme-ancient-calligraphy section.bg-gradient-to-r,
+.theme-ancient-calligraphy section.bg-gradient-to-br,
+.theme-ancient-calligraphy section.bg-gradient-to-tr,
+.theme-ancient-calligraphy aside.bg-gradient-to-b,
+.theme-ancient-calligraphy aside.bg-gradient-to-r,
+.theme-ancient-calligraphy aside.bg-gradient-to-br,
+.theme-ancient-calligraphy aside.bg-gradient-to-tr {
+  background-image: linear-gradient(180deg, #faf5ec 0%, #f1e5d2 100%) !important;
 }
 
-/* Gradients replacement for light parchment & calligraphy */
-.theme-parchment .bg-gradient-to-b,
-.theme-parchment .bg-gradient-to-r,
-.theme-parchment .bg-gradient-to-br,
-.theme-parchment .bg-gradient-to-tr,
-.theme-ancient-calligraphy .bg-gradient-to-b,
-.theme-ancient-calligraphy .bg-gradient-to-r,
-.theme-ancient-calligraphy .bg-gradient-to-br,
-.theme-ancient-calligraphy .bg-gradient-to-tr {
-  background-image: linear-gradient(180deg, #faf5ec 0%, #f2e7d5 100%) !important;
+/* PRIMARY ACTION BUTTONS: Rich antique wax seal / bronze gradient with brilliant white text */
+.theme-parchment button[class*="from-amber"],
+.theme-parchment button[class*="bg-amber-600"],
+.theme-parchment button[class*="bg-amber-700"],
+.theme-parchment button[class*="bg-amber-800"],
+.theme-parchment a[class*="from-amber"],
+.theme-ancient-calligraphy button[class*="from-amber"],
+.theme-ancient-calligraphy button[class*="bg-amber-600"],
+.theme-ancient-calligraphy button[class*="bg-amber-700"],
+.theme-ancient-calligraphy button[class*="bg-amber-800"],
+.theme-ancient-calligraphy a[class*="from-amber"] {
+  background: linear-gradient(135deg, #783d07 0%, #9a520e 50%, #663204 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #b8752a !important;
+  box-shadow: 0 2px 8px rgba(100, 50, 5, 0.22) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* Badges, tags, chips & pills (e.g. Κλασική, × 1, Simple, etc.) */
+.theme-parchment button[class*="from-amber"]:hover,
+.theme-parchment button[class*="bg-amber-600"]:hover,
+.theme-parchment button[class*="bg-amber-700"]:hover,
+.theme-parchment button[class*="bg-amber-800"]:hover,
+.theme-parchment a[class*="from-amber"]:hover,
+.theme-ancient-calligraphy button[class*="from-amber"]:hover,
+.theme-ancient-calligraphy button[class*="bg-amber-600"]:hover,
+.theme-ancient-calligraphy button[class*="bg-amber-700"]:hover,
+.theme-ancient-calligraphy button[class*="bg-amber-800"]:hover,
+.theme-ancient-calligraphy a[class*="from-amber"]:hover {
+  background: linear-gradient(135deg, #8c4709 0%, #ab5b10 50%, #753a05 100%) !important;
+  color: #ffffff !important;
+}
+
+.theme-parchment button[class*="from-amber"] *,
+.theme-parchment button[class*="bg-amber-600"] *,
+.theme-parchment button[class*="bg-amber-700"] *,
+.theme-parchment button[class*="bg-amber-800"] *,
+.theme-parchment a[class*="from-amber"] *,
+.theme-ancient-calligraphy button[class*="from-amber"] *,
+.theme-ancient-calligraphy button[class*="bg-amber-600"] *,
+.theme-ancient-calligraphy button[class*="bg-amber-700"] *,
+.theme-ancient-calligraphy button[class*="bg-amber-800"] *,
+.theme-ancient-calligraphy a[class*="from-amber"] * {
+  color: #ffffff !important;
+  fill: currentColor !important;
+}
+
+/* SECONDARY BUTTONS: Clean parchment tint with deep dark ink text */
+.theme-parchment button[class*="bg-[#"],
+.theme-parchment button[class*="from-amber-800"],
+.theme-parchment button.bg-black\/40,
+.theme-parchment button.bg-black\/20,
+.theme-ancient-calligraphy button[class*="bg-[#"],
+.theme-ancient-calligraphy button[class*="from-amber-800"],
+.theme-ancient-calligraphy button.bg-black\/40,
+.theme-ancient-calligraphy button.bg-black\/20 {
+  background-color: #ebdcc5 !important;
+  background-image: none !important;
+  color: #241203 !important;
+  border-color: #bfa37c !important;
+  font-weight: 600 !important;
+}
+
+.theme-parchment button[class*="bg-[#"]:hover,
+.theme-parchment button[class*="from-amber-800"]:hover,
+.theme-ancient-calligraphy button[class*="bg-[#"]:hover,
+.theme-ancient-calligraphy button[class*="from-amber-800"]:hover {
+  background-color: #dfcdb4 !important;
+  color: #170900 !important;
+  border-color: #9c7b50 !important;
+}
+
+.theme-parchment button[class*="bg-[#"] *,
+.theme-parchment button[class*="from-amber-800"] *,
+.theme-ancient-calligraphy button[class*="bg-[#"] *,
+.theme-ancient-calligraphy button[class*="from-amber-800"] * {
+  color: #241203 !important;
+}
+
+/* ACTIVE TOGGLE BUTTONS (active filter, active layout, active speech rate) */
+.theme-parchment button.bg-amber-500,
+.theme-parchment button[class*="bg-amber-500"],
+.theme-parchment button.bg-amber-600,
+.theme-ancient-calligraphy button.bg-amber-500,
+.theme-ancient-calligraphy button[class*="bg-amber-500"],
+.theme-ancient-calligraphy button.bg-amber-600 {
+  background-color: #7d3f08 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border-color: #ad5c0c !important;
+}
+
+.theme-parchment button.bg-amber-500 *,
+.theme-parchment button[class*="bg-amber-500"] *,
+.theme-parchment button.bg-amber-600 *,
+.theme-ancient-calligraphy button.bg-amber-500 *,
+.theme-ancient-calligraphy button[class*="bg-amber-500"] *,
+.theme-ancient-calligraphy button.bg-amber-600 * {
+  color: #ffffff !important;
+}
+
+/* TEXT COLOR OVERRIDES - CRITICAL CONTRAST FIX */
+/* Primary text & Polytonic ancient Greek text & white text -> Deepest Ancient Dark Ink */
+.theme-parchment [class*="text-[#f"],
+.theme-parchment [class*="text-[#e8"],
+.theme-parchment [class*="text-[#d"],
+.theme-parchment [class*="text-amber-50"],
+.theme-parchment [class*="text-amber-100"],
+.theme-parchment .text-white,
+.theme-parchment .text-stone-100,
+.theme-parchment .text-stone-200,
+.theme-ancient-calligraphy [class*="text-[#f"],
+.theme-ancient-calligraphy [class*="text-[#e8"],
+.theme-ancient-calligraphy [class*="text-[#d"],
+.theme-ancient-calligraphy [class*="text-amber-50"],
+.theme-ancient-calligraphy [class*="text-amber-100"],
+.theme-ancient-calligraphy .text-white,
+.theme-ancient-calligraphy .text-stone-100,
+.theme-ancient-calligraphy .text-stone-200 {
+  color: #241203 !important; /* Deepest ancient brown ink */
+}
+
+/* Body text, modern Greek translation, paragraphs, descriptions */
+.theme-parchment [class*="text-amber-200"],
+.theme-parchment [class*="text-amber-300"],
+.theme-parchment [class*="text-[#a"],
+.theme-parchment [class*="text-[#8"],
+.theme-parchment [class*="text-[#7"],
+.theme-parchment [class*="text-stone-300"],
+.theme-parchment [class*="text-stone-400"],
+.theme-parchment [class*="text-stone-500"],
+.theme-parchment p,
+.theme-ancient-calligraphy [class*="text-amber-200"],
+.theme-ancient-calligraphy [class*="text-amber-300"],
+.theme-ancient-calligraphy [class*="text-[#a"],
+.theme-ancient-calligraphy [class*="text-[#8"],
+.theme-ancient-calligraphy [class*="text-[#7"],
+.theme-ancient-calligraphy [class*="text-stone-300"],
+.theme-ancient-calligraphy [class*="text-stone-400"],
+.theme-ancient-calligraphy [class*="text-stone-500"],
+.theme-ancient-calligraphy p {
+  color: #3b1e06 !important; /* Rich dark sepia ink */
+  opacity: 1 !important;
+}
+
+/* Secondary muted labels, subtitles, verse notes */
+.theme-parchment [class*="text-amber-200/"],
+.theme-parchment [class*="text-amber-300/"],
+.theme-parchment [class*="text-amber-400/"],
+.theme-ancient-calligraphy [class*="text-amber-200/"],
+.theme-ancient-calligraphy [class*="text-amber-300/"],
+.theme-ancient-calligraphy [class*="text-amber-400/"] {
+  color: #4f2d0e !important; /* Dark warm sepia */
+  opacity: 1 !important;
+}
+
+/* Isopsephy Numbers, Math Numerals, Golden Highlights */
+.theme-parchment [class*="text-[#c89b3c]"],
+.theme-parchment [class*="text-[#ffd700]"],
+.theme-parchment [class*="text-[#e6c670]"],
+.theme-parchment [class*="text-amber-400"],
+.theme-parchment [class*="text-amber-500"],
+.theme-parchment [class*="text-yellow-400"],
+.theme-parchment [class*="text-yellow-500"],
+.theme-ancient-calligraphy [class*="text-[#c89b3c]"],
+.theme-ancient-calligraphy [class*="text-[#ffd700]"],
+.theme-ancient-calligraphy [class*="text-[#e6c670]"],
+.theme-ancient-calligraphy [class*="text-amber-400"],
+.theme-ancient-calligraphy [class*="text-amber-500"],
+.theme-ancient-calligraphy [class*="text-yellow-400"],
+.theme-ancient-calligraphy [class*="text-yellow-500"] {
+  color: #8c4500 !important; /* Antique terracotta bronze */
+  font-weight: 700 !important;
+}
+
+/* Green / Emerald accents */
+.theme-parchment [class*="text-emerald-"],
+.theme-ancient-calligraphy [class*="text-emerald-"] {
+  color: #14532d !important;
+  font-weight: 600 !important;
+}
+
+/* Blue / Indigo accents */
+.theme-parchment [class*="text-indigo-"],
+.theme-ancient-calligraphy [class*="text-indigo-"] {
+  color: #1e3a8a !important;
+  font-weight: 600 !important;
+}
+
+/* Red / Crimson accents */
+.theme-parchment [class*="text-red-"],
+.theme-ancient-calligraphy [class*="text-red-"] {
+  color: #991b1b !important;
+  font-weight: 600 !important;
+}
+
+/* BADGES, TAGS, CHIPS & PILLS */
+/* Amber badges */
+.theme-parchment span[class*="bg-amber-500"],
+.theme-parchment span[class*="bg-amber-950"],
+.theme-parchment span[class*="bg-amber-900"],
+.theme-parchment span[class*="bg-[#2a1d12]"],
+.theme-parchment div[class*="bg-amber-500/20"],
+.theme-ancient-calligraphy span[class*="bg-amber-500"],
+.theme-ancient-calligraphy span[class*="bg-amber-950"],
+.theme-ancient-calligraphy span[class*="bg-amber-900"],
+.theme-ancient-calligraphy span[class*="bg-[#2a1d12]"],
+.theme-ancient-calligraphy div[class*="bg-amber-500/20"] {
+  background-color: #fae7cf !important;
+  color: #692e02 !important;
+  border-color: #c98a3e !important;
+  font-weight: 700 !important;
+}
+
+/* Emerald badges */
+.theme-parchment span[class*="bg-emerald-"],
+.theme-ancient-calligraphy span[class*="bg-emerald-"] {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  border-color: #34d399 !important;
+  font-weight: 700 !important;
+}
+
+/* Indigo badges */
+.theme-parchment span[class*="bg-indigo-"],
+.theme-ancient-calligraphy span[class*="bg-indigo-"] {
+  background-color: #e0e7ff !important;
+  color: #1e3a8a !important;
+  border-color: #818cf8 !important;
+  font-weight: 700 !important;
+}
+
+/* General pills & chips */
 .theme-parchment span[class*="font-mono"],
 .theme-parchment span[class*="text-[9px]"],
 .theme-parchment span[class*="text-[10px]"],
+.theme-parchment span[class*="text-[11px]"],
 .theme-ancient-calligraphy span[class*="font-mono"],
 .theme-ancient-calligraphy span[class*="text-[9px]"],
-.theme-ancient-calligraphy span[class*="text-[10px]"] {
+.theme-ancient-calligraphy span[class*="text-[10px]"],
+.theme-ancient-calligraphy span[class*="text-[11px]"] {
   background-color: #ebdcc5 !important;
-  color: #543216 !important;
+  color: #3b1d03 !important;
   border-color: #cbb698 !important;
+}
+
+/* Fixed Toolbars, Footers & Navigation */
+.theme-parchment aside[class*="fixed"],
+.theme-parchment nav[class*="fixed"],
+.theme-ancient-calligraphy aside[class*="fixed"],
+.theme-ancient-calligraphy nav[class*="fixed"] {
+  background-color: rgba(248, 244, 236, 0.98) !important;
+  border-color: #bfa37c !important;
+  color: #241203 !important;
 }
 
 /* Modals & Backdrop */
 .theme-parchment .bg-black\/80,
+.theme-parchment .bg-black\/75,
 .theme-parchment .bg-black\/70,
 .theme-parchment .bg-black\/60,
 .theme-ancient-calligraphy .bg-black\/80,
+.theme-ancient-calligraphy .bg-black\/75,
 .theme-ancient-calligraphy .bg-black\/70,
 .theme-ancient-calligraphy .bg-black\/60 {
   background-color: rgba(60, 42, 20, 0.65) !important;
 }
 
-/* ALL INPUT FIELDS, TEXTAREAS, AND SELECT DROPDOWNS:
-   Bright pure ivory background, rich brown typed letters, bronze borders */
+/* ALL INPUT FIELDS, TEXTAREAS, AND SELECT DROPDOWNS */
 .theme-parchment input,
 .theme-parchment textarea,
 .theme-parchment select,
@@ -201,9 +491,9 @@ body.theme-cyber-tech {
 .theme-ancient-calligraphy textarea,
 .theme-ancient-calligraphy select {
   background-color: #fefcf7 !important;
-  color: #3b1d03 !important; /* Rich dark brown ink for user typed letters */
+  color: #241203 !important;
   border-color: #bfa37c !important;
-  caret-color: #8c5b0f !important; /* Brown cursor */
+  caret-color: #8c5b0f !important;
 }
 
 .theme-parchment input:focus,
@@ -213,7 +503,7 @@ body.theme-cyber-tech {
 .theme-ancient-calligraphy textarea:focus,
 .theme-ancient-calligraphy select:focus {
   background-color: #ffffff !important;
-  color: #2e1401 !important; /* Deepest brown */
+  color: #1a0b00 !important;
   border-color: #8c5b0f !important;
   box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.25) !important;
 }
@@ -222,95 +512,28 @@ body.theme-cyber-tech {
 .theme-parchment textarea::placeholder,
 .theme-ancient-calligraphy input::placeholder,
 .theme-ancient-calligraphy textarea::placeholder {
-  color: #8e7355 !important; /* Soft sepia brown placeholder */
+  color: #7d5e3c !important;
 }
 
-/* All Borders: warm bronze, sepia, caramel instead of dark borders */
+/* All Borders */
 .theme-parchment [class*="border-[#0"],
 .theme-parchment [class*="border-[#1"],
 .theme-parchment [class*="border-[#2"],
 .theme-parchment [class*="border-[#3"],
 .theme-parchment [class*="border-[#4"],
 .theme-parchment [class*="border-[#5"],
+.theme-parchment [class*="border-amber-"],
 .theme-ancient-calligraphy [class*="border-[#0"],
 .theme-ancient-calligraphy [class*="border-[#1"],
 .theme-ancient-calligraphy [class*="border-[#2"],
 .theme-ancient-calligraphy [class*="border-[#3"],
 .theme-ancient-calligraphy [class*="border-[#4"],
-.theme-ancient-calligraphy [class*="border-[#5"] {
+.theme-ancient-calligraphy [class*="border-[#5"],
+.theme-ancient-calligraphy [class*="border-amber-"] {
   border-color: #cbb698 !important;
 }
 
-/* All Light / White Text on dark backgrounds become Deep Ancient Brown on light parchment */
-.theme-parchment [class*="text-[#f"],
-.theme-parchment [class*="text-[#e8"],
-.theme-parchment [class*="text-[#d"],
-.theme-parchment .text-white,
-.theme-parchment .text-stone-100,
-.theme-parchment .text-stone-200,
-.theme-ancient-calligraphy [class*="text-[#f"],
-.theme-ancient-calligraphy [class*="text-[#e8"],
-.theme-ancient-calligraphy [class*="text-[#d"],
-.theme-ancient-calligraphy .text-white,
-.theme-ancient-calligraphy .text-stone-100,
-.theme-ancient-calligraphy .text-stone-200 {
-  color: #382109 !important; /* Deep ancient brown */
-}
-
-/* Secondary & Muted text colors become Warm Medium Brown */
-.theme-parchment [class*="text-[#a"],
-.theme-parchment [class*="text-[#8"],
-.theme-parchment [class*="text-[#7"],
-.theme-parchment [class*="text-[#5"],
-.theme-parchment .text-stone-400,
-.theme-parchment .text-stone-500,
-.theme-ancient-calligraphy [class*="text-[#a"],
-.theme-ancient-calligraphy [class*="text-[#8"],
-.theme-ancient-calligraphy [class*="text-[#7"],
-.theme-ancient-calligraphy [class*="text-[#5"],
-.theme-ancient-calligraphy .text-stone-400,
-.theme-ancient-calligraphy .text-stone-500 {
-  color: #634324 !important; /* Warm medium brown */
-}
-
-/* Golden / Amber values & highlights */
-.theme-parchment [class*="text-[#c89b3c]"],
-.theme-parchment [class*="text-[#ffd700]"],
-.theme-parchment [class*="text-[#e6c670]"],
-.theme-parchment .text-amber-400,
-.theme-parchment .text-amber-500,
-.theme-parchment .text-yellow-400,
-.theme-ancient-calligraphy [class*="text-[#c89b3c]"],
-.theme-ancient-calligraphy [class*="text-[#ffd700]"],
-.theme-ancient-calligraphy [class*="text-[#e6c670]"],
-.theme-ancient-calligraphy .text-amber-400,
-.theme-ancient-calligraphy .text-amber-500,
-.theme-ancient-calligraphy .text-yellow-400 {
-  color: #8c5307 !important; /* Deep antique amber/ochre */
-}
-
-/* Mobile Bottom Navigation Bar & Fixed Toolbars */
-.theme-parchment nav,
-.theme-parchment nav[class*="fixed"],
-.theme-ancient-calligraphy nav,
-.theme-ancient-calligraphy nav[class*="fixed"] {
-  background-color: rgba(248, 244, 236, 0.98) !important;
-  border-top-color: #bfa37c !important;
-  color: #4a2808 !important;
-}
-
-/* Shadow replacements */
-.theme-parchment [class*="shadow-black"],
-.theme-parchment [class*="shadow-2xl"],
-.theme-parchment [class*="shadow-xl"],
-.theme-parchment [class*="shadow-lg"],
-.theme-ancient-calligraphy [class*="shadow-black"],
-.theme-ancient-calligraphy [class*="shadow-2xl"],
-.theme-ancient-calligraphy [class*="shadow-xl"],
-.theme-ancient-calligraphy [class*="shadow-lg"] {
-  box-shadow: 0 4px 20px rgba(90, 60, 25, 0.08) !important;
-}
-
+/* Selection */
 .theme-parchment ::selection,
 .theme-ancient-calligraphy ::selection {
   background-color: #d6b88d !important;
@@ -320,138 +543,256 @@ body.theme-cyber-tech {
 /* =========================================================================
    2. THEME: SOLAR (Ηλιακή - Solar Apollo / Χρυσό & Φωτεινό Ίβουαρ)
    ========================================================================= */
+body.theme-solar,
 .theme-solar {
-  --tw-prose-body: #3c1e00;
-  --tw-prose-headings: #261200;
+  --tw-prose-body: #2a1400;
+  --tw-prose-headings: #1c0d00;
+  background-color: #fffdf5 !important;
+  color: #2a1400 !important;
 }
 
-.theme-solar .bg-\[\#0d0c0a\] {
+.theme-solar #root,
+.theme-solar body,
+.theme-solar main {
   background-color: #fffdf5 !important;
+  color: #2a1400 !important;
 }
-.theme-solar .bg-\[\#14120f\]\/95 {
-  background-color: rgba(255, 250, 235, 0.98) !important;
+
+/* Headings in Solar Theme */
+.theme-solar h1,
+.theme-solar h2,
+.theme-solar h3,
+.theme-solar h4,
+.theme-solar h5,
+.theme-solar h6 {
+  color: #200e00 !important;
+  -webkit-text-fill-color: #200e00 !important;
+  font-weight: 700 !important;
 }
-.theme-solar .bg-\[\#14120f\] {
-  background-color: #fdf5df !important;
-}
-.theme-solar .bg-\[\#16130f\],
-.theme-solar .bg-\[\#181410\],
-.theme-solar .bg-\[\#191511\],
-.theme-solar .bg-\[\#1a1510\],
-.theme-solar .bg-\[\#1c1813\],
-.theme-solar .bg-\[\#171410\],
-.theme-solar .bg-\[\#0e0a06\],
-.theme-solar .bg-\[\#110c07\] {
+
+/* Container cards in Solar */
+.theme-solar div[class*="bg-[#0"],
+.theme-solar div[class*="bg-[#1"],
+.theme-solar div[class*="bg-stone-9"],
+.theme-solar div[class*="bg-stone-8"],
+.theme-solar div[class*="bg-zinc-9"],
+.theme-solar div[class*="bg-black"],
+.theme-solar section[class*="bg-[#"],
+.theme-solar article[class*="bg-[#"],
+.theme-solar aside[class*="bg-[#"],
+.theme-solar header[class*="bg-[#"] {
   background-color: #faebd0 !important;
 }
-.theme-solar .bg-\[\#201b15\],
-.theme-solar .bg-\[\#231e18\],
-.theme-solar .bg-\[\#241c14\],
-.theme-solar .bg-\[\#251d15\],
-.theme-solar .bg-\[\#282117\],
-.theme-solar .bg-\[\#2a2218\],
-.theme-solar .bg-\[\#2f271e\],
-.theme-solar .bg-\[\#2a2219\],
-.theme-solar .bg-\[\#1b120a\],
-.theme-solar .bg-\[\#1a1209\] {
+
+.theme-solar div[class*="bg-[#2"],
+.theme-solar div[class*="bg-[#3"],
+.theme-solar div[class*="bg-[#4"] {
   background-color: #f4dfb8 !important;
 }
-.theme-solar .bg-\[\#34281b\],
-.theme-solar .bg-\[\#3d2a13\],
-.theme-solar .bg-\[\#382613\],
-.theme-solar .bg-\[\#261a0d\] {
-  background-color: #ebd19e !important;
+
+/* Gradients for containers only */
+.theme-solar div.bg-gradient-to-b,
+.theme-solar div.bg-gradient-to-r,
+.theme-solar div.bg-gradient-to-br,
+.theme-solar div.bg-gradient-to-tr,
+.theme-solar section.bg-gradient-to-b,
+.theme-solar section.bg-gradient-to-r,
+.theme-solar section.bg-gradient-to-br,
+.theme-solar section.bg-gradient-to-tr {
+  background-image: linear-gradient(180deg, #fffbf0 0%, #faebd0 100%) !important;
+}
+
+/* Primary Action Buttons in Solar */
+.theme-solar button[class*="from-amber"],
+.theme-solar button[class*="bg-amber-600"],
+.theme-solar button[class*="bg-amber-700"],
+.theme-solar button[class*="bg-amber-800"],
+.theme-solar a[class*="from-amber"] {
+  background: linear-gradient(135deg, #874504 0%, #ad5e0a 50%, #703702 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #d98818 !important;
+  box-shadow: 0 2px 8px rgba(135, 69, 4, 0.25) !important;
+}
+
+.theme-solar button[class*="from-amber"] *,
+.theme-solar button[class*="bg-amber-600"] *,
+.theme-solar button[class*="bg-amber-700"] *,
+.theme-solar button[class*="bg-amber-800"] *,
+.theme-solar a[class*="from-amber"] * {
+  color: #ffffff !important;
+  fill: currentColor !important;
+}
+
+/* Secondary Buttons in Solar */
+.theme-solar button[class*="bg-[#"],
+.theme-solar button[class*="from-amber-800"] {
+  background-color: #faebd0 !important;
+  color: #2a1400 !important;
+  border-color: #deb673 !important;
+  font-weight: 600 !important;
+}
+
+.theme-solar button[class*="bg-[#"] *,
+.theme-solar button[class*="from-amber-800"] * {
+  color: #2a1400 !important;
+}
+
+/* Text in Solar */
+.theme-solar [class*="text-[#f"],
+.theme-solar [class*="text-[#e8"],
+.theme-solar [class*="text-[#d"],
+.theme-solar [class*="text-amber-50"],
+.theme-solar [class*="text-amber-100"],
+.theme-solar .text-white,
+.theme-solar .text-stone-100,
+.theme-solar .text-stone-200 {
+  color: #241000 !important;
+}
+
+.theme-solar [class*="text-amber-200"],
+.theme-solar [class*="text-amber-300"],
+.theme-solar [class*="text-[#a"],
+.theme-solar [class*="text-[#8"],
+.theme-solar [class*="text-[#7"],
+.theme-solar [class*="text-stone-300"],
+.theme-solar [class*="text-stone-400"],
+.theme-solar [class*="text-stone-500"],
+.theme-solar p {
+  color: #3b1a00 !important;
+  opacity: 1 !important;
+}
+
+.theme-solar [class*="text-amber-200/"],
+.theme-solar [class*="text-amber-300/"],
+.theme-solar [class*="text-amber-400/"] {
+  color: #592900 !important;
+  opacity: 1 !important;
+}
+
+.theme-solar [class*="text-[#c89b3c]"],
+.theme-solar [class*="text-[#ffd700]"],
+.theme-solar [class*="text-[#e6c670]"],
+.theme-solar [class*="text-amber-400"],
+.theme-solar [class*="text-amber-500"],
+.theme-solar [class*="text-yellow-400"],
+.theme-solar [class*="text-yellow-500"] {
+  color: #9e4e02 !important;
+  font-weight: 700 !important;
+}
+
+/* Badges in Solar */
+.theme-solar span[class*="bg-amber-"],
+.theme-solar span[class*="bg-[#2a1d12]"] {
+  background-color: #fde8c3 !important;
+  color: #703300 !important;
+  border-color: #e09624 !important;
+  font-weight: 700 !important;
+}
+
+.theme-solar span[class*="font-mono"],
+.theme-solar span[class*="text-[9px]"],
+.theme-solar span[class*="text-[10px]"],
+.theme-solar span[class*="text-[11px]"] {
+  background-color: #faebd0 !important;
+  color: #3b1a00 !important;
+  border-color: #deb673 !important;
 }
 
 .theme-solar input,
 .theme-solar textarea,
 .theme-solar select {
   background-color: #ffffff !important;
-  color: #2b1400 !important;
-  border-color: #e5b36b !important;
+  color: #241000 !important;
+  border-color: #deb673 !important;
 }
+
 .theme-solar input::placeholder,
 .theme-solar textarea::placeholder {
-  color: #8c6333 !important;
+  color: #8c5e23 !important;
 }
 
-.theme-solar .border-\[\#2d251e\],
-.theme-solar .border-\[\#33271c\],
-.theme-solar .border-\[\#3e3020\],
-.theme-solar .border-\[\#3e3223\],
-.theme-solar .border-\[\#4a3a29\],
-.theme-solar .border-\[\#2a2219\],
-.theme-solar .border-\[\#3b2917\],
-.theme-solar .border-\[\#3b2713\],
-.theme-solar .border-\[\#52391b\],
-.theme-solar .border-\[\#4a3419\],
-.theme-solar .border-\[\#8c672b\] {
+.theme-solar [class*="border-amber-"],
+.theme-solar [class*="border-[#"] {
   border-color: #e0be88 !important;
-}
-
-.theme-solar .text-\[\#e8dfd1\],
-.theme-solar .text-\[\#f5ecd8\],
-.theme-solar .text-\[\#f4e2b7\],
-.theme-solar .text-\[\#d6c7b2\],
-.theme-solar .text-\[\#fff2a8\],
-.theme-solar .text-\[\#f0d492\] {
-  color: #2c1500 !important;
-}
-.theme-solar .text-\[\#a69680\],
-.theme-solar .text-\[\#8c7e6c\],
-.theme-solar .text-\[\#c5b59e\] {
-  color: #6d4212 !important;
-}
-.theme-solar .text-\[\#e6c670\],
-.theme-solar .text-\[\#ffd700\],
-.theme-solar .text-\[\#c89b3c\] {
-  color: #b45309 !important;
 }
 
 /* =========================================================================
    3. THEME: ETHEREAL (Αιθέρικη - Cosmic Blue / Ουράνιος Αιθέρας)
    ========================================================================= */
+body.theme-ethereal,
 .theme-ethereal {
   --tw-prose-body: #cbd5e1;
   --tw-prose-headings: #f0f9ff;
+  background-color: #060913 !important;
+  color: #e0f2fe !important;
 }
 
-.theme-ethereal .bg-\[\#0d0c0a\] {
+.theme-ethereal #root,
+.theme-ethereal body,
+.theme-ethereal main {
   background-color: #060913 !important;
+  color: #e0f2fe !important;
 }
-.theme-ethereal .bg-\[\#14120f\]\/95 {
-  background-color: rgba(9, 14, 28, 0.97) !important;
+
+.theme-ethereal h1,
+.theme-ethereal h2,
+.theme-ethereal h3,
+.theme-ethereal h4,
+.theme-ethereal h5,
+.theme-ethereal h6 {
+  color: #f0f9ff !important;
+  -webkit-text-fill-color: #f0f9ff !important;
 }
-.theme-ethereal .bg-\[\#14120f\] {
-  background-color: #0a1020 !important;
+
+.theme-ethereal [class*="bg-clip-text"],
+.theme-ethereal .bg-clip-text {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-image: linear-gradient(90deg, #bae6fd 0%, #38bdf8 50%, #818cf8 100%) !important;
 }
-.theme-ethereal .bg-\[\#16130f\],
-.theme-ethereal .bg-\[\#181410\],
-.theme-ethereal .bg-\[\#191511\],
-.theme-ethereal .bg-\[\#1a1510\],
-.theme-ethereal .bg-\[\#1c1813\],
-.theme-ethereal .bg-\[\#171410\],
-.theme-ethereal .bg-\[\#0e0a06\],
-.theme-ethereal .bg-\[\#110c07\] {
-  background-color: #0f172a !important;
+
+/* Card containers in Ethereal */
+.theme-ethereal div[class*="bg-[#0"],
+.theme-ethereal div[class*="bg-[#1"],
+.theme-ethereal div[class*="bg-stone-9"],
+.theme-ethereal div[class*="bg-stone-8"],
+.theme-ethereal div[class*="bg-black"],
+.theme-ethereal section[class*="bg-[#"],
+.theme-ethereal article[class*="bg-[#"] {
+  background-color: #0c1427 !important;
 }
-.theme-ethereal .bg-\[\#201b15\],
-.theme-ethereal .bg-\[\#231e18\],
-.theme-ethereal .bg-\[\#241c14\],
-.theme-ethereal .bg-\[\#251d15\],
-.theme-ethereal .bg-\[\#282117\],
-.theme-ethereal .bg-\[\#2a2218\],
-.theme-ethereal .bg-\[\#2f271e\],
-.theme-ethereal .bg-\[\#2a2219\],
-.theme-ethereal .bg-\[\#1b120a\],
-.theme-ethereal .bg-\[\#1a1209\] {
-  background-color: #172554 !important;
+
+.theme-ethereal div[class*="bg-[#2"],
+.theme-ethereal div[class*="bg-[#3"],
+.theme-ethereal div[class*="bg-[#4"] {
+  background-color: #132242 !important;
 }
-.theme-ethereal .bg-\[\#34281b\],
-.theme-ethereal .bg-\[\#3d2a13\],
-.theme-ethereal .bg-\[\#382613\],
-.theme-ethereal .bg-\[\#261a0d\] {
-  background-color: #1e3a8a !important;
+
+/* Text in Ethereal */
+.theme-ethereal [class*="text-[#f"],
+.theme-ethereal [class*="text-[#e8"],
+.theme-ethereal [class*="text-[#d"],
+.theme-ethereal [class*="text-amber-50"],
+.theme-ethereal [class*="text-amber-100"],
+.theme-ethereal .text-white {
+  color: #f0f9ff !important;
+}
+
+.theme-ethereal [class*="text-amber-200"],
+.theme-ethereal [class*="text-amber-300"],
+.theme-ethereal [class*="text-[#a"],
+.theme-ethereal [class*="text-[#8"] {
+  color: #bae6fd !important;
+}
+
+.theme-ethereal [class*="text-[#c89b3c]"],
+.theme-ethereal [class*="text-[#ffd700]"],
+.theme-ethereal [class*="text-[#e6c670]"],
+.theme-ethereal [class*="text-amber-400"],
+.theme-ethereal [class*="text-amber-500"],
+.theme-ethereal [class*="text-yellow-400"] {
+  color: #38bdf8 !important;
 }
 
 .theme-ethereal input,
@@ -461,88 +802,92 @@ body.theme-cyber-tech {
   color: #e0f2fe !important;
   border-color: #1e40af !important;
 }
+
 .theme-ethereal input::placeholder,
 .theme-ethereal textarea::placeholder {
   color: #64748b !important;
 }
 
-.theme-ethereal .border-\[\#2d251e\],
-.theme-ethereal .border-\[\#33271c\],
-.theme-ethereal .border-\[\#3e3020\],
-.theme-ethereal .border-\[\#3e3223\],
-.theme-ethereal .border-\[\#4a3a29\],
-.theme-ethereal .border-\[\#2a2219\],
-.theme-ethereal .border-\[\#3b2917\],
-.theme-ethereal .border-\[\#3b2713\],
-.theme-ethereal .border-\[\#52391b\],
-.theme-ethereal .border-\[\#4a3419\],
-.theme-ethereal .border-\[\#8c672b\] {
+.theme-ethereal [class*="border-amber-"],
+.theme-ethereal [class*="border-[#"] {
   border-color: #1e3a8a !important;
-}
-
-.theme-ethereal .text-\[\#e8dfd1\],
-.theme-ethereal .text-\[\#f5ecd8\],
-.theme-ethereal .text-\[\#f4e2b7\],
-.theme-ethereal .text-\[\#d6c7b2\],
-.theme-ethereal .text-\[\#fff2a8\],
-.theme-ethereal .text-\[\#f0d492\] {
-  color: #e0f2fe !important;
-}
-.theme-ethereal .text-\[\#a69680\],
-.theme-ethereal .text-\[\#8c7e6c\],
-.theme-ethereal .text-\[\#c5b59e\] {
-  color: #93c5fd !important;
-}
-.theme-ethereal .text-\[\#e6c670\],
-.theme-ethereal .text-\[\#ffd700\],
-.theme-ethereal .text-\[\#c89b3c\] {
-  color: #38bdf8 !important;
 }
 
 /* =========================================================================
    4. THEME: CYBER-TECH (Τεχνολογίας / Quantum Matrix Emerald & Cyan)
    ========================================================================= */
+body.theme-cyber-tech,
 .theme-cyber-tech {
   --tw-prose-body: #94a3b8;
   --tw-prose-headings: #ecfeff;
+  background-color: #080c14 !important;
+  color: #ecfeff !important;
 }
 
-.theme-cyber-tech .bg-\[\#0d0c0a\] {
+.theme-cyber-tech #root,
+.theme-cyber-tech body,
+.theme-cyber-tech main {
   background-color: #080c14 !important;
+  color: #ecfeff !important;
 }
-.theme-cyber-tech .bg-\[\#14120f\]\/95 {
-  background-color: rgba(10, 16, 26, 0.98) !important;
+
+.theme-cyber-tech h1,
+.theme-cyber-tech h2,
+.theme-cyber-tech h3,
+.theme-cyber-tech h4,
+.theme-cyber-tech h5,
+.theme-cyber-tech h6 {
+  color: #ecfeff !important;
+  -webkit-text-fill-color: #ecfeff !important;
 }
-.theme-cyber-tech .bg-\[\#14120f\] {
-  background-color: #0c1420 !important;
+
+.theme-cyber-tech [class*="bg-clip-text"],
+.theme-cyber-tech .bg-clip-text {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-image: linear-gradient(90deg, #a7f3d0 0%, #10b981 50%, #06b6d4 100%) !important;
 }
-.theme-cyber-tech .bg-\[\#16130f\],
-.theme-cyber-tech .bg-\[\#181410\],
-.theme-cyber-tech .bg-\[\#191511\],
-.theme-cyber-tech .bg-\[\#1a1510\],
-.theme-cyber-tech .bg-\[\#1c1813\],
-.theme-cyber-tech .bg-\[\#171410\],
-.theme-cyber-tech .bg-\[\#0e0a06\],
-.theme-cyber-tech .bg-\[\#110c07\] {
-  background-color: #0f1e2e !important;
+
+.theme-cyber-tech div[class*="bg-[#0"],
+.theme-cyber-tech div[class*="bg-[#1"],
+.theme-cyber-tech div[class*="bg-stone-9"],
+.theme-cyber-tech div[class*="bg-stone-8"],
+.theme-cyber-tech div[class*="bg-black"],
+.theme-cyber-tech section[class*="bg-[#"],
+.theme-cyber-tech article[class*="bg-[#"] {
+  background-color: #0c1524 !important;
 }
-.theme-cyber-tech .bg-\[\#201b15\],
-.theme-cyber-tech .bg-\[\#231e18\],
-.theme-cyber-tech .bg-\[\#241c14\],
-.theme-cyber-tech .bg-\[\#251d15\],
-.theme-cyber-tech .bg-\[\#282117\],
-.theme-cyber-tech .bg-\[\#2a2218\],
-.theme-cyber-tech .bg-\[\#2f271e\],
-.theme-cyber-tech .bg-\[\#2a2219\],
-.theme-cyber-tech .bg-\[\#1b120a\],
-.theme-cyber-tech .bg-\[\#1a1209\] {
-  background-color: #132a3e !important;
+
+.theme-cyber-tech div[class*="bg-[#2"],
+.theme-cyber-tech div[class*="bg-[#3"],
+.theme-cyber-tech div[class*="bg-[#4"] {
+  background-color: #112035 !important;
 }
-.theme-cyber-tech .bg-\[\#34281b\],
-.theme-cyber-tech .bg-\[\#3d2a13\],
-.theme-cyber-tech .bg-\[\#382613\],
-.theme-cyber-tech .bg-\[\#261a0d\] {
-  background-color: #1a3c54 !important;
+
+.theme-cyber-tech [class*="text-[#f"],
+.theme-cyber-tech [class*="text-[#e8"],
+.theme-cyber-tech [class*="text-[#d"],
+.theme-cyber-tech [class*="text-amber-50"],
+.theme-cyber-tech [class*="text-amber-100"],
+.theme-cyber-tech .text-white {
+  color: #ecfeff !important;
+}
+
+.theme-cyber-tech [class*="text-amber-200"],
+.theme-cyber-tech [class*="text-amber-300"],
+.theme-cyber-tech [class*="text-[#a"],
+.theme-cyber-tech [class*="text-[#8"] {
+  color: #a7f3d0 !important;
+}
+
+.theme-cyber-tech [class*="text-[#c89b3c]"],
+.theme-cyber-tech [class*="text-[#ffd700]"],
+.theme-cyber-tech [class*="text-[#e6c670]"],
+.theme-cyber-tech [class*="text-amber-400"],
+.theme-cyber-tech [class*="text-amber-500"],
+.theme-cyber-tech [class*="text-yellow-400"] {
+  color: #10b981 !important;
 }
 
 .theme-cyber-tech input,
@@ -552,42 +897,15 @@ body.theme-cyber-tech {
   color: #ecfeff !important;
   border-color: #0d9488 !important;
 }
+
 .theme-cyber-tech input::placeholder,
 .theme-cyber-tech textarea::placeholder {
   color: #475569 !important;
 }
 
-.theme-cyber-tech .border-\[\#2d251e\],
-.theme-cyber-tech .border-\[\#33271c\],
-.theme-cyber-tech .border-\[\#3e3020\],
-.theme-cyber-tech .border-\[\#3e3223\],
-.theme-cyber-tech .border-\[\#4a3a29\],
-.theme-cyber-tech .border-\[\#2a2219\],
-.theme-cyber-tech .border-\[\#3b2917\],
-.theme-cyber-tech .border-\[\#3b2713\],
-.theme-cyber-tech .border-\[\#52391b\],
-.theme-cyber-tech .border-\[\#4a3419\],
-.theme-cyber-tech .border-\[\#8c672b\] {
+.theme-cyber-tech [class*="border-amber-"],
+.theme-cyber-tech [class*="border-[#"] {
   border-color: #0f766e !important;
-}
-
-.theme-cyber-tech .text-\[\#e8dfd1\],
-.theme-cyber-tech .text-\[\#f5ecd8\],
-.theme-cyber-tech .text-\[\#f4e2b7\],
-.theme-cyber-tech .text-\[\#d6c7b2\],
-.theme-cyber-tech .text-\[\#fff2a8\],
-.theme-cyber-tech .text-\[\#f0d492\] {
-  color: #ecfeff !important;
-}
-.theme-cyber-tech .text-\[\#a69680\],
-.theme-cyber-tech .text-\[\#8c7e6c\],
-.theme-cyber-tech .text-\[\#c5b59e\] {
-  color: #5eead4 !important;
-}
-.theme-cyber-tech .text-\[\#e6c670\],
-.theme-cyber-tech .text-\[\#ffd700\],
-.theme-cyber-tech .text-\[\#c89b3c\] {
-  color: #10b981 !important;
 }
 
 #root {

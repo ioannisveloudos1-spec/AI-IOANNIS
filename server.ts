@@ -1191,6 +1191,108 @@ ${knownIsopsephiesMap[val] ? knownIsopsephiesMap[val].map(m => `- ${m}`).join("\
 *(Ανάλυση από την Τ.Ν. ΙΩΑΝΝΗΣ 1.0)*`;
   }
 
+
+  // API Translation Endpoint (English <-> Greek, Ancient -> Modern Greek)
+  app.post("/api/translate", async (req, res) => {
+    try {
+      const { text, direction = "en_to_el", customApiKey } = req.body;
+      if (!text || typeof text !== "string" || !text.trim()) {
+        return res.status(400).json({ success: false, error: "Κενό κείμενο προς μετάφραση" });
+      }
+
+      let ai = getGenAI();
+      if (customApiKey && typeof customApiKey === "string" && customApiKey.trim().length > 10) {
+        ai = new GoogleGenAI({ apiKey: customApiKey.trim() });
+      }
+
+      let prompt = "";
+      if (direction === "en_to_el") {
+        prompt = `Είσαι η «Τ.Ν. ΙΩΑΝΝΗΣ 1.0», έγκριτος μεταφραστής. Μετάφρασε το ακόλουθο αγγλικό κείμενο σε άπταιστα, φυσικά και ακριβή Ελληνικά (αν περιέχει θεολογικούς, φιλοσοφικούς, ιστορικούς ή βιβλικούς όρους, χρησιμοποίησε την αρμόζουσα ελληνική ορολογία). Επίστρεψε ΜΟΝΟ την τελική ελληνική μετάφραση, χωρίς εισαγωγικά, χωρίς επεξηγηματικά σχόλια και χωρίς markdown επικεφαλίδες:\n\n${text}`;
+      } else if (direction === "el_to_en") {
+        prompt = `You are "AI IOANNIS 1.0", expert classical and modern Greek translator. Translate the following Greek text (ancient, biblical, Byzantine or modern) into fluent, accurate English. Return ONLY the English translation, without quotation marks, without commentary and without markdown headers:\n\n${text}`;
+      } else if (direction === "ancient_to_modern") {
+        prompt = `Είσαι η «Τ.Ν. ΙΩΑΝΝΗΣ 1.0», ειδικός στην αρχαιοελληνική και πατερική γραμματεία. Απόδωσε το παρακάτω αρχαίο ελληνικό κείμενο σε ρέοντα, κατανοητά και πιστά Νέα Ελληνικά. Επίστρεψε ΜΟΝΟ τη νεοελληνική απόδοση, χωρίς εισαγωγικά και χωρίς επεξηγήσεις:\n\n${text}`;
+      } else {
+        return res.status(400).json({ success: false, error: "Μη έγκυρη κατεύθυνση μετάφρασης" });
+      }
+
+      let translatedText = "";
+      let modelUsed = "Offline";
+
+      if (ai) {
+        const candidateModels = ["gemini-3.7-flash", "gemini-flash-latest", "gemini-2.5-flash"];
+        for (const modelName of candidateModels) {
+          try {
+            const response = await ai.models.generateContent({
+              model: modelName,
+              contents: prompt,
+            });
+            if (response && response.text) {
+              translatedText = response.text.trim();
+              modelUsed = `Τ.Ν. ΙΩΑΝΝΗΣ 1.0 (${modelName})`;
+              break;
+            }
+          } catch (err: any) {
+            console.warn(`Translate API error with ${modelName}:`, err?.message || err);
+          }
+        }
+      }
+
+      if (!translatedText) {
+        // Fallback to offline word-by-word / dictionary translation
+        if (direction === "en_to_el") {
+          const dict: Record<string, string> = {
+            "JOHN": "Γιάννης", "TRUE": "Αληθώς", "JOHN TRUE": "Γιάννης Αληθώς",
+            "JESUS": "Ιησούς", "CHRIST": "Χριστός", "JESUS CHRIST": "Ιησούς Χριστός",
+            "GOD": "Θεός", "LORD": "Κύριος", "HOLY": "Άγιος", "SPIRIT": "Πνεύμα",
+            "HOLY SPIRIT": "Άγιο Πνεύμα", "FATHER": "Πατήρ", "SON": "Υιός",
+            "LOVE": "Αγάπη", "LIGHT": "Φως", "TRUTH": "Αλήθεια", "PEACE": "Ειρήνη",
+            "LIFE": "Ζωή", "WORD": "Λόγος", "FAITH": "Πίστη", "HOPE": "Ελπίδα",
+            "WISDOM": "Σοφία", "COMPUTER": "Υπολογιστής", "CORONA VIRUS": "Κορωνοϊός",
+            "MORNING STAR": "Πρωινός Αστήρ", "SACRED GEOMETRY": "Ιερά Γεωμετρία",
+            "ONE TWO THREE": "Ένα Δύο Τρία", "WE ARE NOT ALONE": "Δεν Είμαστε Μόνοι",
+            "NUCLEAR WEAPON": "Πυρηνικό Όπλο", "SAVED IN JESUS": "Σωσμένος εν Ιησού",
+            "RIGHTEOUS GOD": "Δίκαιος Θεός", "THE GOD OF LIGHT": "Ο Θεός του Φωτός"
+          };
+          const cleanKey = text.trim().toUpperCase();
+          if (dict[cleanKey]) {
+            translatedText = dict[cleanKey];
+          } else {
+            const words = text.trim().split(/\s+/);
+            translatedText = words.map(w => dict[w.toUpperCase()] || w).join(" ");
+          }
+        } else if (direction === "el_to_en") {
+          const dict: Record<string, string> = {
+            "ΓΙΑΝΝΗΣ": "John", "ΙΩΑΝΝΗΣ": "John", "ΑΛΗΘΩΣ": "Truly", "ΑΛΗΘΕΙΑ": "Truth",
+            "ΙΗΣΟΥΣ": "Jesus", "ΧΡΙΣΤΟΣ": "Christ", "ΘΕΟΣ": "God", "ΚΥΡΙΟΣ": "Lord",
+            "ΑΓΑΠΗ": "Love", "ΦΩΣ": "Light", "ΖΩΗ": "Life", "ΛΟΓΟΣ": "Word",
+            "ΣΟΦΙΑ": "Wisdom", "ΕΙΡΗΝΗ": "Peace", "ΠΙΣΤΗ": "Faith", "ΕΛΠΙΔΑ": "Hope"
+          };
+          const cleanKey = text.trim().toUpperCase();
+          if (dict[cleanKey]) {
+            translatedText = dict[cleanKey];
+          } else {
+            const words = text.trim().split(/\s+/);
+            translatedText = words.map(w => dict[w.toUpperCase()] || w).join(" ");
+          }
+        } else {
+          translatedText = text;
+        }
+        modelUsed = "Offline Λεξικό";
+      }
+
+      return res.json({
+        success: true,
+        translation: translatedText,
+        direction,
+        modelUsed,
+      });
+    } catch (err: any) {
+      console.error("Translate endpoint fatal error:", err);
+      return res.status(500).json({ success: false, error: err?.message || "Internal error" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

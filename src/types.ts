@@ -1,6 +1,8 @@
 export type TabType = 
   | "calculator" 
   | "search" 
+  | "golden-verses"
+  | "solar-iota-danaos"
   | "online-finder"
   | "calendar"
   | "cosmic-journey"

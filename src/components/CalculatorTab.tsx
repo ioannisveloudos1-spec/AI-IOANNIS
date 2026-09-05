@@ -6,6 +6,7 @@ import {
   getAlphabetChart,
 } from "../utils/isopsephy";
 import { SavedIsopsephyItem, NumberingSystem } from "../types";
+import { formatEnglishItemWithGreekTranslation } from "../utils/translation";
 import { GoldenRatioGaugeTool } from "./GoldenRatioGaugeTool";
 import { PythagoreanMonochordAudio } from "./PythagoreanMonochordAudio";
 import { ExportCardImageModal } from "./ExportCardImageModal";
@@ -105,16 +106,17 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
   const handleSave = () => {
     if (!inputExpression.trim() || result.finalValue <= 0) return;
     
+    const formattedText = formatEnglishItemWithGreekTranslation(inputExpression.trim());
     onSaveItem({
-      text: inputExpression.trim(),
-      normalized: inputExpression.trim().toUpperCase(),
+      text: formattedText,
+      normalized: formattedText.toUpperCase(),
       value: result.finalValue,
       root: mathProps.pythmen,
       greekNumeral: greekNumeral || `${result.finalValue}`,
       isPhrase: result.wordBreakdowns.length > 1,
       wordCount: result.wordBreakdowns.length || 1,
       category: isEnglishSystem ? "English Gematria" : "Υπολογισμός",
-      notes: `Σύστημα: ${getSystemName(selectedSystem)} | ${result.stepsExplanation || inputExpression}`,
+      notes: `Σύστημα: ${getSystemName(selectedSystem)} | ${formattedText} = ${result.finalValue}`,
     });
 
     setSaveSuccess(true);

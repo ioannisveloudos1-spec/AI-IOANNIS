@@ -3,6 +3,8 @@ import { TabType, SavedIsopsephyItem } from "./types";
 import { Header } from "./components/Header";
 import { CalculatorTab } from "./components/CalculatorTab";
 import { SearchTab } from "./components/SearchTab";
+import { GoldenVersesTab } from "./components/GoldenVersesTab";
+import { SolarIotaDanaosTab } from "./components/SolarIotaDanaosTab";
 import { OnlineFinderTab } from "./components/OnlineFinderTab";
 import { CalendarTab } from "./components/CalendarTab";
 import { CosmicJourneyTab } from "./components/cosmic-journey/CosmicJourneyTab";
@@ -37,6 +39,7 @@ import {
   saveThemePreference,
 } from "./utils/theme";
 import { numberToGreekNumeral } from "./utils/isopsephy";
+import { formatEnglishItemWithGreekTranslation } from "./utils/translation";
 import { Calculator, Search, Calendar, Box, BookMarked, Sparkles } from "lucide-react";
 
 const LOCAL_STORAGE_KEY = "greek_isopsephy_saved_archive_v3_canonical";
@@ -309,8 +312,11 @@ export default function App() {
   };
 
   const handleSaveItem = (itemData: Omit<SavedIsopsephyItem, "id" | "createdAt">) => {
+    const formattedText = formatEnglishItemWithGreekTranslation(itemData.text);
     const newItem: SavedIsopsephyItem = {
       ...itemData,
+      text: formattedText,
+      normalized: formattedText.toUpperCase(),
       id: `saved-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date().toISOString(),
     };
@@ -324,7 +330,7 @@ export default function App() {
         showToast(`Το «${newItem.text}» (${newItem.value}) υπάρχει ήδη στο αρχείο.`);
         return prev;
       }
-      showToast(`Αποθηκεύτηκε: «${newItem.text}» = ${newItem.value}`);
+      showToast(`✨ Αποθηκεύτηκε: ${newItem.text}=${newItem.value}`);
       return [newItem, ...prev];
     });
   };
@@ -417,6 +423,29 @@ export default function App() {
             onSaveItem={handleSaveItem}
             onOpenAiModal={handleOpenAiModal}
             savedItems={savedItems}
+          />
+        )}
+
+        {currentTab === "golden-verses" && (
+          <GoldenVersesTab
+            onNavigateToCalculator={(text) => {
+              setCurrentTextForStats(text);
+              setCurrentTab("calculator");
+            }}
+            onNavigateToSearch={(text) => {
+              setCurrentTextForStats(text);
+              setCurrentTab("search");
+            }}
+            onSaveItem={handleSaveItem}
+            onOpenAiModal={handleOpenAiModal}
+          />
+        )}
+
+        {currentTab === "solar-iota-danaos" && (
+          <SolarIotaDanaosTab
+            onOpenAiModal={handleOpenAiModal}
+            onSaveItem={handleSaveItem}
+            onNavigateToTab={(tab) => setCurrentTab(tab)}
           />
         )}
 
@@ -678,19 +707,19 @@ export default function App() {
               className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition-all cursor-pointer touch-manipulation min-h-[44px] w-full min-w-0 overflow-hidden ${
                 isActive
                   ? isLight
-                    ? "text-[#8c5307] font-bold bg-[#ebdcc5]/60"
+                    ? "text-[#7a3902] font-bold bg-[#dfcdb4]"
                     : "text-[#ffd700] font-bold bg-[#241c14]/70"
                   : isLight
-                  ? "text-[#634324] hover:text-[#382109]"
-                  : "text-[#8c7e6c] hover:text-[#d6c7b2]"
+                  ? "text-[#472605] hover:text-[#1c0c00] font-medium"
+                  : "text-[#a69680] hover:text-[#d6c7b2]"
               }`}
             >
               <div className="relative flex items-center justify-center">
                 <Icon
                   className={`w-4.5 h-4.5 sm:w-5 sm:h-5 shrink-0 ${
                     isActive
-                      ? isLight ? "text-[#8c5307]" : "text-[#ffd700]"
-                      : isLight ? "text-[#634324]" : "text-[#736553]"
+                      ? isLight ? "text-[#7a3902]" : "text-[#ffd700]"
+                      : isLight ? "text-[#472605]" : "text-[#8c7e6c]"
                   }`}
                 />
                 {item.badge !== undefined && item.badge > 0 && (

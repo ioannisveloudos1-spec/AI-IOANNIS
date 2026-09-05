@@ -59,7 +59,20 @@ import {
   FolderPlus,
   BookMarked,
   ArrowUpDown,
+  Languages,
+  ArrowLeftRight,
+  RefreshCw,
+  CheckCircle2,
 } from "lucide-react";
+import {
+  formatEnglishItemWithGreekTranslation,
+  translateEnglishToGreekSync,
+  translateGreekToEnglishSync,
+  fetchOnlineTranslation,
+  isEnglishText,
+  isGreekText,
+  TranslationDirection,
+} from "../utils/translation";
 
 interface SearchTabProps {
   onSaveItem: (item: Omit<SavedIsopsephyItem, "id" | "createdAt">) => void;
@@ -171,6 +184,13 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   const [dismissedMatchIds, setDismissedMatchIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Translation suite state
+  const [translationDirection, setTranslationDirection] = useState<TranslationDirection>("ancient_to_modern");
+  const [translatedResult, setTranslatedResult] = useState<string>("");
+  const [isTranslating, setIsTranslating] = useState<boolean>(false);
+  const [translationModelUsed, setTranslationModelUsed] = useState<string>("");
+  const [showOriginalInTranslation, setShowOriginalInTranslation] = useState<boolean>(true);
+
   // Selected preset object
   const selectedPreset = useMemo(() => PRESET_TEXTS.find((p) => p.id === selectedPresetId), [selectedPresetId]);
 
@@ -229,38 +249,104 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     setDismissedMatchIds((prev) => new Set([...prev, id]));
   };
 
+  // Trigger translation mode with a specific direction
+  const handleTriggerTranslationMode = async (direction: TranslationDirection) => {
+    setTopTextViewMode("translation");
+    setTranslationDirection(direction);
+
+    // If ancient_to_modern and using a preset that already has translation
+    if (direction === "ancient_to_modern") {
+      if (selectedPreset?.translation && inputText.trim().startsWith(selectedPreset.text.trim().slice(0, 40))) {
+        setTranslatedResult(selectedPreset.translation);
+        setTranslationModelUsed("Έτοιμη Φιλολογική Απόδοση");
+        return;
+      }
+    }
+
+    if (!inputText.trim()) {
+      setTranslatedResult("");
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const res = await fetchOnlineTranslation(inputText, direction);
+      setTranslatedResult(res.translation);
+      setTranslationModelUsed(res.modelUsed || "Τ.Ν. ΙΩΑΝΝΗΣ 1.0");
+    } catch {
+      // Fallback to local dictionary
+      if (direction === "en_to_el") {
+        setTranslatedResult(translateEnglishToGreekSync(inputText));
+      } else if (direction === "el_to_en") {
+        setTranslatedResult(translateGreekToEnglishSync(inputText));
+      }
+      setTranslationModelUsed("Τοπικό Λεξικό (Offline)");
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handleApplyTranslationToInput = () => {
+    if (!translatedResult) return;
+    const cleaned = cleanAndNormalizePolytonic(translatedResult);
+    setInputText(cleaned + "\n\n");
+    setTopTextViewMode("edit");
+
+    // Automatically switch numbering system to match language
+    if (translationDirection === "el_to_en") {
+      setSelectedSystem(NumberingSystem.ENGLISH_BASE6);
+      setSavedToastMessage("✨ Η αγγλική μετάφραση φορτώθηκε (Ενεργοποιήθηκε το Αγγλικό Σύστημα x6 / 888)!");
+    } else {
+      if (selectedSystem === NumberingSystem.ENGLISH_BASE6 || selectedSystem === NumberingSystem.ENGLISH_SIMPLE) {
+        setSelectedSystem(NumberingSystem.IONIAN);
+      }
+      setSavedToastMessage("✨ Η ελληνική μετάφραση φορτώθηκε για ισοψηφική ανάλυση!");
+    }
+    setTimeout(() => setSavedToastMessage(null), 3500);
+  };
+
+  const handleSwapTranslationDirection = () => {
+    const nextDir: TranslationDirection =
+      translationDirection === "en_to_el" ? "el_to_en" : "en_to_el";
+    handleTriggerTranslationMode(nextDir);
+  };
+
   const handleSaveWordMatch = (wordObj: WordIsopsephy) => {
+    const textToSave = formatEnglishItemWithGreekTranslation(wordObj.rawWord);
+    const isEng = isEnglishText(wordObj.rawWord);
     const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(wordObj.value) || `${wordObj.value}`) : `${wordObj.value}`;
     const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
-      text: wordObj.rawWord,
-      normalized: wordObj.normalizedWord,
+      text: textToSave,
+      normalized: textToSave.toUpperCase(),
       value: wordObj.value,
       root: wordObj.root,
       greekNumeral: greekNum,
       isPhrase: false,
       wordCount: 1,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Αποθηκευμένη λέξη [${sysObj?.shortName || "Ισοψηφία"}]: ${wordObj.rawWord} = ${wordObj.value} (Πυθμένας: ${wordObj.root})`,
-      category: "Μεμονωμένη Λέξη",
+      notes: `Αποθηκευμένη λέξη [${sysObj?.shortName || "Ισοψηφία"}]: ${textToSave} = ${wordObj.value} (Πυθμένας: ${wordObj.root})`,
+      category: isEng ? "English Gematria" : "Μεμονωμένη Λέξη",
       system: selectedSystem,
     });
   };
 
   const handleSavePhraseMatch = (phraseObj: PhraseMatch) => {
+    const textToSave = formatEnglishItemWithGreekTranslation(phraseObj.phrase);
+    const isEng = isEnglishText(phraseObj.phrase);
     const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(phraseObj.value) || `${phraseObj.value}`) : `${phraseObj.value}`;
     const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
-      text: phraseObj.phrase,
-      normalized: phraseObj.phrase.toUpperCase(),
+      text: textToSave,
+      normalized: textToSave.toUpperCase(),
       value: phraseObj.value,
       root: phraseObj.root,
       greekNumeral: greekNum,
       isPhrase: true,
       wordCount: phraseObj.wordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Συνδυασμός ${phraseObj.wordCount} λέξεων [${sysObj?.shortName || "Ισοψηφία"}]: ${phraseObj.words.map((w) => `${w.rawWord}(${w.value})`).join(" + ")} = ${phraseObj.value}`,
-      category: "Συνδυασμός Φράσεων",
+      notes: `Συνδυασμός ${phraseObj.wordCount} λέξεων [${sysObj?.shortName || "Ισοψηφία"}]: ${textToSave} = ${phraseObj.value}`,
+      category: isEng ? "English Gematria" : "Συνδυασμός Φράσεων",
       system: selectedSystem,
     });
   };
@@ -350,19 +436,21 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   };
 
   const handleSaveSeedCombo = (comboObj: SeedWordCombinationMatch) => {
+    const textToSave = formatEnglishItemWithGreekTranslation(comboObj.fullPhrase);
+    const isEng = isEnglishText(comboObj.fullPhrase);
     const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(comboObj.totalValue) || `${comboObj.totalValue}`) : `${comboObj.totalValue}`;
     const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
-      text: comboObj.fullPhrase,
-      normalized: comboObj.fullPhrase.toUpperCase(),
+      text: textToSave,
+      normalized: textToSave.toUpperCase(),
       value: comboObj.totalValue,
       root: comboObj.totalRoot,
       greekNumeral: greekNum,
       isPhrase: true,
       wordCount: comboObj.totalWordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Συνδυασμός με Λέξη-Κλειδί [${sysObj?.shortName || "Gematria"}]: «${comboObj.seedPhrase}» (${comboObj.seedValue}) + ${comboObj.textWordCount} λέξεις: ${comboObj.fullEquation}`,
-      category: "Συνδυασμός με Λέξη-Κλειδί",
+      notes: `Συνδυασμός με Λέξη-Κλειδί [${sysObj?.shortName || "Gematria"}]: ${textToSave} = ${comboObj.totalValue}`,
+      category: isEng ? "English Gematria" : "Συνδυασμός με Λέξη-Κλειδί",
       system: selectedSystem,
     });
   };
@@ -436,19 +524,21 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   };
 
   const handleSaveAnywhereCombo = (comboObj: WordCombinationMatch) => {
+    const textToSave = formatEnglishItemWithGreekTranslation(comboObj.phrase);
+    const isEng = isEnglishText(comboObj.phrase);
     const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(comboObj.value) || `${comboObj.value}`) : `${comboObj.value}`;
     const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
-      text: comboObj.phrase,
-      normalized: comboObj.phrase.toUpperCase(),
+      text: textToSave,
+      normalized: textToSave.toUpperCase(),
       value: comboObj.value,
       root: comboObj.root,
       greekNumeral: greekNum,
       isPhrase: true,
       wordCount: comboObj.wordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Ελεύθερος συνδυασμός ${comboObj.wordCount} λέξεων [${sysObj?.shortName || "Ισοψηφία"}] (${comboObj.isUniqueMode ? "Μοναδικές" : "Κείμενο"}): ${comboObj.words.map((w) => `${w.rawWord}(${w.value})`).join(" + ")} = ${comboObj.value}`,
-      category: "Συνδυασμός Λέξεων Κειμένου",
+      notes: `Ελεύθερος συνδυασμός ${comboObj.wordCount} λέξεων [${sysObj?.shortName || "Ισοψηφία"}]: ${textToSave} = ${comboObj.value}`,
+      category: isEng ? "English Gematria" : "Συνδυασμός Λέξεων Κειμένου",
       system: selectedSystem,
     });
   };
@@ -618,19 +708,21 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   }, [sentences, sentenceTarget, sentenceSearchQuery, sentenceMinWords, sentenceMaxWords, sentenceRootFilter, sentenceSortOption]);
 
   const handleSaveSentence = (sentenceObj: SentenceIsopsephyMatch) => {
+    const textToSave = formatEnglishItemWithGreekTranslation(sentenceObj.text);
+    const isEng = isEnglishText(sentenceObj.text);
     const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(sentenceObj.value) || `${sentenceObj.value}`) : `${sentenceObj.value}`;
     const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
-      text: sentenceObj.text,
-      normalized: sentenceObj.normalizedText,
+      text: textToSave,
+      normalized: textToSave.toUpperCase(),
       value: sentenceObj.value,
       root: sentenceObj.root,
       greekNumeral: greekNum,
       isPhrase: true,
       wordCount: sentenceObj.wordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Πρόταση #${sentenceObj.sentenceIndex} [${sysObj?.shortName || "Ισοψηφία"}] (${sentenceObj.wordCount} λέξεις, ${sentenceObj.charCount} γράμματα): ${sentenceObj.words.slice(0, 6).map(w => `${w.rawWord}(${w.value})`).join(" + ")}${sentenceObj.words.length > 6 ? " + ..." : ""} = ${sentenceObj.value}`,
-      category: "Πρόταση / Φράση Κειμένου",
+      notes: `Πρόταση #${sentenceObj.sentenceIndex} [${sysObj?.shortName || "Ισοψηφία"}]: ${textToSave} = ${sentenceObj.value}`,
+      category: isEng ? "English Gematria" : "Πρόταση / Φράση Κειμένου",
       system: selectedSystem,
     });
   };
@@ -868,6 +960,76 @@ export const SearchTab: React.FC<SearchTabProps> = ({
               <button
                 type="button"
                 onClick={() => {
+                  const p = PRESET_TEXTS.find((x) => x.id === "pythagoras-chrysa-epi-71");
+                  if (p) {
+                    setSelectedPresetId(p.id);
+                    setInputText(p.text);
+                  }
+                }}
+                className="px-2 py-0.5 rounded bg-[#2b1f14] hover:bg-[#3d2c1c] border border-amber-500/50 text-amber-200 text-[11px] font-serif font-bold cursor-pointer transition-colors shadow-sm"
+                title="Φόρτωση: Τα Χρυσά Έπη του Πυθαγόρα (71 Στίχοι)"
+              >
+                📜 Χρυσᾶ Ἔπη (71)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = PRESET_TEXTS.find((x) => x.id === "christos-archetypo-agapis");
+                  if (p) {
+                    setSelectedPresetId(p.id);
+                    setInputText(p.text);
+                  }
+                }}
+                className="px-2 py-0.5 rounded bg-[#1e293b] hover:bg-[#334155] border border-cyan-500/40 text-cyan-200 text-[11px] font-serif font-medium cursor-pointer transition-colors shadow-sm"
+                title="Φόρτωση: Ο Χριστός ως Εσωτερικό Αρχέτυπο: Η Αναζήτηση της Καρδιάς"
+              >
+                🕊️ Ὁ Χριστός ἐντός
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = PRESET_TEXTS.find((x) => x.id === "laureion-ianeus-telianos-666");
+                  if (p) {
+                    setSelectedPresetId(p.id);
+                    setInputText(p.text);
+                  }
+                }}
+                className="px-2 py-0.5 rounded bg-[#2e1d12] hover:bg-[#422818] border border-amber-600/50 text-amber-200 text-[11px] font-serif font-bold cursor-pointer transition-colors shadow-sm"
+                title="Φόρτωση: Η Πύλη ονόματι ΛΑΥΡΕΙΟΝ (666) - Ιανεύς Τελιανός"
+              >
+                🏛️ Πύλη ΛΑΥΡΕΙΟΝ (666)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = PRESET_TEXTS.find((x) => x.id === "plato-cave-republic");
+                  if (p) {
+                    setSelectedPresetId(p.id);
+                    setInputText(p.text);
+                  }
+                }}
+                className="px-2 py-0.5 rounded bg-[#201810] hover:bg-[#302214] border border-[#3e3020] text-amber-300 text-[11px] font-serif cursor-pointer transition-colors"
+                title="Φόρτωση: Πλάτωνος Πολιτεία (Μῦθος Σπηλαίου)"
+              >
+                Μῦθος Σπηλαίου
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = PRESET_TEXTS.find((x) => x.id === "parmenides-nature");
+                  if (p) {
+                    setSelectedPresetId(p.id);
+                    setInputText(p.text);
+                  }
+                }}
+                className="px-2 py-0.5 rounded bg-[#201810] hover:bg-[#302214] border border-[#3e3020] text-amber-300 text-[11px] font-serif cursor-pointer transition-colors"
+                title="Φόρτωση: Παρμενίδης (Περὶ Φύσεως)"
+              >
+                Παρμενίδης
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   const p = PRESET_TEXTS.find((x) => x.id === "delphi-pythagorean-147");
                   if (p) {
                     setSelectedPresetId(p.id);
@@ -905,7 +1067,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
               <span>Κείμενο προς Ανάλυση & Αναζήτηση</span>
             </label>
 
-            {/* Mode Switcher: Edit vs Purple Highlight View vs Modern Greek Translation */}
+            {/* Mode Switcher: Edit vs Purple Highlight View vs Modern Greek Translation vs English Translation */}
             <div className="flex items-center bg-[#0d0c0a] p-1 rounded-lg border border-[#2d241a] ml-1 flex-wrap gap-1">
               <button
                 type="button"
@@ -916,7 +1078,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     : "text-[#8c7e6c] hover:text-[#e8dfd1]"
                 }`}
               >
-                ✍️ Αρχαίο (Επεξεργασία)
+                ✍️ Κείμενο (Επεξεργασία)
               </button>
               <button
                 type="button"
@@ -936,17 +1098,46 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                   </span>
                 )}
               </button>
+
+              {/* Translation Suite Buttons */}
               <button
                 type="button"
-                onClick={() => setTopTextViewMode("translation")}
+                onClick={() => handleTriggerTranslationMode("ancient_to_modern")}
                 className={`px-2.5 py-1 rounded text-xs font-serif transition-all flex items-center gap-1.5 ${
-                  topTextViewMode === "translation"
-                    ? "bg-amber-900/60 text-amber-200 font-bold border border-amber-500/60 shadow-md shadow-amber-900/30"
+                  topTextViewMode === "translation" && translationDirection === "ancient_to_modern"
+                    ? "bg-amber-900/70 text-amber-200 font-bold border border-amber-500/60 shadow-md shadow-amber-900/30"
                     : "text-[#b09e86] hover:text-amber-300"
                 }`}
-                title="Προβολή της πλήρους Νεοελληνικής μετάφρασης του επιλεγμένου κειμένου"
+                title="Απόδοση Αρχαίων Ελληνικών σε Νέα Ελληνικά"
               >
-                <span>📖 Νεοελληνική Μετάφραση</span>
+                <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                <span>🏛️ Αρχαία ➔ Νέα</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTriggerTranslationMode("en_to_el")}
+                className={`px-2.5 py-1 rounded text-xs font-serif transition-all flex items-center gap-1.5 ${
+                  topTextViewMode === "translation" && translationDirection === "en_to_el"
+                    ? "bg-blue-900/70 text-blue-100 font-bold border border-blue-400 shadow-md shadow-blue-900/40"
+                    : "text-blue-300 hover:text-blue-100"
+                }`}
+                title="Μετάφραση αγγλικού κειμένου στα ελληνικά (π.χ. JOHN TRUE ➔ Γιάννης Αληθώς)"
+              >
+                <Languages className="w-3.5 h-3.5 text-blue-400" />
+                <span>🇬🇧 ➔ 🇬🇷 Αγγλικά ➔ Ελληνικά</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTriggerTranslationMode("el_to_en")}
+                className={`px-2.5 py-1 rounded text-xs font-serif transition-all flex items-center gap-1.5 ${
+                  topTextViewMode === "translation" && translationDirection === "el_to_en"
+                    ? "bg-emerald-900/70 text-emerald-100 font-bold border border-emerald-400 shadow-md shadow-emerald-900/40"
+                    : "text-emerald-300 hover:text-emerald-100"
+                }`}
+                title="Μετάφραση ελληνικού κειμένου στα αγγλικά"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-400" />
+                <span>🇬🇷 ➔ 🇬🇧 Ελληνικά ➔ Αγγλικά</span>
               </button>
             </div>
           </div>
@@ -1008,7 +1199,32 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Quick Translation Shortcuts */}
+            <div className="flex items-center gap-1.5 bg-[#0a0907] px-2 py-1 rounded-lg border border-[#2a2218]">
+              <span className="text-[11px] font-serif text-[#a69680]">Μετάφραση:</span>
+              <button
+                type="button"
+                onClick={() => handleTriggerTranslationMode("en_to_el")}
+                disabled={!inputText.trim()}
+                className="px-2 py-0.5 rounded bg-[#121c29] hover:bg-[#1a283b] disabled:opacity-40 disabled:cursor-not-allowed text-blue-300 hover:text-white border border-blue-500/40 text-[11px] font-serif font-bold transition-all flex items-center gap-1 cursor-pointer"
+                title="Μετάφραση του αγγλικού κειμένου σε ελληνικά"
+              >
+                <Languages className="w-3 h-3 text-blue-400" />
+                <span>🇬🇧 ➔ 🇬🇷 Αγγλικά σε Ελληνικά</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTriggerTranslationMode("el_to_en")}
+                disabled={!inputText.trim()}
+                className="px-2 py-0.5 rounded bg-[#10241b] hover:bg-[#183628] disabled:opacity-40 disabled:cursor-not-allowed text-emerald-300 hover:text-white border border-emerald-500/40 text-[11px] font-serif font-bold transition-all flex items-center gap-1 cursor-pointer"
+                title="Μετάφραση του ελληνικού κειμένου σε αγγλικά"
+              >
+                <ArrowLeftRight className="w-3 h-3 text-emerald-400" />
+                <span>🇬🇷 ➔ 🇬🇧 Ελληνικά σε Αγγλικά</span>
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={() => {
@@ -1110,53 +1326,123 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             </div>
           </div>
         ) : (
-          /* Modern Greek Translation View */
+          /* Translation Suite View (Ancient->Modern, EN->EL, EL->EN) */
           <div className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-gradient-to-r from-[#17120c] via-[#241a10] to-[#17120c] border border-amber-600/50 shadow-md">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-amber-950 border border-amber-500/40 text-amber-400">
-                  <BookOpen className="w-4 h-4" />
+            <div className={`p-4 rounded-xl border shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-3 ${
+              translationDirection === "en_to_el"
+                ? "bg-gradient-to-r from-[#0d1624] via-[#142338] to-[#0d1624] border-blue-500/50"
+                : translationDirection === "el_to_en"
+                ? "bg-gradient-to-r from-[#0d2117] via-[#133022] to-[#0d2117] border-emerald-500/50"
+                : "bg-gradient-to-r from-[#17120c] via-[#241a10] to-[#17120c] border-amber-600/50"
+            }`}>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-serif font-bold border flex items-center gap-1.5 ${
+                    translationDirection === "en_to_el"
+                      ? "bg-blue-950 text-blue-200 border-blue-400/50"
+                      : translationDirection === "el_to_en"
+                      ? "bg-emerald-950 text-emerald-200 border-emerald-400/50"
+                      : "bg-amber-950 text-amber-200 border-amber-400/50"
+                  }`}>
+                    {translationDirection === "en_to_el" && <><Languages className="w-3.5 h-3.5 text-blue-400" /> Μετάφραση: Αγγλικά ➔ Ελληνικά</>}
+                    {translationDirection === "el_to_en" && <><ArrowLeftRight className="w-3.5 h-3.5 text-emerald-400" /> Μετάφραση: Ελληνικά ➔ Αγγλικά</>}
+                    {translationDirection === "ancient_to_modern" && <><BookOpen className="w-3.5 h-3.5 text-amber-400" /> Νεοελληνική Απόδοση Αρχαίου</>}
+                  </span>
+
+                  {translationModelUsed && (
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-black/40 text-[#cbb698] border border-white/10">
+                      Πηγή: {translationModelUsed}
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <h4 className="text-sm font-serif font-bold text-amber-100 flex items-center gap-2 flex-wrap">
-                    <span>{selectedPreset?.title || "Νεοελληνική Μετάφραση"}</span>
-                    {selectedPreset?.author && (
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/30">
-                        {selectedPreset.author}
-                      </span>
-                    )}
-                  </h4>
-                  <p className="text-xs text-[#cbb698] font-sans mt-0.5">
-                    {selectedPreset?.era ? `Εποχή: ${selectedPreset.era} • ` : ""}Πλήρης απόδοση στα Νέα Ελληνικά
-                  </p>
+
+                <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                  <span className="text-[11px] text-[#8c7e6c] mr-1">Εναλλαγή:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleTriggerTranslationMode("ancient_to_modern")}
+                    className={`px-2 py-0.5 rounded text-[11px] font-serif transition-colors ${
+                      translationDirection === "ancient_to_modern"
+                        ? "bg-amber-800 text-white font-bold"
+                        : "bg-black/30 text-amber-300/70 hover:text-amber-200"
+                    }`}
+                  >
+                    🏛️ Αρχαία ➔ Νέα
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTriggerTranslationMode("en_to_el")}
+                    className={`px-2 py-0.5 rounded text-[11px] font-serif transition-colors ${
+                      translationDirection === "en_to_el"
+                        ? "bg-blue-800 text-white font-bold"
+                        : "bg-black/30 text-blue-300/70 hover:text-blue-200"
+                    }`}
+                  >
+                    🇬🇧 ➔ 🇬🇷 Αγγλικά ➔ Ελληνικά
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTriggerTranslationMode("el_to_en")}
+                    className={`px-2 py-0.5 rounded text-[11px] font-serif transition-colors ${
+                      translationDirection === "el_to_en"
+                        ? "bg-emerald-800 text-white font-bold"
+                        : "bg-black/30 text-emerald-300/70 hover:text-emerald-200"
+                    }`}
+                  >
+                    🇬🇷 ➔ 🇬🇧 Ελληνικά ➔ Αγγλικά
+                  </button>
+                  {(translationDirection === "en_to_el" || translationDirection === "el_to_en") && (
+                    <button
+                      type="button"
+                      onClick={handleSwapTranslationDirection}
+                      className="px-2 py-0.5 rounded text-[11px] font-serif bg-black/40 hover:bg-black/60 text-white border border-white/20 transition-all flex items-center gap-1 ml-1 cursor-pointer"
+                      title="Αντιστροφή γλώσσας (Ελληνικά <-> Αγγλικά)"
+                    >
+                      <ArrowLeftRight className="w-3 h-3" />
+                      <span>Αντιστροφή</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (selectedPreset?.translation) {
-                      handleCopyText(selectedPreset.translation, "preset-translation-copy");
-                    }
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#251a0e] hover:bg-[#382613] text-amber-200 border border-amber-500/40 text-xs font-serif font-bold transition-all shadow-sm cursor-pointer"
-                  title="Αντιγραφή του κειμένου της μετάφρασης"
+                  onClick={() => setShowOriginalInTranslation(!showOriginalInTranslation)}
+                  className="px-2.5 py-1.5 rounded-lg bg-black/30 hover:bg-black/50 text-[#d6c7b2] border border-white/10 text-xs font-serif transition-all cursor-pointer"
                 >
-                  {copiedId === "preset-translation-copy" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
-                  <span>{copiedId === "preset-translation-copy" ? "Αντιγράφηκε!" : "Αντιγραφή"}</span>
+                  {showOriginalInTranslation ? "Απόκρυψη Πρωτοτύπου" : "Προβολή Πρωτοτύπου"}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => {
-                    if (selectedPreset?.translation) {
-                      setInputText(cleanAndNormalizePolytonic(selectedPreset.translation) + "\n\n");
-                      setTopTextViewMode("edit");
-                    }
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-black font-serif text-xs font-black transition-all shadow-[0_0_12px_rgba(245,158,11,0.35)] cursor-pointer"
-                  title="Φόρτωση της νεοελληνικής μετάφρασης στο πεδίο ανάλυσης για υπολογισμό λεξαρίθμων"
+                  disabled={isTranslating || !translatedResult}
+                  onClick={() => handleCopyText(translatedResult, "translation-copy")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#251a0e] hover:bg-[#382613] disabled:opacity-40 text-amber-200 border border-amber-500/40 text-xs font-serif font-bold transition-all shadow-sm cursor-pointer"
+                  title="Αντιγραφή της μετάφρασης"
+                >
+                  {copiedId === "translation-copy" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
+                  <span>{copiedId === "translation-copy" ? "Αντιγράφηκε!" : "Αντιγραφή"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isTranslating || !inputText.trim()}
+                  onClick={() => handleTriggerTranslationMode(translationDirection)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 hover:bg-black/60 disabled:opacity-40 text-[#f5ecd8] border border-white/20 text-xs font-serif transition-all cursor-pointer"
+                  title="Επαναμετάφραση μέσω AI"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isTranslating ? "animate-spin text-amber-400" : ""}`} />
+                  <span>Επαναμετάφραση</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isTranslating || !translatedResult}
+                  onClick={handleApplyTranslationToInput}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-40 text-black font-serif text-xs font-black transition-all shadow-md shadow-amber-500/30 cursor-pointer"
+                  title="Φόρτωση του μεταφρασμένου κειμένου στο πεδίο κειμένου για υπολογισμό λεξαρίθμων"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-black" />
                   <span>Ανάλυση Μετάφρασης</span>
@@ -1164,20 +1450,47 @@ export const SearchTab: React.FC<SearchTabProps> = ({
               </div>
             </div>
 
+            {/* Optional Original Text Preview */}
+            {showOriginalInTranslation && inputText.trim() && (
+              <div className="p-3 bg-[#0a0907] rounded-xl border border-[#2b2218] text-xs font-serif text-[#a69680] space-y-1">
+                <span className="font-bold text-[#d4af37] block uppercase tracking-wider text-[10px]">
+                  Πρωτότυπο Κείμενο (Πηγή):
+                </span>
+                <p className="line-clamp-2 italic text-[#cbb698] whitespace-pre-wrap">{inputText.trim()}</p>
+              </div>
+            )}
+
             {/* Translation Content Box with Two Empty Lines at the end */}
-            <div className={`p-4 sm:p-6 pb-20 bg-[#0c0a08] rounded-xl border border-amber-900/40 leading-relaxed text-sm sm:text-base font-serif text-[#f2e7d7] overflow-y-auto gold-scrollbar whitespace-pre-line shadow-inner ${
+            <div className={`p-4 sm:p-6 pb-20 bg-[#0c0a08] rounded-xl border border-[#2d251e] leading-relaxed text-sm sm:text-base font-serif text-[#f2e7d7] overflow-y-auto gold-scrollbar whitespace-pre-line shadow-inner ${
               isExpandedTextarea ? "max-h-[500px]" : "max-h-[300px]"
             }`}>
-              {selectedPreset?.translation ? (
+              {isTranslating ? (
+                <div className="py-12 text-center space-y-3">
+                  <RefreshCw className="w-8 h-8 text-amber-400 animate-spin mx-auto" />
+                  <p className="text-sm font-serif font-bold text-amber-200">
+                    Μετάφραση σε εξέλιξη μέσω της Τ.Ν. ΙΩΑΝΝΗΣ...
+                  </p>
+                  <p className="text-xs text-[#8c7e6c]">
+                    Απόδοση όρων & προτάσεων με λεξικό και τεχνητή νοημοσύνη.
+                  </p>
+                </div>
+              ) : translatedResult ? (
                 <div>
-                  {selectedPreset.translation}
+                  {translatedResult}
                   {/* Two empty lines spacer so user can read the very last line without being cut off */}
                   <div className="h-16" aria-hidden="true" />
                 </div>
               ) : (
                 <div className="py-8 text-center text-[#8c7e6c] italic space-y-2">
-                  <p>Δεν υπάρχει διαθέσιμη μετάφραση για το συγκεκριμένο κείμενο.</p>
-                  <p className="text-xs text-[#6e5f4e]">Επιλέξτε ένα από τα διαθέσιμα έτοιμα κείμενα από το μενού παραπάνω.</p>
+                  <p>Δεν υπάρχει ακόμη αποτέλεσμα μετάφρασης για το κείμενο.</p>
+                  <button
+                    type="button"
+                    onClick={() => handleTriggerTranslationMode(translationDirection)}
+                    disabled={!inputText.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-[#282015] hover:bg-[#3d3020] disabled:opacity-40 text-amber-300 text-xs font-serif border border-amber-500/40 cursor-pointer"
+                  >
+                    Έναρξη Μετάφρασης Τώρα
+                  </button>
                 </div>
               )}
             </div>

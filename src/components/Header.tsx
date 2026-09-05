@@ -27,6 +27,7 @@ import {
   Shield,
   Moon,
   Scroll,
+  ScrollText,
   Feather,
   Palette,
   Cpu,
@@ -69,6 +70,8 @@ export const Header: React.FC<HeaderProps> = ({
   const tabs = [
     { id: "calculator" as TabType, label: "Υπολογισμός", icon: Calculator, desc: "Μεμονωμένες λέξεις & πράξεις" },
     { id: "search" as TabType, label: "Αναζήτηση", icon: Search, desc: "Ανάλυση κειμένου & συνδυασμοί" },
+    { id: "golden-verses" as TabType, label: "Χρυσά Έπη", icon: ScrollText, desc: "Τα Χρυσά Έπη του Πυθαγόρα (Αρχαίο & Νεοελληνική)" },
+    { id: "solar-iota-danaos" as TabType, label: "Ι & ΔΑ-ΝΑΟΣ", icon: Sun, desc: "Το Ηλιακόν Ι (1111), ο ΔΑ-ΝΑΟΣ, η Ιερά Τετρακτύς, Infernus, Beatrice (666=666) & Μακάρια" },
     { id: "calendar" as TabType, label: "Ημερολόγιο", icon: Calendar, desc: "Αττικοί & Σύγχρονοι Μήνες, Θεοί & Σελήνη" },
     { id: "cosmic-journey" as TabType, label: "Κοσμική Ανάταση", icon: Sparkles, desc: "Διαδραστικό μυθολογικό ταξίδι 4 Πράξεων & Επίγνωσης" },
     { id: "online-finder" as TabType, label: "Ανιχνευτής Web", icon: Globe, desc: "Online λεξικά, URL & 1119" },
@@ -135,13 +138,13 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="border-b border-[#2d251e] bg-[#14120f]/95 backdrop-blur-md sticky top-0 z-40 pt-1 sm:pt-0 w-full max-w-full overflow-x-hidden">
+    <header className="border-b border-[#2d251e] bg-[#14120f]/95 backdrop-blur-md sticky top-0 z-40 pt-1 sm:pt-0 w-full max-w-full">
       <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 w-full">
         <div className="flex flex-col py-2 sm:py-2.5 gap-2 w-full">
           
           {/* Logo & Classical Title */}
-          <div className="flex items-center justify-between gap-1.5 sm:gap-4 w-full">
-            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+          <div className="flex items-center justify-between gap-2 sm:gap-4 w-full flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink-0">
               <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#8a6825] via-[#c89b3c] to-[#e6c670] p-[1.5px] shadow-lg shadow-[#c89b3c]/20 shrink-0 overflow-hidden">
                 <img
                   src={appLogoImg}
@@ -166,7 +169,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Action Buttons for Mobile (<lg) & Desktop (>=lg) - Responsive layout to fit within screen bounds */}
-            <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0 relative">
+            <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0 relative ml-auto">
               {/* Theme Toggle Button (Compact icon-first, text on xl) */}
               <button
                 onClick={onOpenThemeModal || onToggleTheme}
@@ -189,35 +192,35 @@ export const Header: React.FC<HeaderProps> = ({
                 {theme === "parchment" ? (
                   <>
                     <Scroll className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#825313] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Περγαμηνή</span>
+                    <span className="text-[11px] font-sans font-bold hidden 2xl:inline">Περγαμηνή</span>
                   </>
                 ) : theme === "ancient-calligraphy" ? (
                   <>
                     <Feather className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#7a491e] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Καλλιγραφία</span>
+                    <span className="text-[11px] font-sans font-bold hidden 2xl:inline">Καλλιγραφία</span>
                   </>
                 ) : theme === "solar" ? (
                   <>
                     <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#d97706] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Ηλιακή</span>
+                    <span className="text-[11px] font-sans font-bold hidden 2xl:inline">Ηλιακή</span>
                   </>
                 ) : theme === "ethereal" ? (
                   <>
                     <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#38bdf8] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Αιθέρικη</span>
+                    <span className="text-[11px] font-sans font-bold hidden 2xl:inline">Αιθέρικη</span>
                   </>
                 ) : theme === "cyber-tech" ? (
                   <>
                     <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#10b981] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Tech</span>
+                    <span className="text-[11px] font-sans font-bold hidden 2xl:inline">Tech</span>
                   </>
                 ) : (
                   <>
                     <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ffd700] shrink-0" />
-                    <span className="text-[11px] font-sans font-bold hidden xl:inline">Κλασικό</span>
+                    <span className="text-[11px] font-sans font-bold hidden 2xl:inline">Κλασικό</span>
                   </>
                 )}
-                <Palette className="w-3 h-3 opacity-60 hidden xl:inline shrink-0" />
+                <Palette className="w-3 h-3 opacity-60 hidden 2xl:inline shrink-0" />
               </button>
 
               {/* Quick AI Assistant button on mobile & tablet (<lg) */}
@@ -361,7 +364,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <button
                     onClick={onOpenFontModal}
                     id="header-font-selector-btn"
-                    className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-lg bg-[#18130e] hover:bg-[#251d15] border border-[#3e3020] hover:border-[#c89b3c] text-xs font-serif text-[#d6c7b2] hover:text-[#e6c670] transition-all shadow-sm shrink-0 cursor-pointer min-h-[36px] touch-manipulation"
+                    className="flex items-center gap-1 px-2 py-1.5 sm:px-2 sm:py-2 rounded-lg bg-[#18130e] hover:bg-[#251d15] border border-[#3e3020] hover:border-[#c89b3c] text-xs font-serif text-[#d6c7b2] hover:text-[#e6c670] transition-all shadow-sm shrink-0 cursor-pointer min-h-[36px] touch-manipulation"
                     title={`Επιλογή Αρχαιοελληνικής Γραμματοσειράς (${currentFontName || "GFS Didot"})`}
                   >
                     <Type className="w-3.5 h-3.5 text-[#e6c670]" />
@@ -373,7 +376,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <button
                     onClick={onOpenExportReport}
                     id="header-export-report-btn"
-                    className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-lg bg-[#1a1510] hover:bg-[#281f15] border border-[#3e3020] hover:border-[#c89b3c] text-xs font-serif text-[#d6c7b2] hover:text-[#e6c670] transition-all shadow-sm shrink-0 cursor-pointer min-h-[36px] touch-manipulation"
+                    className="flex items-center gap-1 px-2 py-1.5 sm:px-2 sm:py-2 rounded-lg bg-[#1a1510] hover:bg-[#281f15] border border-[#3e3020] hover:border-[#c89b3c] text-xs font-serif text-[#d6c7b2] hover:text-[#e6c670] transition-all shadow-sm shrink-0 cursor-pointer min-h-[36px] touch-manipulation"
                     title="Εξαγωγή Αναλυτικής Αναφοράς / PDF"
                   >
                     <FileText className="w-3.5 h-3.5 text-[#c89b3c]" />
@@ -385,7 +388,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <button
                     onClick={onOpenPortalGate}
                     id="header-portal-gate-btn"
-                    className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-lg bg-[#1a140d] hover:bg-[#281e13] border border-[#c89b3c]/50 hover:border-[#e6c670] text-xs font-serif text-[#e6c670] transition-all shadow-sm shrink-0 cursor-pointer min-h-[36px] touch-manipulation"
+                    className="flex items-center gap-1 px-2 py-1.5 sm:px-2 sm:py-2 rounded-lg bg-[#1a140d] hover:bg-[#281e13] border border-[#c89b3c]/50 hover:border-[#e6c670] text-xs font-serif text-[#e6c670] transition-all shadow-sm shrink-0 cursor-pointer min-h-[36px] touch-manipulation"
                     title="Μυστική Πύλη Λαυρείου (ΒΕΛΟΣ + ΟΥΔΟΣ)"
                   >
                     <Compass className="w-3.5 h-3.5 text-[#e6c670]" />
@@ -396,7 +399,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={onOpenApiKeyModal}
                   id="header-api-key-btn"
-                  className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-lg bg-[#1c1813] hover:bg-[#282117] border border-[#3e3223] hover:border-[#c89b3c] text-xs font-serif text-[#e6c670] transition-colors relative shadow-sm shrink-0 cursor-pointer min-h-[36px] touch-manipulation"
+                  className="flex items-center gap-1 px-2 py-1.5 sm:px-2 sm:py-2 rounded-lg bg-[#1c1813] hover:bg-[#282117] border border-[#3e3223] hover:border-[#c89b3c] text-xs font-serif text-[#e6c670] transition-colors relative shadow-sm shrink-0 cursor-pointer min-h-[36px] touch-manipulation"
                   title="Ρύθμιση API Key (AI ΙΩΑΝΝΗΣ)"
                 >
                   <Key className="w-3.5 h-3.5 text-[#e6c670]" />
@@ -422,7 +425,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Navigation Bar with Luxury Gold Controls & Full Screen Width */}
-          <div className="flex items-center gap-1.5 sm:gap-2 relative w-full">
+          <div className="flex items-center gap-1.5 sm:gap-2 relative w-full min-w-0">
             {/* Quick Tabs Dropdown Selector (Direct Access to all 18 Tabs) */}
             <div className="relative shrink-0">
               <button
@@ -527,12 +530,12 @@ export const Header: React.FC<HeaderProps> = ({
               <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
 
-            {/* Scrollable Tabs Wrapper */}
+            {/* Scrollable Tabs Wrapper (Takes up remaining flex space with min-w-0 so it never overflows or pushes the right arrow off-screen) */}
             <div
               ref={navScrollRef}
               onScroll={checkScroll}
               onWheel={handleNavWheel}
-              className="flex items-center space-x-1 p-1 bg-[#191511] rounded-xl border border-[#33271c] w-full overflow-x-auto gold-scrollbar scroll-smooth shadow-inner shadow-black/40"
+              className="flex-1 min-w-0 flex items-center space-x-1 p-1 bg-[#191511] rounded-xl border border-[#33271c] overflow-x-auto gold-scrollbar scroll-smooth shadow-inner shadow-black/40"
             >
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -562,7 +565,7 @@ export const Header: React.FC<HeaderProps> = ({
               })}
             </div>
 
-            {/* Right Scroll Button (Gold Arrow) */}
+            {/* Right Scroll Button (Gold Arrow) - ALWAYS visible and glowing when more tabs exist to the right */}
             <button
               type="button"
               onClick={() => handleScroll("right")}
@@ -570,10 +573,10 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label="Κύλιση δεξιά"
               className={`p-1.5 sm:p-2 rounded-lg border transition-all shrink-0 z-10 min-h-[38px] min-w-[38px] flex items-center justify-center touch-manipulation ${
                 canScrollRight
-                  ? "bg-gradient-to-r from-[#3a2c1b] to-[#2d2215] border-[#c89b3c] text-[#e6c670] hover:text-[#fff] hover:border-[#e6c670] shadow-md shadow-[#c89b3c]/20 active:scale-95 cursor-pointer"
+                  ? "bg-gradient-to-r from-[#3a2c1b] to-[#2d2215] border-[#c89b3c] text-[#ffd700] hover:text-[#fff] hover:border-[#e6c670] shadow-md shadow-[#c89b3c]/40 ring-1 ring-[#c89b3c]/70 active:scale-95 cursor-pointer animate-pulse"
                   : "bg-[#181410] border-[#2d2419] text-[#554637] opacity-40 cursor-not-allowed"
               }`}
-              title="Κύλιση δεξιά"
+              title="Κύλιση δεξιά (περισσότερες καρτέλες)"
             >
               <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
