@@ -30,8 +30,8 @@ interface ArchivePdfExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   savedItems: SavedIsopsephyItem[];
-  filteredItems: SavedIsopsephyItem[];
-  selectedItemIds: Set<string>;
+  filteredItems?: SavedIsopsephyItem[];
+  selectedItemIds?: Set<string>;
   currentAppTheme?: AppTheme;
   currentAppFontId?: string;
 }
@@ -238,8 +238,8 @@ export const ArchivePdfExportModal: React.FC<ArchivePdfExportModalProps> = ({
   isOpen,
   onClose,
   savedItems,
-  filteredItems,
-  selectedItemIds,
+  filteredItems = savedItems,
+  selectedItemIds = new Set<string>(),
   currentAppTheme,
   currentAppFontId,
 }) => {

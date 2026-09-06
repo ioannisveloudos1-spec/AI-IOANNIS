@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from "react";
 import { SavedIsopsephyItem } from "../types";
+import { AppTheme } from "../utils/theme";
+import { ArchivePdfExportModal } from "./ArchivePdfExportModal";
 import { HISTORICAL_ISOPSEPHIES, HistoricalIsopsephyEntry } from "../data/historicalIsopsephies";
 import { numberToGreekNumeral, getMathematicalProperties, calculateWordIsopsephy, cleanAndNormalizePolytonic } from "../utils/isopsephy";
-import { Search, Bookmark, Trash2, Download, Upload, Sparkles, Scale, BookOpen, Layers, Check, Copy, ExternalLink, Plus, Folder, Hash, ArrowUpDown, ArrowDownAZ, ArrowUpAZ, ArrowDown01, ArrowUp10, Clock, LayoutGrid, ListFilter, X, CheckSquare, Square, Filter, FileSpreadsheet, Tag, GitCompare, ArrowLeftRight, HelpCircle } from "lucide-react";
+import { Search, Bookmark, Trash2, Download, Upload, Sparkles, Scale, BookOpen, Layers, Check, Copy, ExternalLink, Plus, Folder, Hash, ArrowUpDown, ArrowDownAZ, ArrowUpAZ, ArrowDown01, ArrowUp10, Clock, LayoutGrid, ListFilter, X, CheckSquare, Square, Filter, FileSpreadsheet, Tag, GitCompare, ArrowLeftRight, HelpCircle, FileText } from "lucide-react";
 import { TOPIC_CATEGORIES, categorizeTerm, exportToCsvFile } from "../utils/topicClustering";
 
 type SortOption = "value_desc" | "value_asc" | "alpha_asc" | "alpha_desc" | "date_desc" | "date_asc" | "count_desc";
@@ -16,6 +18,8 @@ interface ArchiveTabProps {
   onImportItems: (items: SavedIsopsephyItem[]) => void;
   onSaveItem: (item: Omit<SavedIsopsephyItem, "id" | "createdAt">) => void;
   onOpenAiModal: (text: string, number: number, words: string[]) => void;
+  currentAppTheme?: AppTheme;
+  currentAppFontId?: string;
 }
 
 // Helper to highlight matching text in purple
@@ -44,8 +48,11 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
   onImportItems,
   onSaveItem,
   onOpenAiModal,
+  currentAppTheme = "dark-ancient",
+  currentAppFontId = "GFSNeohellenic",
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<"saved" | "classical" | "compare">("saved");
+  const [showPdfExportModal, setShowPdfExportModal] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortOption, setSortOption] = useState<SortOption>("value_desc");
@@ -373,7 +380,17 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              onClick={() => setShowPdfExportModal(true)}
+              id="btn-export-archive-pdf"
+              className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-950 via-[#362516] to-amber-950 hover:from-amber-900 hover:to-[#422e1b] border border-amber-500/70 text-[#ffd700] hover:text-[#fff] text-xs font-serif font-bold flex items-center gap-1.5 transition-all shadow-sm shadow-amber-950/40 cursor-pointer"
+              title="Εξαγωγή σε κομψό έγγραφο PDF A4 με το επιλεγμένο θέμα και γραμματοσειρά"
+            >
+              <FileText className="w-4 h-4 text-[#ffd700]" />
+              <span className="hidden sm:inline">Εξαγωγή PDF</span>
+            </button>
+
             <button
               onClick={handleExportCSV}
               id="btn-export-archive-csv"
@@ -1239,6 +1256,19 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* PDF Export Modal with current theme & font */}
+      {showPdfExportModal && (
+        <ArchivePdfExportModal
+          isOpen={showPdfExportModal}
+          onClose={() => setShowPdfExportModal(false)}
+          savedItems={savedItems}
+          filteredItems={filteredAndSortedItems}
+          selectedItemIds={selectedItemIds}
+          currentAppTheme={currentAppTheme}
+          currentAppFontId={currentAppFontId}
+        />
       )}
 
     </div>

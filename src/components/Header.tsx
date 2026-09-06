@@ -33,6 +33,7 @@ import {
   Cpu,
   SlidersHorizontal,
   LayoutGrid,
+  BookOpenCheck,
 } from "lucide-react";
 import appLogoImg from "../assets/images/ego_eimi_logo_1787417709332.jpg";
 
@@ -68,6 +69,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
 }) => {
   const tabs = [
+    { id: "all-tabs" as TabType, label: "Καρτέλες", icon: LayoutGrid, desc: "Πύλη όλων των καρτελών με μεγάλα κουμπιά & εικόνες" },
+    { id: "europe" as TabType, label: "Ευρώπη", icon: BookOpenCheck, desc: "Μυθιστόρημα: Η Μυθική Ευρώπη, ο Ταύρος & τα Ιερά Σύμβολα" },
     { id: "calculator" as TabType, label: "Υπολογισμός", icon: Calculator, desc: "Μεμονωμένες λέξεις & πράξεις" },
     { id: "search" as TabType, label: "Αναζήτηση", icon: Search, desc: "Ανάλυση κειμένου & συνδυασμοί" },
     { id: "golden-verses" as TabType, label: "Χρυσά Έπη", icon: ScrollText, desc: "Τα Χρυσά Έπη του Πυθαγόρα (Αρχαίο & Νεοελληνική)" },
@@ -145,6 +148,22 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Logo & Classical Title */}
           <div className="flex items-center justify-between gap-2 sm:gap-4 w-full flex-wrap sm:flex-nowrap">
             <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink-0">
+              {/* Quick Jump Portal Button "ΚΑΡΤΕΛΕΣ" on top left */}
+              <button
+                type="button"
+                onClick={() => onSelectTab("all-tabs")}
+                id="header-all-tabs-portal-btn"
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border font-serif font-bold transition-all shadow-md shrink-0 cursor-pointer ${
+                  currentTab === "all-tabs"
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-[#140e08] border-amber-300 ring-2 ring-amber-400/50 shadow-amber-950/40"
+                    : "bg-gradient-to-r from-[#2c1d12] via-[#3a2718] to-[#2c1d12] hover:from-[#3a2718] hover:to-[#4a321e] border-amber-500/70 text-[#ffd700] hover:text-white shadow-amber-950/30"
+                }`}
+                title="Πύλη Συντομεύσεων: Προβολή όλων των καρτελών με μεγάλα κουμπιά"
+              >
+                <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ffd700]" />
+                <span className="tracking-wider uppercase text-[10px] sm:text-xs">ΚΑΡΤΕΛΕΣ</span>
+              </button>
+
               <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#8a6825] via-[#c89b3c] to-[#e6c670] p-[1.5px] shadow-lg shadow-[#c89b3c]/20 shrink-0 overflow-hidden">
                 <img
                   src={appLogoImg}

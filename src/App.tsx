@@ -21,6 +21,8 @@ import { GameTab } from "./components/GameTab";
 import { StatsTab } from "./components/StatsTab";
 import { ArchiveTab } from "./components/ArchiveTab";
 import { GuideTab } from "./components/GuideTab";
+import { EuropeTab } from "./components/EuropeTab";
+import { AllTabsPortalTab } from "./components/AllTabsPortalTab";
 import { AiAnalysisModal } from "./components/AiAnalysisModal";
 import { ApiKeyModal } from "./components/ApiKeyModal";
 import { ExportReportModal } from "./components/ExportReportModal";
@@ -407,6 +409,27 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-2.5 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-x-hidden">
+        {currentTab === "all-tabs" && (
+          <AllTabsPortalTab
+            currentTab={currentTab}
+            onSelectTab={(tab) => {
+              setCurrentTab(tab);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            savedCount={savedItems.length}
+            theme={theme}
+          />
+        )}
+
+        {currentTab === "europe" && (
+          <EuropeTab
+            theme={theme}
+            currentFontId={currentFontId}
+            onSaveItem={handleSaveItem}
+            onOpenAiModal={handleOpenAiModal}
+          />
+        )}
+
         {currentTab === "calculator" && (
           <CalculatorTab
             onSaveItem={handleSaveItem}
@@ -562,6 +585,8 @@ export default function App() {
             onImportItems={handleImportItems}
             onSaveItem={handleSaveItem}
             onOpenAiModal={handleOpenAiModal}
+            currentAppTheme={theme}
+            currentAppFontId={currentFontId}
           />
         )}
 

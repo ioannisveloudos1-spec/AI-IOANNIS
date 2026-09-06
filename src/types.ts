@@ -1,4 +1,6 @@
 export type TabType = 
+  | "all-tabs"
+  | "europe"
   | "calculator" 
   | "search" 
   | "golden-verses"
