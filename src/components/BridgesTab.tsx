@@ -81,7 +81,7 @@ export const BridgesTab: React.FC<BridgesTabProps> = ({
   const [wordB, setWordB] = useState<string>("");
   const [showPairLetterBreakdown, setShowPairLetterBreakdown] = useState<boolean>(false);
 
-  // Mode 2: Cross Language Gematria State
+  // Mode 2: Cross Language Isopsephy State
   const [crossGreekWord, setCrossGreekWord] = useState<string>("");
   const [crossEnglishPhrase, setCrossEnglishPhrase] = useState<string>("");
   const [crossEngSystem, setCrossEngSystem] = useState<"base6" | "simple">("base6");
@@ -524,7 +524,7 @@ export const BridgesTab: React.FC<BridgesTabProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* MODE 2: CROSS-LANGUAGE GEMATRIA MATRIX                                    */}
+      {/* MODE 2: CROSS-LANGUAGE ISOPSEPHY MATRIX                                   */}
       {/* ========================================================================= */}
       {activeMode === "cross_language" && (
         <div className="space-y-6">
@@ -582,7 +582,7 @@ export const BridgesTab: React.FC<BridgesTabProps> = ({
             <div className="p-5 rounded-2xl bg-[#12161a] border border-cyan-900/40 shadow-md space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-serif font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <span>🇬🇧 Αγγλική Φράση (English Gematria)</span>
+                  <span>🇬🇧 Αγγλική Φράση (Αγγλική Ισοψηφία)</span>
                 </label>
                 <select
                   value={crossEngSystem}
@@ -590,7 +590,7 @@ export const BridgesTab: React.FC<BridgesTabProps> = ({
                   className="px-2 py-0.5 rounded bg-[#182329] border border-cyan-700/40 text-cyan-300 text-[11px] outline-none"
                 >
                   <option value="base6">English Base 6 (A=6, B=12...)</option>
-                  <option value="simple">Simple Gematria (A=1, B=2...)</option>
+                  <option value="simple">Απλή Ισοψηφία (A=1, B=2...)</option>
                 </select>
               </div>
               <input

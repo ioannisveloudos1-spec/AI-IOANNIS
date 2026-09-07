@@ -115,7 +115,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
       greekNumeral: greekNumeral || `${result.finalValue}`,
       isPhrase: result.wordBreakdowns.length > 1,
       wordCount: result.wordBreakdowns.length || 1,
-      category: isEnglishSystem ? "English Gematria" : "Υπολογισμός",
+      category: isEnglishSystem ? "Λατινική Ισοψηφία" : "Υπολογισμός",
       notes: `Σύστημα: ${getSystemName(selectedSystem)} | ${formattedText} = ${result.finalValue}`,
     });
 
@@ -223,7 +223,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
           <div>
             <h2 className="text-base sm:text-lg font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
               <Hash className="w-5 h-5 text-[#c89b3c]" />
-              <span>Υπολογιστής Ισοψηφίας & Gematria</span>
+              <span>Υπολογιστής Ισοψηφίας & Λεξαρίθμων</span>
             </h2>
             <p className="text-xs text-[#a69680] mt-0.5">
               Επιλέξτε σύστημα αρίθμησης με την ακόλουθη σειρά:
@@ -365,7 +365,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
             <label htmlFor="isopsephy-main-input" className="text-xs font-medium uppercase tracking-wider text-[#a69680] font-serif flex items-center gap-1.5 flex-wrap">
-              <span>{isEnglishSystem ? "Λατινικη Λεξη, Φραση η Πραξη (English Gematria)" : "Ελληνικη Λεξη, Φραση η Πραξη (Ισοψηφια)"}</span>
+              <span>{isEnglishSystem ? "Λατινικη Λεξη, Φραση η Πραξη (Λατινική Ισοψηφία)" : "Ελληνικη Λεξη, Φραση η Πραξη (Ισοψηφια)"}</span>
               <span className="text-[10px] font-mono text-[#c89b3c]">({getSystemName(selectedSystem)})</span>
             </label>
             
@@ -490,7 +490,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
               {/* Main Number and Numeral */}
               <div>
                 <span className="text-xs uppercase tracking-widest text-[#a69680] font-mono">
-                  Συνολικος {isEnglishSystem ? "Gematria" : "Λεξαριθμος"}
+                  Συνολικός {isEnglishSystem ? "Λεξάριθμος (Ισοψηφία)" : "Λεξάριθμος"}
                 </span>
                 <div className="flex items-baseline gap-4 mt-1">
                   <span
@@ -645,7 +645,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
         ) : (
           <div className="p-8 rounded-xl bg-[#12100d] border border-[#2d2419] text-center text-[#7a6e5e] font-serif">
             {isEnglishSystem
-              ? "Εισάγετε λατινικούς/αγγλικούς χαρακτήρες για να υπολογιστεί το Gematria."
+              ? "Εισάγετε λατινικούς/αγγλικούς χαρακτήρες για να υπολογιστεί η ισοψηφία."
               : "Εισάγετε ελληνικούς χαρακτήρες για να υπολογιστεί ο λεξάριθμος."}
           </div>
         )}
@@ -1007,7 +1007,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#c89b3c]" />
-              <span>Πίνακας English Gematria (Πολλαπλάσια του 6 / A=6 ... Z=156)</span>
+              <span>Πίνακας Λατινικής Ισοψηφίας (Πολλαπλάσια του 6 / A=6 ... Z=156)</span>
             </h3>
             <span className="text-[11px] font-mono px-2.5 py-0.5 rounded bg-[#221b14] text-[#e6c670] border border-[#3e3122]">
               26 Γράμματα × 6 = Σ 2.106

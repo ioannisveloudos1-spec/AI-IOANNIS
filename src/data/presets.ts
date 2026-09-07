@@ -1627,7 +1627,7 @@ I.B. x 12000 = 144000
   {
     id: "english-genesis-creation",
     title: "Genesis 1:1 & The Creation of the Cosmos (English)",
-    author: "King James Bible & English Gematria",
+    author: "King James Bible & Αγγλική Ισοψηφία",
     era: "1611 μ.Χ.",
     category: "biblical",
     description: "The opening verses of Genesis in English. Ideal for English Simple (A=1..Z=26) and English Base 6 (A=6..Z=156) analysis of divine mathematical balance.",
@@ -1637,7 +1637,7 @@ I.B. x 12000 = 144000
   {
     id: "english-sacred-tech",
     title: "Sacred Geometry & Cosmic Code (English Base 6 / Sumerian)",
-    author: "Sacred Science & Computational Gematria",
+    author: "Sacred Science & Υπολογιστική Ισοψηφία",
     era: "Modern Era",
     category: "philosophical",
     description: "Curated English philosophical and technological corpus designed to test English Base 6 (COMPUTER=666, SACRED=372, JESUS=444, TRUTH=522) and phrase combinations.",

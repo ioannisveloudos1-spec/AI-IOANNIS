@@ -80,7 +80,7 @@ interface SearchTabProps {
   savedItems: SavedIsopsephyItem[];
 }
 
-export const SEARCH_GEMATRIA_SYSTEMS = [
+export const SEARCH_ISOPSEPHY_SYSTEMS = [
   {
     id: NumberingSystem.IONIAN,
     name: "1. Ιωνική Αρίθμηση",
@@ -121,7 +121,7 @@ export const SEARCH_GEMATRIA_SYSTEMS = [
     id: NumberingSystem.ENGLISH_BASE6,
     name: "5. Αγγλική × 6 (Base 6)",
     shortName: "English ×6 (Base 6)",
-    desc: "A=6, B=12 ... Z=156 (Sumerian / Gematrix)",
+    desc: "A=6, B=12 ... Z=156 (Sumerian / English Isopsephy)",
     badge: "🔤 Base 6 / 666",
     isEnglish: true,
     example: "COMPUTER=666, JESUS=444",
@@ -315,7 +315,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     const textToSave = formatEnglishItemWithGreekTranslation(wordObj.rawWord);
     const isEng = isEnglishText(wordObj.rawWord);
     const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(wordObj.value) || `${wordObj.value}`) : `${wordObj.value}`;
-    const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
+    const sysObj = SEARCH_ISOPSEPHY_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
       text: textToSave,
       normalized: textToSave.toUpperCase(),
@@ -326,7 +326,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
       wordCount: 1,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
       notes: `Αποθηκευμένη λέξη [${sysObj?.shortName || "Ισοψηφία"}]: ${textToSave} = ${wordObj.value} (Πυθμένας: ${wordObj.root})`,
-      category: isEng ? "English Gematria" : "Μεμονωμένη Λέξη",
+      category: isEng ? "Αγγλική Ισοψηφία" : "Μεμονωμένη Λέξη",
       system: selectedSystem,
     });
   };
@@ -335,7 +335,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     const textToSave = formatEnglishItemWithGreekTranslation(phraseObj.phrase);
     const isEng = isEnglishText(phraseObj.phrase);
     const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(phraseObj.value) || `${phraseObj.value}`) : `${phraseObj.value}`;
-    const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
+    const sysObj = SEARCH_ISOPSEPHY_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
       text: textToSave,
       normalized: textToSave.toUpperCase(),
@@ -346,7 +346,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
       wordCount: phraseObj.wordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
       notes: `Συνδυασμός ${phraseObj.wordCount} λέξεων [${sysObj?.shortName || "Ισοψηφία"}]: ${textToSave} = ${phraseObj.value}`,
-      category: isEng ? "English Gematria" : "Συνδυασμός Φράσεων",
+      category: isEng ? "Αγγλική Ισοψηφία" : "Συνδυασμός Φράσεων",
       system: selectedSystem,
     });
   };
@@ -439,7 +439,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     const textToSave = formatEnglishItemWithGreekTranslation(comboObj.fullPhrase);
     const isEng = isEnglishText(comboObj.fullPhrase);
     const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(comboObj.totalValue) || `${comboObj.totalValue}`) : `${comboObj.totalValue}`;
-    const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
+    const sysObj = SEARCH_ISOPSEPHY_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
       text: textToSave,
       normalized: textToSave.toUpperCase(),
@@ -449,8 +449,8 @@ export const SearchTab: React.FC<SearchTabProps> = ({
       isPhrase: true,
       wordCount: comboObj.totalWordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
-      notes: `Συνδυασμός με Λέξη-Κλειδί [${sysObj?.shortName || "Gematria"}]: ${textToSave} = ${comboObj.totalValue}`,
-      category: isEng ? "English Gematria" : "Συνδυασμός με Λέξη-Κλειδί",
+      notes: `Συνδυασμός με Λέξη-Κλειδί [${sysObj?.shortName || "Ισοψηφία"}]: ${textToSave} = ${comboObj.totalValue}`,
+      category: isEng ? "Αγγλική Ισοψηφία" : "Συνδυασμός με Λέξη-Κλειδί",
       system: selectedSystem,
     });
   };
@@ -527,7 +527,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     const textToSave = formatEnglishItemWithGreekTranslation(comboObj.phrase);
     const isEng = isEnglishText(comboObj.phrase);
     const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(comboObj.value) || `${comboObj.value}`) : `${comboObj.value}`;
-    const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
+    const sysObj = SEARCH_ISOPSEPHY_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
       text: textToSave,
       normalized: textToSave.toUpperCase(),
@@ -538,7 +538,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
       wordCount: comboObj.wordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
       notes: `Ελεύθερος συνδυασμός ${comboObj.wordCount} λέξεων [${sysObj?.shortName || "Ισοψηφία"}]: ${textToSave} = ${comboObj.value}`,
-      category: isEng ? "English Gematria" : "Συνδυασμός Λέξεων Κειμένου",
+      category: isEng ? "Αγγλική Ισοψηφία" : "Συνδυασμός Λέξεων Κειμένου",
       system: selectedSystem,
     });
   };
@@ -711,7 +711,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
     const textToSave = formatEnglishItemWithGreekTranslation(sentenceObj.text);
     const isEng = isEnglishText(sentenceObj.text);
     const greekNum = selectedSystem === NumberingSystem.IONIAN ? (numberToGreekNumeral(sentenceObj.value) || `${sentenceObj.value}`) : `${sentenceObj.value}`;
-    const sysObj = SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem);
+    const sysObj = SEARCH_ISOPSEPHY_SYSTEMS.find((s) => s.id === selectedSystem);
     onSaveItem({
       text: textToSave,
       normalized: textToSave.toUpperCase(),
@@ -722,7 +722,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
       wordCount: sentenceObj.wordCount,
       sourceText: PRESET_TEXTS.find((p) => p.id === selectedPresetId)?.title || "Κείμενο Αναζήτησης",
       notes: `Πρόταση #${sentenceObj.sentenceIndex} [${sysObj?.shortName || "Ισοψηφία"}]: ${textToSave} = ${sentenceObj.value}`,
-      category: isEng ? "English Gematria" : "Πρόταση / Φράση Κειμένου",
+      category: isEng ? "Αγγλική Ισοψηφία" : "Πρόταση / Φράση Κειμένου",
       system: selectedSystem,
     });
   };
@@ -862,7 +862,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
         </div>
       </div>
 
-      {/* Interactive Numbering System Selector Bar (Greek & English Gematria Systems) */}
+      {/* Interactive Numbering System Selector Bar (Greek & English Isopsephy Systems) */}
       <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#17130f] via-[#201912] to-[#17130f] border-2 border-[#3d2f1f] shadow-lg shadow-black/30 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#2d2318]">
           <div className="flex items-center gap-2">
@@ -875,14 +875,14 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           <div className="text-xs font-serif text-[#a69680] flex items-center gap-1.5 flex-wrap">
             <span>Ενεργό Σύστημα:</span>
             <span className="text-amber-200 font-mono font-bold px-2 py-0.5 rounded bg-[#100d09] border border-amber-500/30">
-              {SEARCH_GEMATRIA_SYSTEMS.find((s) => s.id === selectedSystem)?.name}
+              {SEARCH_ISOPSEPHY_SYSTEMS.find((s) => s.id === selectedSystem)?.name}
             </span>
           </div>
         </div>
 
         {/* System Buttons Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
-          {SEARCH_GEMATRIA_SYSTEMS.map((sys) => {
+          {SEARCH_ISOPSEPHY_SYSTEMS.map((sys) => {
             const isSelected = selectedSystem === sys.id;
             return (
               <button

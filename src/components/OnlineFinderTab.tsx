@@ -35,6 +35,12 @@ import {
   Table,
   ChevronDown,
   ChevronUp,
+  Upload,
+  HardDrive,
+  FolderUp,
+  History,
+  RotateCcw,
+  Download,
 } from "lucide-react";
 import {
   calculateIsopsephy,
@@ -75,7 +81,19 @@ interface OnlineCombinationItem {
   meaning: string;
 }
 
-const GEMATRIA_SYSTEMS = [
+export interface SavedCrawledDatabaseSession {
+  id: string;
+  timestamp: string;
+  title: string;
+  sourceUrl: string;
+  system: NumberingSystem;
+  range: { start: number; end: number };
+  targetFilter?: string;
+  itemCount: number;
+  items: Array<{ text: string; value: number; count: number; translation?: string | null; meaning?: string }>;
+}
+
+const ISOPSEPHY_SYSTEMS = [
   {
     id: NumberingSystem.IONIAN,
     name: "🇬🇷 1. Ελληνική Ιωνική Αρίθμηση",
@@ -108,7 +126,7 @@ const GEMATRIA_SYSTEMS = [
     id: NumberingSystem.ENGLISH_BASE6,
     name: "🔤 5. Αγγλική Αρίθμηση ×6 (Base 6)",
     shortName: "English ×6 (6-156)",
-    desc: "Πολλαπλάσια του 6: A=6, B=12, C=18 ... Z=156 (Gematrix / 888)",
+    desc: "Πολλαπλάσια του 6: A=6, B=12, C=18 ... Z=156 (Βάση 6 / 888)",
     badge: "Base 6 / 888",
   },
 ];
@@ -149,7 +167,7 @@ const SystemSelectionBar: React.FC<{
 
       {/* 5 Systems in exact requested order */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
-        {GEMATRIA_SYSTEMS.map((sys) => {
+        {ISOPSEPHY_SYSTEMS.map((sys) => {
           const isActive = currentSystem === sys.id;
           return (
             <button
@@ -187,7 +205,7 @@ const SystemSelectionBar: React.FC<{
         <div className="p-3 rounded-lg bg-[#18130e] border border-[#c89b3c]/30 animate-in fade-in duration-150 space-y-2">
           <div className="flex items-center justify-between text-xs font-serif text-[#d6c7b2] flex-wrap gap-2">
             <span>
-              Χάρτης Αρίθμησης: <strong className="text-[#e6c670]">{GEMATRIA_SYSTEMS.find((s) => s.id === currentSystem)?.name}</strong> ({chartData.length} χαρακτήρες)
+              Χάρτης Αρίθμησης: <strong className="text-[#e6c670]">{ISOPSEPHY_SYSTEMS.find((s) => s.id === currentSystem)?.name}</strong> ({chartData.length} χαρακτήρες)
             </span>
             <span className="text-[11px] font-mono text-[#c89b3c] bg-[#241c14] px-2 py-0.5 rounded border border-[#3e3020]">
               Σύνολο Αλφαβήτου: {totalSum.toLocaleString("el-GR")}
@@ -232,11 +250,6 @@ const PRESET_TARGETS = [
 ];
 
 const PRESET_URLS = [
-  {
-    name: "Gematrix.org: 666 (English Base 6)",
-    url: "https://www.gematrix.org/?word=666",
-    desc: "English Gematria (A=6, B=12... Z=156) για τον αριθμό 666",
-  },
   {
     name: "Arithmosofia: 666",
     url: "http://www.arithmosofia.com/ResultsByValue.aspx?value=666",
@@ -350,6 +363,200 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
     setTimeout(() => setQualityCleanReport(null), 4000);
   };
 
+  // Saved database sessions & offline files
+  const [savedDbSessions, setSavedDbSessions] = useState<SavedCrawledDatabaseSession[]>(() => {
+    try {
+      const raw = localStorage.getItem("isopsephy_crawled_db_sessions_v1");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showDbHistoryModal, setShowDbHistoryModal] = useState<boolean>(false);
+  const dbFileInputRef = useRef<HTMLInputElement>(null);
+
+  const persistSavedDbSessions = (sessions: SavedCrawledDatabaseSession[]) => {
+    setSavedDbSessions(sessions);
+    try {
+      localStorage.setItem("isopsephy_crawled_db_sessions_v1", JSON.stringify(sessions));
+    } catch (e) {
+      console.warn("LocalStorage quota reached", e);
+    }
+  };
+
+  const handleUploadDbJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const parsed = JSON.parse(content);
+        let rawItems: any[] = [];
+        let sourceTitle = file.name;
+        let sys = urlGematriaSystem;
+
+        if (Array.isArray(parsed)) {
+          rawItems = parsed;
+        } else if (parsed && typeof parsed === "object") {
+          if (Array.isArray(parsed.matches)) rawItems = parsed.matches;
+          else if (Array.isArray(parsed.items)) rawItems = parsed.items;
+          else if (Array.isArray(parsed.results)) rawItems = parsed.results;
+          if (parsed.title) sourceTitle = parsed.title;
+          if (parsed.system) sys = parsed.system;
+        }
+
+        const validMatches = rawItems
+          .filter((item) => item && (item.text || item.phrase))
+          .map((item) => {
+            const txt = (item.text || item.phrase || "").toString().trim();
+            const val =
+              typeof item.value === "number"
+                ? item.value
+                : typeof item.calculatedSum === "number"
+                ? item.calculatedSum
+                : calculateIsopsephy(txt, sys);
+            return {
+              text: txt,
+              value: val,
+              count: typeof item.count === "number" ? item.count : 1,
+              translation: item.translation || item.meaning || null,
+            };
+          });
+
+        if (validMatches.length === 0) {
+          setQualityCleanReport("Το αρχείο JSON δεν περιέχει αναγνωρίσιμα ισόψηφα στοιχεία.");
+          setTimeout(() => setQualityCleanReport(null), 4000);
+          return;
+        }
+
+        setUrlScannedMatches(validMatches);
+        const calcRange = parsed.crawledRange || { start: 1, end: Math.max(1, Math.ceil(validMatches.length / 25)) };
+        setLastCrawledRange(calcRange);
+
+        const newSession: SavedCrawledDatabaseSession = {
+          id: "db_" + Date.now(),
+          timestamp: new Date().toLocaleDateString("el-GR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          title: sourceTitle.replace(/\.json$/i, ""),
+          sourceUrl: parsed.sourceUrl || "Εισαγωγή Αρχείου",
+          system: sys,
+          range: calcRange,
+          targetFilter: parsed.filterTarget || "",
+          itemCount: validMatches.length,
+          items: validMatches,
+        };
+        persistSavedDbSessions([newSession, ...savedDbSessions.filter((s) => s.title !== newSession.title)].slice(0, 30));
+
+        setQualityCleanReport(`Φορτώθηκαν και ξαναδιαβάστηκαν επιτυχώς ${validMatches.length} στοιχεία από το αρχείο «${file.name}»!`);
+        setTimeout(() => setQualityCleanReport(null), 4500);
+      } catch (err: any) {
+        console.error("Error reading database JSON:", err);
+        setQualityCleanReport("Σφάλμα ανάγνωσης αρχείου JSON: " + (err.message || "Μη έγκυρη μορφή"));
+        setTimeout(() => setQualityCleanReport(null), 5000);
+      }
+    };
+    reader.readAsText(file);
+    if (dbFileInputRef.current) dbFileInputRef.current.value = "";
+  };
+
+  const handleLoadPresetDatabase = (targetNum: number, sys: NumberingSystem = NumberingSystem.IONIAN) => {
+    let items: Array<{ text: string; value: number; count: number; translation?: string | null }> = [];
+
+    if (sys === NumberingSystem.ENGLISH_BASE6 && ENGLISH_BASE6_CORPUS[targetNum]) {
+      items = ENGLISH_BASE6_CORPUS[targetNum].map((c) => ({
+        text: c.text,
+        value: targetNum,
+        count: 1,
+        translation: c.meaning,
+      }));
+    } else if (GREEK_IONIAN_CORPUS[targetNum]) {
+      items = GREEK_IONIAN_CORPUS[targetNum].map((c) => ({
+        text: c.text,
+        value: targetNum,
+        count: 1,
+        translation: c.meaning,
+      }));
+    }
+
+    if (items.length > 0) {
+      setUrlGematriaSystem(sys);
+      setFilterTargetFromUrl(String(targetNum));
+      setUrlScannedMatches(items);
+      const calcRange = { start: 1, end: Math.max(1, Math.ceil(items.length / 10)) };
+      setLastCrawledRange(calcRange);
+
+      const sysName = sys === NumberingSystem.ENGLISH_BASE6 ? "English Base 6" : "Ιωνική";
+      const newSession: SavedCrawledDatabaseSession = {
+        id: "preset_" + targetNum + "_" + Date.now(),
+        timestamp: new Date().toLocaleDateString("el-GR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        title: `Βάση Λεξαρίθμου ${targetNum} (${sysName})`,
+        sourceUrl: `Ενσωματωμένη Βάση ${targetNum}`,
+        system: sys,
+        range: calcRange,
+        targetFilter: String(targetNum),
+        itemCount: items.length,
+        items,
+      };
+      persistSavedDbSessions([newSession, ...savedDbSessions.filter((s) => s.id !== newSession.id)].slice(0, 30));
+
+      setQualityCleanReport(`Φορτώθηκε επιτυχώς η έτοιμη βάση ${targetNum} (${items.length} επαληθευμένα στοιχεία)!`);
+      setTimeout(() => setQualityCleanReport(null), 4000);
+    }
+  };
+
+  const handleLoadDbSession = (session: SavedCrawledDatabaseSession) => {
+    setUrlGematriaSystem(session.system);
+    if (session.sourceUrl && session.sourceUrl.startsWith("http")) {
+      setTargetUrl(session.sourceUrl);
+    }
+    setFilterTargetFromUrl(session.targetFilter || "");
+    setCrawlStartPage(session.range.start);
+    setCrawlEndPage(session.range.end);
+    setLastCrawledRange(session.range);
+    setUrlScannedMatches(session.items);
+    setShowDbHistoryModal(false);
+    setQualityCleanReport(`Επαναφορτώθηκαν και ξαναδιαβάστηκαν επιτυχώς ${session.items.length} στοιχεία από τη βάση: «${session.title}»!`);
+    setTimeout(() => setQualityCleanReport(null), 4000);
+  };
+
+  const handleDeleteDbSession = (id: string) => {
+    persistSavedDbSessions(savedDbSessions.filter((s) => s.id !== id));
+  };
+
+  const handleDownloadSessionFile = (session: SavedCrawledDatabaseSession) => {
+    const exportData = {
+      title: session.title,
+      sourceUrl: session.sourceUrl,
+      filterTarget: session.targetFilter || "all",
+      system: session.system,
+      crawledRange: session.range,
+      exportDate: session.timestamp,
+      count: session.itemCount,
+      matches: session.items,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `isopsephy_database_${session.title.replace(/[^a-zA-Z0-9_\u0370-\u03FF]/g, "_")}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Mode 3: Batch text states
   const [batchInputText, setBatchInputText] = useState<string>("");
   const [batchTargetFilter, setBatchTargetFilter] = useState<string>("");
@@ -364,7 +571,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
     const headers = [
       "Λέξη / Φράση (Text)",
       "Ελληνική Μετάφραση (Translation)",
-      "Αριθμητική Αξία (Gematria Value)",
+      "Αριθμητική Αξία (Numerical Value)",
       "Πυθμένας (Digital Root)",
       "Ελληνική Αρίθμηση (Greek Numeral)",
       "Πλήθος Εμφανίσεων (Count)",
@@ -393,7 +600,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
     exportToCsvFile(
       headers,
       rows,
-      `gematria_scanned_matches_${crawlStartPage}_${crawlEndPage}_target_${filterTargetFromUrl || "all"}`
+      `url_scanned_matches_${crawlStartPage}_${crawlEndPage}_target_${filterTargetFromUrl || "all"}`
     );
   };
 
@@ -432,13 +639,13 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
     setIsSearchingTarget(true);
     setSearchProgress(5);
     const isEng = selectedGematriaSystem === NumberingSystem.ENGLISH_BASE6;
-    setSearchStatusStage(isEng ? "Έναρξη αναζήτησης English Gematria (Base 6) & Gematrix..." : "Έναρξη αναζήτησης στα τοπικά λεξικά & αρχεία...");
+    setSearchStatusStage(isEng ? "Έναρξη αναζήτησης Αγγλικής Αρίθμησης (Base 6)..." : "Έναρξη αναζήτησης στα τοπικά λεξικά & αρχεία...");
     setTargetSearchError(null);
     setTargetResults([]);
     setTargetCombinations([]);
 
     const stages = isEng ? [
-      { progress: 20, stage: "Ανάκτηση βάσεων Gematrix & English Gematria (x6)..." },
+      { progress: 20, stage: "Ανάκτηση βάσεων δεδομένων & Αγγλικής Αρίθμησης (x6)..." },
       { progress: 45, stage: "Υπολογισμός τιμών: A=6, B=12, C=18 ... Z=156..." },
       { progress: 70, stage: "Σύνδεση με AI & σάρωση διεθνούς βιβλιογραφίας..." },
       { progress: 88, stage: `Επαλήθευση ακριβούς αθροίσματος target = ${num}...` },
@@ -459,7 +666,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
     }, 450);
 
     try {
-      const response = await fetch("/api/search-isopsephy-target", {
+      let response = await fetch("/api/online-isopsephy-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -467,24 +674,36 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
           system: selectedGematriaSystem,
           customApiKey,
         }),
-      });
+      }).catch(() => null);
+
+      if (!response || !response.ok) {
+        response = await fetch("/api/search-isopsephy-target", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            targetNumber: num,
+            system: selectedGematriaSystem,
+            customApiKey,
+          }),
+        }).catch(() => null);
+      }
 
       clearInterval(interval);
       setSearchProgress(100);
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await response.json();
         setSearchStatusStage("Ολοκλήρωση ανάλυσης & διαμόρφωση αποτελεσμάτων!");
 
         if (data.results && data.results.length > 0) {
-          setTargetSourceType(data.source || (isEng ? "English Gematria Engine" : "Διαδικτυακή Αναζήτηση & Βιβλιοθήκη"));
+          setTargetSourceType(data.source || (isEng ? "Αγγλικό Σύστημα Αρίθμησης" : "Διαδικτυακή Αναζήτηση & Βιβλιοθήκη"));
           const enrichedResults: OnlineResultItem[] = (data.results || []).map(
             (item: any) => {
               const verifiedValue = calculateIsopsephy(item.text, selectedGematriaSystem);
               return {
                 text: item.text,
                 meaning: item.meaning || "Ισόψηφο εύρημα",
-                source: item.source || (isEng ? "English Gematria (x6)" : "Αρχαία Γραμματεία"),
+                source: item.source || (isEng ? "Αγγλική Αρίθμηση (x6)" : "Αρχαία Γραμματεία"),
                 calculatedSum: verifiedValue > 0 ? verifiedValue : num,
                 letters: getWordLettersBreakdown(item.text, selectedGematriaSystem).map((l) => ({
                   char: l.char,
@@ -836,6 +1055,34 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
         }
       }
 
+      // Auto-save completed session to database history
+      if (wordFreqMap.size > 0) {
+        const sessionItems = Array.from(wordFreqMap.entries()).map(([txt, info]) => ({
+          text: txt,
+          value: info.value,
+          count: info.count,
+          translation: info.translation || translateEnglishToGreek(txt),
+        }));
+        const newSession: SavedCrawledDatabaseSession = {
+          id: "crawl_" + Date.now(),
+          timestamp: new Date().toLocaleDateString("el-GR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          title: `Σάρωση Σελ. ${startP}-${endP} (${filterTargetFromUrl ? "Στόχος " + filterTargetFromUrl : "Όλα"})`,
+          sourceUrl: targetUrl,
+          system: activeSys,
+          range: { start: startP, end: endP },
+          targetFilter: filterTargetFromUrl,
+          itemCount: sessionItems.length,
+          items: sessionItems,
+        };
+        persistSavedDbSessions([newSession, ...savedDbSessions.filter((s) => s.title !== newSession.title)].slice(0, 30));
+      }
+
       setLastCrawledRange({ start: startP, end: endP });
       setPagesFetchedCount(totalProcessedPages);
 
@@ -989,7 +1236,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                   Διαδικτυακός Ανιχνευτής & Crawler Ισοψηφιών
                 </h2>
                 <p className="text-xs md:text-sm text-[#a89984] font-serif">
-                  Αντίστροφη εύρεση λεξαρίθμων, crawler πολλαπλών σελίδων (Gematrix.org / Arithmosofia) & αυτόματη μετάφραση στα ελληνικά
+                  Αντίστροφη εύρεση λεξαρίθμων, crawler πολλαπλών σελίδων & αυτόματη μετάφραση στα ελληνικά
                 </p>
               </div>
             </div>
@@ -1078,7 +1325,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5" />
-                      <span>Αναζήτηση {selectedGematriaSystem === NumberingSystem.ENGLISH_BASE6 ? "English Gematria" : "Ισοψηφιών"}</span>
+                      <span>Αναζήτηση {selectedGematriaSystem === NumberingSystem.ENGLISH_BASE6 ? "Αγγλικών Αριθμών" : "Ισοψηφιών"}</span>
                     </>
                   )}
                 </button>
@@ -1130,7 +1377,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                     type="button"
                     onClick={() => {
                       const exportData = {
-                        title: "Isopsephy & Gematria Target Results Export",
+                        title: "Isopsephy Target Results Export",
                         targetNumber: targetNumber,
                         system: selectedGematriaSystem,
                         source: targetSourceType,
@@ -1143,7 +1390,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");
                       a.href = url;
-                      a.download = `gematria_target_${targetNumber}_${selectedGematriaSystem.toLowerCase()}.json`;
+                      a.download = `isopsephy_target_${targetNumber}_${selectedGematriaSystem.toLowerCase()}.json`;
                       a.click();
                       URL.revokeObjectURL(url);
                     }}
@@ -1358,6 +1605,117 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                     </button>
                   </div>
                 )}
+              </div>
+
+              {/* Hidden File Input for Re-Reading / Uploading Database JSON */}
+              <input
+                type="file"
+                ref={dbFileInputRef}
+                accept=".json,application/json"
+                onChange={handleUploadDbJson}
+                className="hidden"
+              />
+
+              {/* Database & Files Management Toolbar */}
+              <div className="p-4 rounded-xl bg-[#120f0c] border border-[#c89b3c]/40 space-y-3 shadow-lg">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-[#281f15] border border-[#c89b3c]/50 text-[#c89b3c]">
+                      <HardDrive className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-serif font-bold text-[#e6c670]">
+                        Βάσεις Δεδομένων & Αρχεία Σελίδων (Offline Database Center)
+                      </h4>
+                      <p className="text-[11px] text-[#a89984] font-serif">
+                        Κατέβασμα, ξαναδιάβασμα και άμεση φόρτωση αρχείων λεξαρίθμων χωρίς απώλεια δεδομένων
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Upload / Re-Read JSON button */}
+                    <button
+                      type="button"
+                      onClick={() => dbFileInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-lg bg-[#1f1710] hover:bg-[#2e2115] border border-[#c89b3c]/60 text-[#e6c670] text-xs font-serif font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                      title="Φόρτωση και ξαναδιάβασμα οποιουδήποτε αποθηκευμένου αρχείου .json"
+                    >
+                      <FolderUp className="w-4 h-4 text-[#c89b3c]" />
+                      <span>📂 Εισαγωγή & Ξαναδιάβασμα Αρχείου</span>
+                    </button>
+
+                    {/* Saved Sessions History button */}
+                    <button
+                      type="button"
+                      onClick={() => setShowDbHistoryModal(true)}
+                      className="px-3 py-1.5 rounded-lg bg-[#1a1510] hover:bg-[#251d16] border border-[#c89b3c]/40 text-[#f5ebd7] text-xs font-serif flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Προβολή ιστορικού αποθηκευμένων σαρώσεων"
+                    >
+                      <History className="w-4 h-4 text-[#c89b3c]" />
+                      <span>Ιστορικό Βάσεων ({savedDbSessions.length})</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Instant Built-in Database Loaders */}
+                <div className="pt-2 border-t border-[#c89b3c]/20">
+                  <div className="text-[11px] text-[#a89984] font-serif mb-2 flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-[#c89b3c]" />
+                    <span>Άμεση Φόρτωση Ενσωματωμένης Βάσης (100% Offline, χωρίς ανάγκη σύνδεσης):</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleLoadPresetDatabase(666, NumberingSystem.ENGLISH_BASE6)}
+                      className="px-2.5 py-1 rounded-md bg-[#18130e] hover:bg-[#2a1c10] border border-[#c89b3c]/30 text-[#e6c670] text-xs font-serif hover:border-[#c89b3c] transition-colors cursor-pointer"
+                    >
+                      ⚡ 666 (Gematrix 10 Σελ.)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadPresetDatabase(666, NumberingSystem.IONIAN)}
+                      className="px-2.5 py-1 rounded-md bg-[#18130e] hover:bg-[#2a1c10] border border-[#c89b3c]/30 text-[#e6c670] text-xs font-serif hover:border-[#c89b3c] transition-colors cursor-pointer"
+                    >
+                      🇬🇷 666 (Ελληνική Ιωνική)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadPresetDatabase(888, NumberingSystem.ENGLISH_BASE6)}
+                      className="px-2.5 py-1 rounded-md bg-[#18130e] hover:bg-[#2a1c10] border border-[#c89b3c]/30 text-[#e6c670] text-xs font-serif hover:border-[#c89b3c] transition-colors cursor-pointer"
+                    >
+                      ⚡ 888 (English / Jesus)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadPresetDatabase(888, NumberingSystem.IONIAN)}
+                      className="px-2.5 py-1 rounded-md bg-[#18130e] hover:bg-[#2a1c10] border border-[#c89b3c]/30 text-[#e6c670] text-xs font-serif hover:border-[#c89b3c] transition-colors cursor-pointer"
+                    >
+                      🇬🇷 888 (ΙΗΣΟΥΣ)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadPresetDatabase(1119, NumberingSystem.IONIAN)}
+                      className="px-2.5 py-1 rounded-md bg-[#18130e] hover:bg-[#2a1c10] border border-[#c89b3c]/30 text-[#e6c670] text-xs font-serif hover:border-[#c89b3c] transition-colors cursor-pointer"
+                    >
+                      📜 1119 (ΙΩΑΝΝΗΣ)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadPresetDatabase(1480, NumberingSystem.IONIAN)}
+                      className="px-2.5 py-1 rounded-md bg-[#18130e] hover:bg-[#2a1c10] border border-[#c89b3c]/30 text-[#e6c670] text-xs font-serif hover:border-[#c89b3c] transition-colors cursor-pointer"
+                    >
+                      ✨ 1480 (ΧΡΙΣΤΟΣ)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadPresetDatabase(2368, NumberingSystem.IONIAN)}
+                      className="px-2.5 py-1 rounded-md bg-[#18130e] hover:bg-[#2a1c10] border border-[#c89b3c]/30 text-[#e6c670] text-xs font-serif hover:border-[#c89b3c] transition-colors cursor-pointer"
+                    >
+                      👑 2368 (ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ)
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Dynamic Range Configuration Card */}
@@ -1619,7 +1977,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                     type="button"
                     onClick={() => {
                       const exportData = {
-                        title: "URL Range Scanned Gematria Matches Export",
+                        title: "URL Range Scanned Isopsephy Matches Export",
                         sourceUrl: targetUrl,
                         filterTarget: filterTargetFromUrl || "all",
                         system: urlGematriaSystem,
@@ -1634,7 +1992,7 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");
                       a.href = url;
-                      a.download = `gematria_range_${crawlStartPage}_${crawlEndPage}_target_${filterTargetFromUrl || "all"}.json`;
+                      a.download = `isopsephy_range_${crawlStartPage}_${crawlEndPage}_target_${filterTargetFromUrl || "all"}.json`;
                       a.click();
                       URL.revokeObjectURL(url);
                     }}
@@ -2100,6 +2458,106 @@ export const OnlineFinderTab: React.FC<OnlineFinderTabProps> = ({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Database History Modal */}
+      {showDbHistoryModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#16120d] border border-[#c89b3c]/50 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-[#c89b3c]/30 flex items-center justify-between bg-[#1f1710]">
+              <div className="flex items-center gap-2">
+                <History className="w-5 h-5 text-[#c89b3c]" />
+                <h3 className="text-base font-serif font-bold text-[#f5ebd7]">
+                  Ιστορικό Αποθηκευμένων Βάσεων & Σαρώσεων ({savedDbSessions.length})
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowDbHistoryModal(false)}
+                className="p-1.5 rounded-lg bg-[#140f0a] hover:bg-[#281f15] border border-[#c89b3c]/30 text-[#a89984] hover:text-[#f5ebd7] transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 overflow-y-auto space-y-3 flex-1">
+              {savedDbSessions.length === 0 ? (
+                <div className="text-center py-10 text-[#a89984] font-serif space-y-2">
+                  <HardDrive className="w-10 h-10 mx-auto text-[#c89b3c]/40" />
+                  <p>Δεν υπάρχουν ακόμη αποθηκευμένες σαρώσεις στο ιστορικό.</p>
+                  <p className="text-xs text-[#8c7e6c]">
+                    Κάθε φορά που σαρώνετε σελίδες ή φορτώνετε ένα αρχείο JSON, αυτό διατηρείται εδώ αυτόματα για άμεσο ξαναδιάβασμα.
+                  </p>
+                </div>
+              ) : (
+                savedDbSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className="p-3.5 rounded-xl bg-[#120f0c] border border-[#c89b3c]/30 hover:border-[#c89b3c]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-serif font-bold text-[#f5ebd7]">
+                          {session.title}
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[11px] bg-[#281f15] text-[#c89b3c] border border-[#c89b3c]/30">
+                          {session.itemCount} στοιχεία
+                        </span>
+                        {session.targetFilter && (
+                          <span className="px-2 py-0.5 rounded text-[11px] bg-[#1a1612] text-[#85e3b3] border border-[#85e3b3]/30">
+                            Στόχος: {session.targetFilter}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-[#a89984] font-serif flex items-center gap-3 flex-wrap">
+                        <span>📅 {session.timestamp}</span>
+                        <span>📄 Σελίδες {session.range.start}-{session.range.end}</span>
+                        <span className="truncate max-w-xs opacity-75">{session.sourceUrl}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => handleLoadDbSession(session)}
+                        className="px-3 py-1.5 rounded-lg bg-[#281f15] hover:bg-[#382b1d] border border-[#c89b3c]/50 text-[#e6c670] text-xs font-serif font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Επαναφόρτωση και ξαναδιάβασμα στη βασική καρτέλα"
+                      >
+                        <BookOpen className="w-3.5 h-3.5 text-[#c89b3c]" />
+                        <span>📖 Ξαναδιάβασμα</span>
+                      </button>
+                      <button
+                        onClick={() => handleDownloadSessionFile(session)}
+                        className="p-1.5 rounded-lg bg-[#140f0a] hover:bg-[#241a10] border border-[#c89b3c]/30 text-[#e6c670] text-xs transition-colors cursor-pointer"
+                        title="Λήψη αρχείου JSON"
+                      >
+                        <Download className="w-3.5 h-3.5 text-[#c89b3c]" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDbSession(session.id)}
+                        className="p-1.5 rounded-lg bg-[#140f0a] hover:bg-red-950/40 border border-[#3d2f22] hover:border-red-600/50 text-[#8c7e6c] hover:text-red-400 text-xs transition-colors cursor-pointer"
+                        title="Διαγραφή από το ιστορικό"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 border-t border-[#c89b3c]/30 flex items-center justify-between bg-[#1a1510] text-xs text-[#a89984] font-serif">
+              <span>Τα δεδομένα παραμένουν αποθηκευμένα τοπικά στη συσκευή σας.</span>
+              <button
+                onClick={() => setShowDbHistoryModal(false)}
+                className="px-4 py-1.5 rounded-lg bg-[#281f15] text-[#f5ebd7] hover:bg-[#382b1d] border border-[#c89b3c]/40 font-semibold cursor-pointer"
+              >
+                Κλείσιμο
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

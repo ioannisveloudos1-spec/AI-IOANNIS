@@ -209,7 +209,7 @@ Ion Velos=John True`;
       title: "A SEED OF LIGHT",
       val: 666,
       sub: "A(6) + SEED(198) + OF(126) + LIGHT(336) = 666",
-      system: "English Gematria (Base 6)",
+      system: "Αγγλική Ισοψηφία (Base 6)",
       icon: Sparkles,
     },
     {

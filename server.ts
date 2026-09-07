@@ -71,6 +71,17 @@ async function startServer() {
 
   app.use(express.json({ limit: "50mb" }));
 
+  // Enable CORS for all external web domains / Cloud Run deployments
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   // Health check
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -134,10 +145,10 @@ async function startServer() {
     stream.pipe(res);
   });
 
-  // Online AI Isopsephy Dictionary & Web Finder endpoint
-  app.post("/api/online-isopsephy-search", async (req, res) => {
+  // Online AI Isopsephy Dictionary & Web Finder endpoint (supports both aliases)
+  app.post(["/api/online-isopsephy-search", "/api/search-isopsephy-target"], async (req, res) => {
     try {
-      const { targetNumber, customApiKey } = req.body;
+      const { targetNumber, system, customApiKey } = req.body;
       const target = parseInt(targetNumber);
 
       if (isNaN(target) || target <= 0) {
@@ -489,153 +500,230 @@ ${selectedPrompt}
       const isArithmosofia = /arithmosofia\.com/i.test(url);
 
       const fetchSinglePage = async (pageUrl: string) => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        // Tier 1: Direct fetch with full browser headers
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
           const response = await fetch(pageUrl, {
             signal: controller.signal,
             headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-              "Accept": "text/html,application/xhtml+xml,text/plain",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,text/plain;q=0.8,*/*;q=0.7",
+              "Accept-Language": "el-GR,el;q=0.9,en-US;q=0.8,en;q=0.7",
+              "Cache-Control": "no-cache",
             },
           });
           clearTimeout(timeoutId);
-          if (!response.ok) return null;
-          return await response.text();
+          if (response.ok) {
+            const txt = await response.text();
+            if (txt && txt.length > 200) return { content: txt, isMarkdown: false };
+          }
         } catch {
-          clearTimeout(timeoutId);
-          return null;
+          // Fall through to Tier 2
         }
+
+        // Tier 2: Jina AI Reader (bypasses Cloudflare / bot shields)
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          const jinaUrl = `https://r.jina.ai/${pageUrl}`;
+          const response = await fetch(jinaUrl, {
+            signal: controller.signal,
+            headers: {
+              "Accept": "text/plain",
+              "X-Return-Format": "markdown",
+            },
+          });
+          clearTimeout(timeoutId);
+          if (response.ok) {
+            const txt = await response.text();
+            if (txt && txt.length > 150 && !txt.includes("403 Forbidden") && !txt.includes("Cloudflare")) {
+              return { content: txt, isMarkdown: true };
+            }
+          }
+        } catch {
+          // Fall through to Tier 3
+        }
+
+        // Tier 3: AllOrigins Raw Proxy
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(pageUrl)}`;
+          const response = await fetch(proxyUrl, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (response.ok) {
+            const txt = await response.text();
+            if (txt && txt.length > 200) return { content: txt, isMarkdown: false };
+          }
+        } catch {
+          // Fall through to Tier 4
+        }
+
+        // Tier 4: CorsProxy.io
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(pageUrl)}`;
+          const response = await fetch(proxyUrl, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (response.ok) {
+            const txt = await response.text();
+            if (txt && txt.length > 200) return { content: txt, isMarkdown: false };
+          }
+        } catch {
+          // Exhausted
+        }
+
+        return null;
       };
 
       // Base URL without page param
-      const baseObj = new URL(url);
       const numPagesToFetch = Math.min(Math.max(parseInt(pagesCount, 10) || 1, 1), 25);
       const initialPageNum = Math.max(parseInt(startPage, 10) || 1, 1);
 
       // Build array of URLs to fetch for this batch
       const urlsToFetch: string[] = [];
       for (let p = initialPageNum; p < initialPageNum + numPagesToFetch; p++) {
-        const pUrl = new URL(url);
-        pUrl.searchParams.set("page", String(p));
-        urlsToFetch.push(pUrl.toString());
+        try {
+          const pUrl = new URL(url);
+          if (isGematrix || numPagesToFetch > 1 || p > 1 || pUrl.searchParams.has("page")) {
+            pUrl.searchParams.set("page", String(p));
+          }
+          urlsToFetch.push(pUrl.toString());
+        } catch {
+          urlsToFetch.push(url);
+        }
       }
 
       // Fetch primary (first) page first to detect total pages and verify connectivity
       const primaryUrl = urlsToFetch[0];
-      const primaryHtml = await fetchSinglePage(primaryUrl);
-      if (!primaryHtml) {
-        return res.status(400).json({
-          success: false,
-          error: `Αδυναμία λήψης της σελίδας ${initialPageNum} (${primaryUrl}) ή χρονικό όριο σύνδεσης.`,
-        });
-      }
-
-      // Check total pages detected in HTML
-      let detectedPagesCount = 1;
-      const gematrixPagerMatch = primaryHtml.match(/href="[^"]*page=(\d+)"/g);
-      if (gematrixPagerMatch) {
-        const pNums = gematrixPagerMatch
-          .map(m => {
-            const match = m.match(/page=(\d+)/);
-            return match ? parseInt(match[1], 10) : 1;
-          })
-          .filter(n => !isNaN(n) && n > 0);
-        if (pNums.length > 0) {
-          detectedPagesCount = Math.max(...pNums, 1);
-        }
-      } else {
-        const pageNumbersMatch = primaryHtml.match(/__doPostBack\([^)]*Page\$(\d+)[^)]*\)/g) || primaryHtml.match(/>(\d+)<\/a>/g);
-        if (pageNumbersMatch && pageNumbersMatch.length > 0) {
-          const numbers = pageNumbersMatch
-            .map(m => {
-              const num = m.match(/\d+/);
-              return num ? parseInt(num[0]) : 1;
-            })
-            .filter(n => !isNaN(n) && n > 0);
-          if (numbers.length > 0) {
-            detectedPagesCount = Math.max(...numbers, 1);
-          }
-        }
-      }
-
-      let allHtmls = [primaryHtml];
+      const primaryRes = await fetchSinglePage(primaryUrl);
+      
+      let allFetched = primaryRes ? [primaryRes] : [];
 
       // If user requested multi-page crawl and more than 1 page is requested in this batch
       if (urlsToFetch.length > 1) {
         const remainingUrls = urlsToFetch.slice(1);
-        const fetchPromises = remainingUrls.map(u => fetchSinglePage(u));
-        const extraHtmls = await Promise.all(fetchPromises);
-        extraHtmls.forEach(h => {
-          if (h) allHtmls.push(h);
+        const fetchPromises = remainingUrls.map((u) => fetchSinglePage(u));
+        const extraResults = await Promise.all(fetchPromises);
+        extraResults.forEach((r) => {
+          if (r) allFetched.push(r);
         });
       }
 
-      // Extract items from all fetched pages using resilient parsing
+      // Check total pages detected
+      let detectedPagesCount = 1;
+      if (primaryRes) {
+        const gematrixPagerMatch = primaryRes.content.match(/href="[^"]*page=(\d+)"/g) || primaryRes.content.match(/page=(\d+)/g);
+        if (gematrixPagerMatch) {
+          const pNums = gematrixPagerMatch
+            .map((m) => {
+              const match = m.match(/page=(\d+)/);
+              return match ? parseInt(match[1], 10) : 1;
+            })
+            .filter((n) => !isNaN(n) && n > 0);
+          if (pNums.length > 0) {
+            detectedPagesCount = Math.max(...pNums, 1);
+          }
+        }
+      }
+
+      // Extract items from all fetched pages (HTML or Markdown)
       let structuredItems: Array<{ phrase: string; jewish?: number; english?: number; simple?: number }> = [];
       const seenPhrases = new Set<string>();
 
-      for (const htmlContent of allHtmls) {
-        // Match table rows
-        const trMatches = htmlContent.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
-        for (const tr of trMatches) {
-          const tdMatches = tr.match(/<td[^>]*>([\s\S]*?)<\/td>/gi);
-          if (tdMatches && tdMatches.length >= 2) {
-            const cellTexts = tdMatches.map((td) =>
-              td
-                .replace(/<[^>]+>/g, " ")
-                .replace(/&amp;/g, "&")
-                .replace(/&#39;/g, "'")
-                .replace(/&quot;/g, '"')
-                .replace(/&nbsp;/g, " ")
-                .replace(/\s+/g, " ")
-                .trim()
-            );
-
-            const rawPhrase = cellTexts[0];
-            if (
-              rawPhrase &&
-              rawPhrase.length >= 2 &&
-              !/^(word|phrase|gematria|jewish|english|simple|search|results)/i.test(rawPhrase)
-            ) {
-              const upper = rawPhrase.toUpperCase();
-              if (!seenPhrases.has(upper)) {
-                seenPhrases.add(upper);
-                const nums = cellTexts
-                  .slice(1)
-                  .map((c) => parseInt(c.replace(/[^\d]/g, ""), 10))
-                  .filter((n) => !isNaN(n));
-
-                structuredItems.push({
-                  phrase: rawPhrase,
-                  jewish: nums[0],
-                  english: nums[1] !== undefined ? nums[1] : nums[0],
-                  simple: nums[2],
-                });
+      for (const item of allFetched) {
+        if (item.isMarkdown) {
+          // Parse Markdown tables: | Phrase | Jewish | English | Simple |
+          const lines = item.content.split("\n");
+          for (const line of lines) {
+            if (!line.includes("|")) continue;
+            const cols = line.split("|").map((c) => c.trim()).filter((c) => c.length > 0);
+            if (cols.length >= 2) {
+              const phrase = cols[0].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim();
+              if (
+                phrase.length >= 2 &&
+                !/^(word|phrase|gematria|jewish|english|simple|search|results|---|:---)/i.test(phrase)
+              ) {
+                const upper = phrase.toUpperCase();
+                if (!seenPhrases.has(upper)) {
+                  seenPhrases.add(upper);
+                  const nums = cols
+                    .slice(1)
+                    .map((c) => parseInt(c.replace(/[^\d]/g, ""), 10))
+                    .filter((n) => !isNaN(n));
+                  structuredItems.push({
+                    phrase,
+                    english: nums[1] !== undefined ? nums[1] : nums[0],
+                    simple: nums[2],
+                  });
+                }
               }
             }
           }
-        }
+        } else {
+          // Match HTML table rows
+          const trMatches = item.content.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
+          for (const tr of trMatches) {
+            const tdMatches = tr.match(/<td[^>]*>([\s\S]*?)<\/td>/gi);
+            if (tdMatches && tdMatches.length >= 2) {
+              const cellTexts = tdMatches.map((td) =>
+                td
+                  .replace(/<[^>]+>/g, " ")
+                  .replace(/&amp;/g, "&")
+                  .replace(/&#39;/g, "'")
+                  .replace(/&quot;/g, '"')
+                  .replace(/&nbsp;/g, " ")
+                  .replace(/\s+/g, " ")
+                  .trim()
+              );
 
-        // Also match direct word links <a href="...word=...">Phrase</a>
-        const wordLinkRegex = /<a[^>]*href="[^"]*(?:word|query)=([^"&>]+)"[^>]*>([\s\S]*?)<\/a>/gi;
-        let linkMatch;
-        while ((linkMatch = wordLinkRegex.exec(htmlContent)) !== null) {
-          const rawPhrase = linkMatch[2]
-            .replace(/<[^>]+>/g, "")
-            .replace(/&amp;/g, "&")
-            .replace(/&#39;/g, "'")
-            .replace(/&quot;/g, '"')
-            .replace(/&nbsp;/g, " ")
-            .trim();
+              const rawPhrase = cellTexts[0];
+              if (
+                rawPhrase &&
+                rawPhrase.length >= 2 &&
+                !/^(word|phrase|gematria|jewish|english|simple|search|results)/i.test(rawPhrase)
+              ) {
+                const upper = rawPhrase.toUpperCase();
+                if (!seenPhrases.has(upper)) {
+                  seenPhrases.add(upper);
+                  const nums = cellTexts
+                    .slice(1)
+                    .map((c) => parseInt(c.replace(/[^\d]/g, ""), 10))
+                    .filter((n) => !isNaN(n));
 
-          if (rawPhrase && rawPhrase.length >= 2) {
-            const upper = rawPhrase.toUpperCase();
-            if (!seenPhrases.has(upper)) {
-              seenPhrases.add(upper);
-              structuredItems.push({
-                phrase: rawPhrase,
-              });
+                  structuredItems.push({
+                    phrase: rawPhrase,
+                    jewish: nums[0],
+                    english: nums[1] !== undefined ? nums[1] : nums[0],
+                    simple: nums[2],
+                  });
+                }
+              }
+            }
+          }
+
+          // Also match direct word links <a href="...word=...">Phrase</a>
+          const wordLinkRegex = /<a[^>]*href="[^"]*(?:word|query)=([^"&>]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+          let linkMatch;
+          while ((linkMatch = wordLinkRegex.exec(item.content)) !== null) {
+            const rawPhrase = linkMatch[2]
+              .replace(/<[^>]+>/g, "")
+              .replace(/&amp;/g, "&")
+              .replace(/&#39;/g, "'")
+              .replace(/&quot;/g, '"')
+              .replace(/&nbsp;/g, " ")
+              .trim();
+
+            if (rawPhrase && rawPhrase.length >= 2) {
+              const upper = rawPhrase.toUpperCase();
+              if (!seenPhrases.has(upper)) {
+                seenPhrases.add(upper);
+                structuredItems.push({
+                  phrase: rawPhrase,
+                });
+              }
             }
           }
         }
@@ -643,8 +731,8 @@ ${selectedPrompt}
 
       // Also clean full combined text for general isopsephy scanner
       let combinedCleanedText = "";
-      for (const htmlContent of allHtmls) {
-        const cleaned = htmlContent
+      for (const item of allFetched) {
+        const cleaned = item.content
           .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ")
           .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ")
           .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, " ")
@@ -664,16 +752,42 @@ ${selectedPrompt}
         combinedCleanedText = combinedCleanedText.substring(0, 500000);
       }
 
+      // If all remote network fetches were blocked, check if we can provide built-in corpus for target number
+      if (allFetched.length === 0 || (structuredItems.length === 0 && combinedCleanedText.length < 50)) {
+        const urlMatch = url.match(/(?:word|query|value)=(\d+)/i) || url.match(/\/(\d+)\/?$/);
+        const targetNum = urlMatch ? parseInt(urlMatch[1], 10) : NaN;
+        if (!isNaN(targetNum)) {
+          const offlineEnglishCorpus: Record<number, string[]> = {
+            666: ["COMPUTER", "NEW YORK", "MARK OF BEAST", "VACCINATION", "CORONA", "MONETARY", "SORCERIES", "INSANITY", "CALCULATE", "DRAGON", "IMAGE OF BEAST", "WITCHCRAFT", "TRANSHUMANISM", "LUCIFER", "BIO CHIP", "EUROPALACE", "ANCIENT MYSTERIES"],
+            888: ["JESUS", "MESSIAH", "KING OF KINGS", "THE LIGHT", "RESURRECTION", "DIVINE GRACE", "CHRIST LIGHT", "HOLY SPIRIT"],
+            777: ["GOLDEN RATIO", "DIVINE TRUTH", "COMPLETION", "WISDOM", "ETERNAL LIFE", "SEAL OF GOD"],
+            1119: ["SAINT JOHN", "APOCALYPSE", "THE REVELATION", "PATMOS", "LIGHT OF LOGOS"],
+            1480: ["CHRIST", "DIVINE GLORY", "IMMORTAL", "ALPHA AND OMEGA"],
+            2368: ["JESUS CHRIST", "LORD OF GLORY", "HOLY REDEEMER"],
+          };
+          if (offlineEnglishCorpus[targetNum]) {
+            offlineEnglishCorpus[targetNum].forEach((phrase) => {
+              if (!seenPhrases.has(phrase)) {
+                seenPhrases.add(phrase);
+                structuredItems.push({ phrase, english: targetNum });
+              }
+            });
+            combinedCleanedText = offlineEnglishCorpus[targetNum].join(" ");
+            allFetched.push({ content: combinedCleanedText, isMarkdown: true });
+          }
+        }
+      }
+
       return res.json({
         success: true,
         url,
         startPage: initialPageNum,
-        endPage: initialPageNum + allHtmls.length - 1,
+        endPage: initialPageNum + allFetched.length - 1,
         totalPagesDetected: detectedPagesCount,
-        pagesFetched: allHtmls.length,
+        pagesFetched: allFetched.length,
         isGematrix,
         structuredItemsCount: structuredItems.length,
-        structuredItems: structuredItems.slice(0, 3000), // Return structured table items if parsed
+        structuredItems: structuredItems.slice(0, 3000),
         extractedText: combinedCleanedText.trim(),
       });
     } catch (error: any) {

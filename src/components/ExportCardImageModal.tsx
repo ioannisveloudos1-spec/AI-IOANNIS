@@ -539,7 +539,7 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
                   {/* Phrase / Word Display */}
                   <div>
                     <div className={`text-[11px] font-mono uppercase tracking-widest ${tStyles.textSecondary}`}>
-                      {isEnglish ? "English Gematria Phrase" : "Ελληνική Έκφραση / Λέξη"}
+                      {isEnglish ? "Αγγλική Έκφραση (Ισοψηφία)" : "Ελληνική Έκφραση / Λέξη"}
                     </div>
                     <div
                       className={`text-xl sm:text-3xl font-ancient-greek font-black tracking-wide ${tStyles.textPrimary} mt-0.5 break-words`}
@@ -632,7 +632,7 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
                       <span>{researcherSignature || "Ελληνική Ισοψηφία & Λεξάριθμοι"}</span>
                     </span>
                     <span className={`${tStyles.accent} font-mono text-[9px]`}>
-                      #Isopsephy #Gematria #{totalValue}
+                      #Isopsephy #Lexarithms #{totalValue}
                     </span>
                   </div>
                 )}

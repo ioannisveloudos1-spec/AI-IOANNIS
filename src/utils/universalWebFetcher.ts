@@ -304,17 +304,17 @@ async function fetchSinglePageResilient(
     // next proxy
   }
 
-  // Strategy 4: CorsProxy.org
+  // Strategy 4: CorsProxy.io
   try {
-    const proxyUrl = `https://corsproxy.org/?url=${encodeURIComponent(pageUrl)}`;
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(pageUrl)}`;
     const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 6500);
+    const t = setTimeout(() => controller.abort(), 7500);
     const res = await fetch(proxyUrl, { signal: controller.signal });
     clearTimeout(t);
     if (res.ok) {
       const text = await res.text();
       if (text && text.length > 200) {
-        return { text, isMarkdown: false, engine: "CorsProxy.org" };
+        return { text, isMarkdown: false, engine: "CorsProxy.io" };
       }
     }
   } catch {
@@ -324,7 +324,7 @@ async function fetchSinglePageResilient(
   // Strategy 5: Direct Fetch (Standard web / local)
   try {
     const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 4500);
+    const t = setTimeout(() => controller.abort(), 5500);
     const res = await fetch(pageUrl, { signal: controller.signal });
     clearTimeout(t);
     if (res.ok) {
@@ -350,10 +350,11 @@ export async function fetchWebPageUniversal(
 ): Promise<UniversalFetchResult> {
   const isGematrix = /gematrix\.org/i.test(targetUrl);
 
-  // 1. Try Backend First (if Express server is running on localhost:3000)
+  // 1. Try Backend First (Express server /api/fetch-web-text)
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
+    // Allow up to 35 seconds for batch / multi-page crawling over network
+    const timer = setTimeout(() => controller.abort(), 35000);
 
     const backendRes = await fetch("/api/fetch-web-text", {
       method: "POST",
@@ -369,7 +370,7 @@ export async function fetchWebPageUniversal(
     clearTimeout(timer);
 
     if (backendRes && backendRes.ok) {
-      const data = await backendRes.json();
+      const data = await backendRes.json().catch(() => null);
       if (
         data &&
         data.success &&

@@ -30,6 +30,8 @@ import {
   Sun,
   Shield,
   Eye,
+  FileDown,
+  FileText,
 } from "lucide-react";
 
 interface EuropeTabProps {
@@ -56,18 +58,20 @@ export interface NovelChapter {
 const NOVEL_CHAPTERS: NovelChapter[] = [
   {
     id: "prologue",
-    number: "Εισαγωγή",
-    title: "Ο Μύθος της Ευρώπης & η Ιωνική Ισοψηφία",
-    subtitle: "Η Ευρύοπτη Κόρη, το Μυστήριο του Ταύρου και η Γέννηση του Πολιτισμού",
+    number: "Πρόλογος",
+    title: "Εισαγωγικό Σημείωμα του Συγγραφέα Ιωάννη Βελούδου",
+    subtitle: "Το Μυθιστόρημα «Ευρώπη: Οδύσσεια των Άστρων», ο Αιών, ο Ιωάννης ο Ελεήμων και η Ιωνική Ισοψηφία",
     summary:
-      "Μια φιλοσοφική και ισοψηφική εισαγωγή στον μύθο της Ευρώπης, τη βαθύτερη ετυμολογική σημασία (Ευρύς + Ωψ) και τη συμβολική μεταφορά του φωτός από την Ανατολή στο Αιγαίο.",
+      "Το πρωτότυπο εισαγωγικό σημείωμα και πρόλογος του συγγραφέα Ιωάννη Βελούδου για το μυθιστόρημα «Ευρώπη: Οδύσσεια των Άστρων», την ετυμολογία (Ευρύς + Ωψ), τον μυστικό συμβολισμό του Ταύρου, τον Αιώνα και τη μετάβαση του πνευματικού φωτός στο Αιγαίο.",
     paragraphs: [
       "Στην αυγή της καταγεγραμμένης μνήμης, ο μύθος δεν ήταν απλή ποιητική αλληγορία, αλλά η ιερά γλώσσα των μυστών, ένας κρυπτογραφημένος κώδικας όπου τα ονόματα των θεών και των ηρώων αντηχούσαν μαθηματικούς νόμους και κοσμικές πορείες. Το όνομα «ΕΥΡΩΠΗ» (Ε=5, Υ=400, Ρ=100, Ω=800, Π=80, Η=8 — άθροισμα 1393 στην απλή εκφορά, ή 1075 κατά την εσωτερική ακολουθία) δηλοί την «ευρύοπτη», εκείνην που κατέχει ευρύ βλέμμα, την ανοιχτόμυαλη και ευρύχωρη συνείδηση που αγκαλιάζει τον ορίζοντα.",
       "Όταν ο βασιλέας των θεών Ζευς μεταμορφώνεται σε πάλλευκο, πράο ταύρο για να σαγηνεύσει τη θυγατέρα του βασιλέως Αγήνορος, δεν συντελείται μια τυχαία αρπαγή. Είναι η αρχετυπική ώθηση του ανώτερου πνεύματος να μεταφέρει την ανθρώπινη ψυχή από την καθηλωμένη ακτή της αρχαϊκής Ανατολής προς το φωτεινό κέντρο της Μεσογείου — την ιερή νήσο Κρήτη.",
-      "Μέσα από αυτό το μυθιστόρημα, ξεδιπλώνεται το ταξίδι της Ευρώπης όχι ως απλό ιστορικό δράμα, αλλά ως η μυητική διαδρομή της συνείδησης που ταξιδεύει πάνω στα κύματα του χρόνου, αγκαλιάζει το θεϊκό στοιχείο κάτω από τον αειθαλή πλάτανο της Γόρτυνας, και γεννά τους θεμελιωτές της δικαιοσύνης και της νομοθεσίας: τον Μίνωα, τον Ραδάμανθυ και τον Σαρπηδόνα."
+      "Μέσα από το μυθιστόρημα «ΕΥΡΩΠΗ: ΟΔΥΣΣΕΙΑ ΤΩΝ ΑΣΤΡΩΝ», ξεδιπλώνεται το ταξίδι της Ευρώπης ως η μυητική διαδρομή της ανθρώπινης συνείδησης: η συνάντηση με τον «Αιώνα» (861), η πνευματική παρακαταθήκη της ελεημοσύνης και της αγάπης («Ιωάννης ο Ελεήμων»), και η θεοφάνεια κάτω από τον αειθαλή πλάτανο της Γόρτυνας, όπου γεννώνται οι στυλοβάτες της ευνομίας: ο Μίνως, ο Ραδάμανθυς και ο Σαρπηδών.",
+      "Ως συγγραφέας, παραδίδω τούτο το έργο όχι μόνον ως μυθοπλασία, αλλά ως κλείδα αυτογνωσίας: κάθε λεξάριθμος, κάθε λέξη και κάθε εικόνα συνδέουν τη διαδρομή της Ευρώπης με το αιώνιο κάλεσμα του «ΕΓΩ ΕΙΜΙ» (870) — την ανακάλυψη πως ο αληθινός ναός του φωτός είναι η ίδια η αφυπνισμένη ανθρώπινη ψυχή."
     ],
     keyTerms: [
       { term: "ΕΥΡΩΠΗ", value: 1075, explanation: "Ευρύς + Ωψ: Η ευρύοπτος, η κατέχουσα ευρύ και ανοιχτό βλέμμα προς το άπειρο." },
+      { term: "ΑΙΩΝ", value: 861, explanation: "Ο αιώνιος κοσμικός χρόνος και η ουράνια τάξις." },
       { term: "ΖΕΥΣ", value: 612, explanation: "Η αρχή του ζωτικού φωτός και της κοσμικής νοήσεως (Ζωή + Εύς)." },
       { term: "ΤΑΥΡΟΣ", value: 1071, explanation: "Το ιερό ηλιακό ζώδιο της γονιμότητος και της ακατανίκητης ορμής." },
       { term: "ΚΡΗΤΗ", value: 436, explanation: "Το λίκνο του Μινωικού πολιτισμού και το ιερό νησί του Διός." }
@@ -321,6 +325,109 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
     }
   };
 
+  // Download complete text backup of the novel with UTF-8 BOM (fixes Greek characters in Windows Notepad)
+  const handleDownloadNovelTxt = () => {
+    const fullText = NOVEL_CHAPTERS.map(
+      (ch) =>
+        `========================================\n${ch.number}: ${ch.title}\n${ch.subtitle}\n========================================\n\nΣΥΝΟΨΗ:\n${ch.summary}\n\n${ch.paragraphs.join("\n\n")}\n\nΒΑΣΙΚΟΙ ΟΡΟΙ & ΙΣΟΨΗΦΙΑ:\n${ch.keyTerms
+          .map((t) => `- ${t.term} (Λεξάριθμος: ${t.value}): ${t.explanation}`)
+          .join("\n")}\n\n`
+    ).join("\n\n");
+
+    // Prepending \uFEFF (UTF-8 Byte Order Mark) guarantees that Windows Notepad and all text editors
+    // open the Greek text with 100% crystal-clear clarity instead of unreadable symbols/mojibake.
+    const blob = new Blob(
+      [`\uFEFFΕΥΡΩΠΗ: ΟΔΥΣΣΕΙΑ ΤΩΝ ΑΣΤΡΩΝ\nΣυγγραφέας: Ιωάννης Βελούδος\n\n${fullText}`],
+      { type: "text/plain;charset=utf-8" }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "EVROPI_ODYSSEIA_TON_ASTRON_Ioannis_Veloudos.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Download complete novel as formatted Microsoft Word document (.doc)
+  const handleDownloadNovelDoc = () => {
+    const htmlChapters = NOVEL_CHAPTERS.map((ch) => `
+      <div style="page-break-after: always; margin-bottom: 35px;">
+        <h2 style="color: #875500; font-size: 19pt; font-family: 'Times New Roman', serif; border-bottom: 2px solid #c89b3c; padding-bottom: 6px; margin-top: 24px;">
+          ${ch.number}: ${ch.title}
+        </h2>
+        <h4 style="color: #555555; font-size: 12pt; font-style: italic; margin-top: 4px; margin-bottom: 14px;">
+          ${ch.subtitle}
+        </h4>
+        <div style="background-color: #fcf9f2; border-left: 4px solid #c89b3c; padding: 10px 14px; margin-bottom: 18px; font-style: italic; font-size: 11pt; color: #444;">
+          <strong>Σύνοψη:</strong> ${ch.summary}
+        </div>
+        ${ch.paragraphs
+          .map(
+            (p) =>
+              `<p style="font-size: 12pt; line-height: 1.65; text-align: justify; margin-bottom: 14px; text-indent: 24px; font-family: 'Times New Roman', serif;">${p}</p>`
+          )
+          .join("")}
+        <div style="margin-top: 20px; padding: 12px; background-color: #f7f3eb; border: 1px solid #d4c5a9; border-radius: 6px;">
+          <h4 style="color: #6b4300; font-size: 11pt; text-transform: uppercase; margin-top: 0; margin-bottom: 8px;">
+            Βασικοί Όροι & Ισοψηφία
+          </h4>
+          <table style="width: 100%; border-collapse: collapse; font-size: 10pt; font-family: 'Times New Roman', serif;">
+            <thead>
+              <tr style="background-color: #e8dcc4; color: #3a2205; text-align: left;">
+                <th style="padding: 6px 8px; border: 1px solid #c4b08d;">Όρος</th>
+                <th style="padding: 6px 8px; border: 1px solid #c4b08d; text-align: center; width: 90px;">Λεξάριθμος</th>
+                <th style="padding: 6px 8px; border: 1px solid #c4b08d;">Ερμηνεία</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ch.keyTerms
+                .map(
+                  (t) => `
+                <tr>
+                  <td style="padding: 6px 8px; border: 1px solid #d8ccb6; font-weight: bold; color: #7a4805;">${t.term}</td>
+                  <td style="padding: 6px 8px; border: 1px solid #d8ccb6; text-align: center; font-weight: bold; color: #000;">${t.value}</td>
+                  <td style="padding: 6px 8px; border: 1px solid #d8ccb6;">${t.explanation}</td>
+                </tr>
+              `
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `).join("");
+
+    const docHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>ΕΥΡΩΠΗ: ΟΔΥΣΣΕΙΑ ΤΩΝ ΑΣΤΡΩΝ - Ιωάννης Βελούδος</title>
+        <style>
+          body { font-family: 'Times New Roman', 'Palatino Linotype', Georgia, serif; color: #1a1a1a; margin: 40px; }
+          h1 { color: #5a3800; font-size: 26pt; text-align: center; margin-bottom: 6px; }
+          .author { text-align: center; font-size: 15pt; color: #7a4805; font-weight: bold; margin-bottom: 8px; }
+          .sub { text-align: center; font-size: 11pt; color: #666; font-style: italic; margin-bottom: 30px; }
+        </style>
+      </head>
+      <body>
+        <h1>ΕΥΡΩΠΗ: ΟΔΥΣΣΕΙΑ ΤΩΝ ΑΣΤΡΩΝ</h1>
+        <div class="author">Συγγραφέας: Ιωάννης Βελούδος</div>
+        <div class="sub">Πλήρης Έκδοση Μυθιστορήματος • Ιωνική Ισοψηφία & Αρχετυπικός Μύθος • Αιών & Ιωάννης ο Ελεήμων</div>
+        <hr style="border: 0; border-top: 2px solid #c89b3c; margin-bottom: 30px;" />
+        ${htmlChapters}
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(["\uFEFF" + docHtml], { type: "application/msword;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "EVROPI_ODYSSEIA_TON_ASTRON_Ioannis_Veloudos.doc";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Save isopsephy term to archive
   const handleSaveTermToArchive = (term: string, value: number, explanation: string) => {
     if (!onSaveItem) return;
@@ -335,7 +442,7 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
       isPhrase: false,
       wordCount: 1,
       category: "Μυθολογία",
-      notes: `Μυθιστόρημα «Η Μυθική Ευρώπη» — ${explanation}`,
+      notes: `Μυθιστόρημα «Ευρώπη: Οδύσσεια των Άστρων» — ${explanation}`,
     });
     setCopiedTerm(term);
     setTimeout(() => setCopiedTerm(null), 2500);
@@ -398,15 +505,15 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
             </div>
 
             <h2 className="text-xl sm:text-3xl font-serif font-bold tracking-wide">
-              Η ΜΥΘΙΚΗ ΕΥΡΩΠΗ
+              ΕΥΡΩΠΗ: ΟΔΥΣΣΕΙΑ ΤΩΝ ΑΣΤΡΩΝ
             </h2>
 
             <p className="text-xs sm:text-sm font-serif opacity-90 leading-relaxed">
-              Το αρχετυπικό ταξίδι της Ευρύοπτης Κόρης πάνω στη ράχη του Ταύρου, η άφιξη στην ιερή Κρήτη, ο αειθαλής πλάτανος της Γόρτυνας και η μυστική γέννηση του ευρωπαϊκού πολιτισμού υπό το φως της Ιωνικής Ισοψηφίας.
+              Το αρχετυπικό ταξίδι της Ευρύοπτης Κόρης πάνω στη ράχη του Ταύρου, η άφιξη στην ιερή Κρήτη, ο αειθαλής πλάτανος της Γόρτυνας, ο Αιών, ο Ιωάννης ο Ελεήμων και η μυστική γέννηση του ευρωπαϊκού πολιτισμού υπό το φως της Ιωνικής Ισοψηφίας.
             </p>
           </div>
 
-          {/* View Mode Switcher & FlipHTML5 Direct Action */}
+          {/* View Mode Switcher & Download Actions */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full md:w-auto">
             <div
               className={`p-1 rounded-xl border flex items-center shadow-inner ${
@@ -447,17 +554,49 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
               </button>
             </div>
 
-            <a
-              href="https://online.fliphtml5.com/wicfu/qzko/#p=5"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-[#140e08] text-xs font-serif font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/40 transition-all cursor-pointer"
-              title="Άνοιγμα της ψηφιακής έκδοσης FlipHTML5 σε νέα καρτέλα"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Νέα Καρτέλα</span>
-            </a>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Word Download Button (.doc) */}
+              <button
+                type="button"
+                onClick={handleDownloadNovelDoc}
+                className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#382613] via-[#4d351b] to-[#382613] hover:from-[#4d351b] hover:to-[#5e4122] border border-[#ffd700]/70 text-[#ffd700] text-xs font-serif font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md shadow-amber-950/40"
+                title="Κατέβασμα πλήρους αντιγράφου του μυθιστορήματος σε αρχείο Microsoft Word (.doc) με μορφοποίηση"
+              >
+                <FileText className="w-4 h-4 text-[#ffd700]" />
+                <span>Αντίγραφο Word (.doc)</span>
+              </button>
+
+              {/* TXT Download Button (with UTF-8 BOM) */}
+              <button
+                type="button"
+                onClick={handleDownloadNovelTxt}
+                className="px-3 py-2 rounded-xl bg-[#281f15] hover:bg-[#382b1d] border border-amber-600/50 text-amber-200 text-xs font-serif font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                title="Κατέβασμα αρχείου κειμένου (.txt) με ελληνική κωδικοποίηση UTF-8"
+              >
+                <FileDown className="w-3.5 h-3.5 text-amber-400" />
+                <span>Κείμενο (.txt UTF-8)</span>
+              </button>
+
+              <a
+                href="https://online.fliphtml5.com/wicfu/qzko/#p=5"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-[#140e08] text-xs font-serif font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/40 transition-all cursor-pointer"
+                title="Άνοιγμα της ψηφιακής έκδοσης FlipHTML5 σε νέα καρτέλα"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Νέα Καρτέλα</span>
+              </a>
+            </div>
           </div>
+        </div>
+
+        {/* Offline Permanence Banner */}
+        <div className="mt-3 px-3.5 py-2 rounded-xl bg-emerald-950/30 border border-emerald-600/40 text-emerald-300 text-xs font-serif flex items-center gap-2">
+          <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>
+            <strong>100% Αυτόνομο & Μόνιμο:</strong> Όλα τα κεφάλαια, ο Πρόλογος / Εισαγωγικό Σημείωμα του συγγραφέα Ιωάννη Βελούδου, οι ισοψηφίες και το κείμενο του μυθιστορήματος «Ευρώπη: Οδύσσεια των Άστρων» είναι πλήρως ενσωματωμένα στον κώδικα της εφαρμογής. Παραμένουν διαθέσιμα για ανάγνωση, αναζήτηση, λήψη σε Word (.doc) / TXT και εκφώνηση ακόμα κι αν η εξωτερική διεύθυνση FlipHTML5 διαγραφεί από το διαδίκτυο.
+          </span>
         </div>
       </div>
 
