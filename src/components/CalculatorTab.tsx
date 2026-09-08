@@ -149,6 +149,23 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
     }
   };
 
+  const getSystemShortName = (sys: NumberingSystem): string => {
+    switch (sys) {
+      case NumberingSystem.IONIAN:
+        return "1. Ιωνική (1-900)";
+      case NumberingSystem.GREEK_SIMPLE:
+        return "2. Απλή (1-24)";
+      case NumberingSystem.GREEK_MULT6:
+        return "3. Ελληνική ×6";
+      case NumberingSystem.ENGLISH_SIMPLE:
+        return "4. Αγγλική (1-26)";
+      case NumberingSystem.ENGLISH_BASE6:
+        return "5. Base 6 (×6)";
+      default:
+        return "Ισοψηφία";
+    }
+  };
+
   // Presets per system
   const getPresets = () => {
     switch (selectedSystem) {
@@ -201,6 +218,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
       case NumberingSystem.IONIAN:
       default:
         return [
+          { label: "ΙΩΑΝΝΗΣ - ΑΜΑΡΤΙΑ", val: "666" },
           { label: "ΙΑΝΕΥΣ", val: "666" },
           { label: "ΤΕΛΙΑΝΟΣ", val: "666" },
           { label: "ΙΩΑΝΝΗΣ", val: "1119" },
@@ -366,7 +384,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
             <label htmlFor="isopsephy-main-input" className="text-xs font-medium uppercase tracking-wider text-[#a69680] font-serif flex items-center gap-1.5 flex-wrap">
               <span>{isEnglishSystem ? "Λατινικη Λεξη, Φραση η Πραξη (Λατινική Ισοψηφία)" : "Ελληνικη Λεξη, Φραση η Πραξη (Ισοψηφια)"}</span>
-              <span className="text-[10px] font-mono text-[#c89b3c]">({getSystemName(selectedSystem)})</span>
+              <span className="text-[10px] font-mono text-[#c89b3c]">({getSystemShortName(selectedSystem)})</span>
             </label>
             
             {/* Quick insert helper keypad */}
@@ -427,15 +445,15 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
           <div className="relative">
             <textarea
               id="isopsephy-main-input"
-              rows={inputExpression.length > 30 || inputExpression.includes(" ") ? 2 : 1}
+              rows={inputExpression.includes("\n") || inputExpression.length > 40 ? 2 : 1}
               value={inputExpression}
               onChange={(e) => setInputExpression(e.target.value)}
               placeholder={
                 selectedSystem === NumberingSystem.ENGLISH_BASE6 || selectedSystem === NumberingSystem.ENGLISH_SIMPLE
-                  ? "e.g. John True, Jesus, Lucifer, 888 + 1480..."
-                  : "π.χ. ΙΗΣΟΥΣ, Ο ΣΠΟΡΟΣ ΤΟΥ ΦΩΤΟΣ, 888 + 1480, ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ..."
+                  ? "e.g. JESUS - TRUTH"
+                  : "π.χ. ΙΩΑΝΝΗΣ - ΑΜΑΡΤΙΑ"
               }
-              className="w-full pl-3.5 pr-10 py-3 bg-[#0f0e0c] border border-[#3d3224] focus:border-[#c89b3c] focus:ring-2 focus:ring-[#c89b3c]/20 rounded-xl text-base sm:text-2xl font-ancient-greek text-[#f5ecd8] placeholder-[#5c5144] transition-all outline-none resize-none break-words leading-relaxed"
+              className="w-full pl-3.5 pr-10 py-3 bg-[#0f0e0c] border border-[#3d3224] focus:border-[#c89b3c] focus:ring-2 focus:ring-[#c89b3c]/20 rounded-xl text-base sm:text-2xl font-ancient-greek text-[#f5ecd8] placeholder-[#5c5144] transition-all outline-none resize-none break-words leading-normal min-h-[52px] sm:min-h-[58px]"
               autoFocus
             />
             {inputExpression && (
@@ -478,21 +496,30 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
         {result.finalValue > 0 ? (
           <div
             key={`calc-hero-${result.finalValue}-${selectedSystem}`}
-            className="p-6 rounded-xl bg-[#12100d] border border-[#3d2f1f] relative overflow-hidden animate-lexarithm-result animate-card-shimmer transition-all"
+            className="p-4 sm:p-6 rounded-2xl bg-[#12100d] border border-[#3d2f1f] relative overflow-hidden animate-lexarithm-result animate-card-shimmer transition-all"
           >
             {/* Background decorative watermark */}
             <div className="absolute right-4 -bottom-6 text-[110px] font-serif font-black text-[#ffffff]/[0.02] pointer-events-none select-none">
               {greekNumeral || (isEnglishSystem ? "G" : "Ω")}
             </div>
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
               
               {/* Main Number and Numeral */}
-              <div>
-                <span className="text-xs uppercase tracking-widest text-[#a69680] font-mono">
-                  Συνολικός {isEnglishSystem ? "Λεξάριθμος (Ισοψηφία)" : "Λεξάριθμος"}
-                </span>
-                <div className="flex items-baseline gap-4 mt-1">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+                  <span className="text-xs uppercase tracking-widest text-[#a69680] font-mono">
+                    Συνολικός {isEnglishSystem ? "Λεξάριθμος (Ισοψηφία)" : "Λεξάριθμος"}
+                  </span>
+                  <div
+                    className="text-[11px] font-mono text-[#c89b3c] px-2.5 py-0.5 rounded-full bg-[#1e1913] border border-[#362b1e] whitespace-nowrap shadow-sm"
+                    title={getSystemName(selectedSystem)}
+                  >
+                    {getSystemShortName(selectedSystem)}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-baseline gap-3 mt-1">
                   <span
                     key={`calc-num-${result.finalValue}`}
                     className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#f7e0aa] via-[#e6c670] to-[#c89b3c] drop-shadow-md animate-number-glow inline-block"
@@ -502,7 +529,7 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                   {greekNumeral && (
                     <div
                       key={`calc-numeral-${greekNumeral}`}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#221c15] border border-[#443625] animate-badge-glow shadow-sm"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#221c15] border border-[#443625] animate-badge-glow shadow-sm shrink-0"
                     >
                       <span className="text-xs text-[#8c7e6c] font-sans">Ιωνικός:</span>
                       <span className="text-base sm:text-lg font-serif font-bold text-[#e6c670]">
@@ -510,9 +537,6 @@ export const CalculatorTab: React.FC<CalculatorTabProps> = ({
                       </span>
                     </div>
                   )}
-                  <div className="text-xs font-mono text-[#a69680] px-2.5 py-1 rounded bg-[#1e1913] border border-[#362b1e]">
-                    {getSystemName(selectedSystem)}
-                  </div>
                 </div>
 
                 {/* Digital Root & Math Badges */}

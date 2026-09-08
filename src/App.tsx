@@ -516,6 +516,9 @@ export default function App() {
           <GrammatariTab
             onSaveItem={handleSaveItem}
             onOpenAiModal={handleOpenAiModal}
+            onOpenFontModal={() => setFontModalOpen(true)}
+            currentFontId={currentFontId}
+            onSelectFont={handleSelectFont}
           />
         )}
 
@@ -724,33 +727,69 @@ export default function App() {
         ].map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
-          const isLight = theme === "parchment" || theme === "ancient-calligraphy" || theme === "solar";
+          const isParchment = theme === "parchment" || theme === "ancient-calligraphy";
+          const isSolar = theme === "solar";
+          const isLight = isParchment || isSolar;
+          const isEthereal = theme === "ethereal";
+          const isCyberTech = theme === "cyber-tech";
+
+          // Active vs Inactive tab button styling
+          const activeBtnClass = isParchment
+            ? "text-white font-bold bg-[#783d07] shadow-sm"
+            : isSolar
+            ? "text-white font-bold bg-[#b45309] shadow-sm"
+            : isEthereal
+            ? "text-[#040816] font-bold bg-[#38bdf8] shadow-sm"
+            : isCyberTech
+            ? "text-[#022c22] font-bold bg-[#10b981] shadow-sm"
+            : "text-[#ffd700] font-bold bg-[#241c14] border border-[#c89b3c]/40";
+
+          const inactiveBtnClass = isLight
+            ? "text-[#5c3e21] hover:text-[#2b1704] font-medium"
+            : isEthereal || isCyberTech
+            ? "text-[#94a3b8] hover:text-[#e2e8f0] font-medium"
+            : "text-[#a69680] hover:text-[#d6c7b2]";
+
+          const activeIconClass = isLight
+            ? "text-white"
+            : isEthereal
+            ? "text-[#040816]"
+            : isCyberTech
+            ? "text-[#022c22]"
+            : "text-[#ffd700]";
+
+          const inactiveIconClass = isLight
+            ? "text-[#8a5b28]"
+            : isEthereal || isCyberTech
+            ? "text-[#64748b]"
+            : "text-[#8c7e6c]";
+
           return (
             <button
               key={item.id}
               onClick={() => setCurrentTab(item.id)}
               className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition-all cursor-pointer touch-manipulation min-h-[44px] w-full min-w-0 overflow-hidden ${
-                isActive
-                  ? isLight
-                    ? "text-[#7a3902] font-bold bg-[#dfcdb4]"
-                    : "text-[#ffd700] font-bold bg-[#241c14]/70"
-                  : isLight
-                  ? "text-[#472605] hover:text-[#1c0c00] font-medium"
-                  : "text-[#a69680] hover:text-[#d6c7b2]"
+                isActive ? activeBtnClass : inactiveBtnClass
               }`}
             >
               <div className="relative flex items-center justify-center">
                 <Icon
                   className={`w-4.5 h-4.5 sm:w-5 sm:h-5 shrink-0 ${
-                    isActive
-                      ? isLight ? "text-[#7a3902]" : "text-[#ffd700]"
-                      : isLight ? "text-[#472605]" : "text-[#8c7e6c]"
+                    isActive ? activeIconClass : inactiveIconClass
                   }`}
                 />
                 {item.badge !== undefined && item.badge > 0 && (
                   <span
                     className={`absolute -top-1.5 -right-2 text-[8px] px-1 py-0.1 rounded-full font-bold leading-none ${
-                      isLight ? "bg-[#8c5307] text-[#fff]" : "bg-[#c89b3c] text-black"
+                      isActive
+                        ? "bg-white text-[#783d07]"
+                        : isLight
+                        ? "bg-[#8c5307] text-[#fff]"
+                        : isEthereal
+                        ? "bg-[#38bdf8] text-[#040816]"
+                        : isCyberTech
+                        ? "bg-[#10b981] text-[#022c22]"
+                        : "bg-[#c89b3c] text-black"
                     }`}
                   >
                     {item.badge > 999 ? "999+" : item.badge}
@@ -773,15 +812,27 @@ export default function App() {
         <button
           onClick={() => handleOpenAiModal("ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ", 2368, ["ΙΗΣΟΥΣ", "ΧΡΙΣΤΟΣ"])}
           className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition-all cursor-pointer touch-manipulation min-h-[44px] w-full min-w-0 overflow-hidden ${
-            theme === "parchment" || theme === "ancient-calligraphy" || theme === "solar"
-              ? "text-[#8c5307] hover:bg-[#ebdcc5]/50"
+            theme === "parchment" || theme === "ancient-calligraphy"
+              ? "text-[#783d07] hover:bg-[#ebdcc5]/60"
+              : theme === "solar"
+              ? "text-[#b45309] hover:bg-[#faebd0]/60"
+              : theme === "ethereal"
+              ? "text-[#38bdf8] hover:bg-[#0c1427]/60"
+              : theme === "cyber-tech"
+              ? "text-[#10b981] hover:bg-[#0c1524]/60"
               : "text-[#f5ecd8] hover:bg-[#241c14]/70"
           }`}
         >
           <Sparkles
             className={`w-4.5 h-4.5 sm:w-5 sm:h-5 shrink-0 animate-pulse ${
-              theme === "parchment" || theme === "ancient-calligraphy" || theme === "solar"
-                ? "text-[#8c5307]"
+              theme === "parchment" || theme === "ancient-calligraphy"
+                ? "text-[#783d07]"
+                : theme === "solar"
+                ? "text-[#b45309]"
+                : theme === "ethereal"
+                ? "text-[#38bdf8]"
+                : theme === "cyber-tech"
+                ? "text-[#10b981]"
                 : "text-[#ffd700]"
             }`}
           />

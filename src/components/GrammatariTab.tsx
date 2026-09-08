@@ -32,10 +32,12 @@ import {
   Feather,
   BookMarked,
   X,
+  Type,
 } from "lucide-react";
 import { solveGrammatari, GrammatariMatch } from "../utils/grammatari";
 import { SavedIsopsephyItem, GrammatariSavedRecord } from "../types";
 import { getWordMeaning, WordMeaningDetail } from "../data/wordMeanings";
+import { ANCIENT_GREEK_FONTS } from "../utils/greekFonts";
 import {
   loadGrammatariRecords,
   saveGrammatariRecord,
@@ -53,6 +55,9 @@ import { SacredHarmonicsCard } from "./SacredHarmonicsCard";
 interface GrammatariTabProps {
   onSaveItem?: (item: Omit<SavedIsopsephyItem, "id" | "createdAt">) => void;
   onOpenAiModal?: (text: string, number: number, words: string[]) => void;
+  onOpenFontModal?: () => void;
+  currentFontId?: string;
+  onSelectFont?: (fontId: string) => void;
 }
 
 const PRESET_PHRASES = [
@@ -69,13 +74,17 @@ const PRESET_PHRASES = [
 export const GrammatariTab: React.FC<GrammatariTabProps> = ({
   onSaveItem,
   onOpenAiModal,
+  onOpenFontModal,
+  currentFontId,
+  onSelectFont,
 }) => {
   // Navigation: "solver" (Εύρεση) or "database" (Βάση Δεδομένων Γραμματάρι)
   const [activeView, setActiveView] = useState<"solver" | "database">("solver");
 
   const [inputPhrase, setInputPhrase] = useState<string>("ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ");
   const [minLen, setMinLen] = useState<number>(2);
-  const [maxLen, setMaxLen] = useState<number>(9);
+  const [maxLen, setMaxLen] = useState<number>(15);
+  const [activeLengthChip, setActiveLengthChip] = useState<number | null>(null);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
   const [searchFilter, setSearchFilter] = useState<string>("");
@@ -96,7 +105,7 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
     setDbRecords(loadGrammatariRecords());
   }, []);
 
-  // Run the solver
+  // Run the solver strictly respecting letter counts
   const results = useMemo(() => {
     return solveGrammatari(inputPhrase, minLen, maxLen, customWordBank);
   }, [inputPhrase, minLen, maxLen, customWordBank]);
@@ -200,16 +209,37 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
   // Filtered and sorted matches for active solver view
   const processedMatchesByLength = useMemo(() => {
     const output: Record<number, GrammatariMatch[]> = {};
+    const trimmedFilter = searchFilter.trim();
+    const normalizedQuery = trimmedFilter
+      ? trimmedFilter
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toUpperCase()
+      : "";
+
     for (let l = minLen; l <= maxLen; l++) {
       let list = results.matchesByLength[l] || [];
-      if (searchFilter.trim()) {
-        const query = searchFilter.trim().toUpperCase();
-        list = list.filter(
-          (m) =>
-            m.word.includes(query) ||
-            m.isopsephy.toString().includes(query) ||
-            m.pythmen.toString() === query
-        );
+      if (normalizedQuery) {
+        list = list.filter((m) => {
+          const mNorm = m.word
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toUpperCase();
+          const matchesWord = mNorm.includes(normalizedQuery) || m.word.includes(normalizedQuery);
+          const matchesIsopsephy = m.isopsephy.toString().includes(trimmedFilter);
+          const matchesPythmen = m.pythmen.toString() === trimmedFilter;
+
+          const meaning = getWordMeaning(m.word);
+          const meaningText = meaning
+            ? `${meaning.summary} ${meaning.category} ${meaning.highlightTag || ""} ${meaning.etymology || ""}`
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toUpperCase()
+            : "";
+          const matchesMeaning = meaningText.includes(normalizedQuery);
+
+          return matchesWord || matchesIsopsephy || matchesPythmen || matchesMeaning;
+        });
       }
       if (sortBy === "alphabetical") {
         list = [...list].sort((a, b) => a.word.localeCompare(b.word));
@@ -223,9 +253,47 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
     return output;
   }, [results, minLen, maxLen, searchFilter, sortBy]);
 
+  // Key Sacred & Highlighted Matches found in current results for 1-click focus
+  const keySacredHighlights = useMemo(() => {
+    const prominentKeys = [
+      { word: "ΟΥΔΟΣ", iso: 744, tag: "Κατώφλι" },
+      { word: "ΑΙΩΝ", iso: 861, tag: "Χρόνος" },
+      { word: "ΝΟΥΣ", iso: 720, tag: "Νόηση" },
+      { word: "ΙΗΣΟΥΣ", iso: 888, tag: "Ίαση" },
+      { word: "ΔΙΟΝΥΣΟΣ", iso: 1004, tag: "Μυστήρια" },
+      { word: "ΟΔΥΣΣΕΙΑ", iso: 890, tag: "Νόστος" },
+      { word: "ΒΑΣΙΛΕΥΣ", iso: 848, tag: "Ηγεμονία" },
+      { word: "ΔΙΑΣ", iso: 215, tag: "Ύπατος Θεός" },
+      { word: "ΑΔΗΣ", iso: 213, tag: "Αόρατος" },
+      { word: "ΗΔΟΝΩΝ", iso: 982, tag: "Επικούρεια" },
+      { word: "ΒΕΛΟΣ", iso: 307, tag: "Ακτίνα" },
+      { word: "ΙΑΣΩΝ", iso: 1061, tag: "Ιερά Γνώση" },
+      { word: "ΑΙΣΩΝ", iso: 1061, tag: "Πατέρας Ιάσονα" },
+      { word: "ΣΙΩΝ", iso: 1060, tag: "Ιερό Όρος" },
+      { word: "ΟΔΟΣ", iso: 344, tag: "Ιερά Οδός" },
+      { word: "ΝΕΟΣ", iso: 325, tag: "Ανανέωση" },
+      { word: "ΑΝΩ", iso: 851, tag: "Άνω Κόσμος" },
+      { word: "ΒΑΣΗ", iso: 211, tag: "Θεμέλιο" },
+    ];
+    const allMatchesList = Object.values(results.matchesByLength).flat();
+    const matchWords = new Set(allMatchesList.map((m) => m.word));
+    return prominentKeys.filter((k) => matchWords.has(k.word));
+  }, [results.matchesByLength]);
+
   const totalFilteredMatches = useMemo(() => {
     return Object.values(processedMatchesByLength).reduce((acc, list) => acc + list.length, 0);
   }, [processedMatchesByLength]);
+
+  const availableLengthsWithMatches = useMemo(() => {
+    const list: { len: number; count: number }[] = [];
+    for (let l = minLen; l <= maxLen; l++) {
+      const c = (processedMatchesByLength[l] || []).length;
+      if (c > 0) {
+        list.push({ len: l, count: c });
+      }
+    }
+    return list;
+  }, [processedMatchesByLength, minLen, maxLen]);
 
   // Current record object ready for export
   const currentRecordForExport: GrammatariSavedRecord = useMemo(() => {
@@ -276,8 +344,11 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
               <span className="p-2.5 rounded-xl bg-[#2a1e12] border border-[#c89b3c]/40 text-[#ffd700]">
                 <SpellCheck className="w-5 h-5" />
               </span>
-              <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#f5ecd8]">
-                ΓΡΑΜΜΑΤΑΡΙ (Υπο-Αναγραμματισμοί Ονόματος & Φράσης)
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#f5ecd8] flex items-center flex-wrap gap-x-2.5">
+                <span>ΓΡΑΜΜΑΤΑΡΙ</span>
+                <span className="text-sm sm:text-base font-medium text-[#ffd700] whitespace-nowrap">
+                  (Αναγραμματισμοί &amp; Υποαναγραμματισμοί)
+                </span>
               </h2>
             </div>
             <p className="text-xs sm:text-sm text-[#b8a78e] font-serif max-w-3xl leading-relaxed">
@@ -286,10 +357,25 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {onOpenFontModal && (
+              <button
+                type="button"
+                onClick={onOpenFontModal}
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#201810] hover:bg-[#2c2014] border border-[#3e2e1c] text-[#c89b3c] hover:text-[#ffd700] font-serif text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shadow-md"
+                title="Επιλογή ελληνικής καλλιγραφικής γραμματοσειράς"
+              >
+                <Type className="w-4 h-4 text-[#ffd700]" />
+                <span className="hidden sm:inline">Γραμματοσειρά:</span>
+                <span className="text-[#f5ecd8] font-bold">
+                  {ANCIENT_GREEK_FONTS.find((f) => f.id === currentFontId)?.name.split(" ")[0] || "Didot"}
+                </span>
+              </button>
+            )}
+
             {onOpenAiModal && (
               <button
                 onClick={() => onOpenAiModal(inputPhrase, results.sourceIsopsephy, [])}
-                className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#8a6825] to-[#c89b3c] hover:from-[#9c762b] hover:to-[#dbaa45] text-black font-serif font-bold text-xs shadow-lg shadow-[#c89b3c]/20 transition-all cursor-pointer"
+                className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#8a6825] to-[#c89b3c] hover:from-[#9c762b] hover:to-[#dbaa45] text-black font-serif font-bold text-xs shadow-lg shadow-[#c89b3c]/20 transition-all cursor-pointer whitespace-nowrap"
               >
                 <Sparkles className="w-4 h-4" />
                 AI Ερμηνεία
@@ -419,6 +505,31 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
               </div>
             </div>
 
+            {/* Strict Anagram Rule Confirmation */}
+            <div className="pt-2 border-t border-[#23180f]">
+              <div className="p-3 rounded-xl bg-gradient-to-r from-[#170e08] via-[#1f140c] to-[#120b06] border border-[#4d321d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-emerald-950/80 border border-emerald-600/60 text-emerald-400 text-xs flex items-center justify-center font-bold">
+                    ✓
+                  </span>
+                  <div>
+                    <span className="text-xs font-serif font-bold text-[#ffd700] block">
+                      Αυστηρός Αναγραμματισμός (Υποσύνολο Γραμμάτων)
+                    </span>
+                    <span className="text-[11px] text-[#b8a692] font-serif leading-tight block">
+                      Χρήση αποκλειστικά των γραμμάτων της φράσης και αυστηρά έως το διαθέσιμο πλήθος τους (π.χ. με 1 «Α» αποκλείονται λέξεις με 2 «Α» όπως το «ΑΙΑΣ»).
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                  <span className="text-[11px] font-mono text-[#8a7662]">Έγκυρα Ευρήματα:</span>
+                  <span className="px-2 py-0.5 rounded-md bg-[#2b1b0f] border border-[#ffd700]/40 text-[#ffd700] font-mono font-bold text-xs">
+                    {results.totalMatches} λέξεις
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* Length Controls and Filter Bar */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 pt-2 border-t border-[#23180f]">
               {/* Min Length */}
@@ -429,7 +540,7 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
                   onChange={(e) => setMinLen(Number(e.target.value))}
                   className="w-full px-3 py-2 rounded-lg bg-[#0c0805] border border-[#332415] text-[#f5ecd8] text-xs font-serif outline-none"
                 >
-                  {[2, 3, 4, 5, 6, 7, 8].map((num) => (
+                  {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
                     <option key={num} value={num}>
                       {num} Γράμματα
                     </option>
@@ -445,7 +556,7 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
                   onChange={(e) => setMaxLen(Number(e.target.value))}
                   className="w-full px-3 py-2 rounded-lg bg-[#0c0805] border border-[#332415] text-[#f5ecd8] text-xs font-serif outline-none"
                 >
-                  {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].map((num) => (
+                  {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((num) => (
                     <option key={num} value={num}>
                       {num} Γράμματα
                     </option>
@@ -469,19 +580,77 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
 
               {/* Search within results */}
               <div className="space-y-1">
-                <label className="text-[11px] font-serif text-[#a89984]">Φίλτρο στα Αποτελέσματα:</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-serif text-[#a89984]">Φίλτρο στα Αποτελέσματα:</label>
+                  {searchFilter && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchFilter("")}
+                      className="text-[10px] text-[#ffd700] hover:underline cursor-pointer flex items-center gap-0.5"
+                    >
+                      <X className="w-3 h-3" />
+                      <span>Καθαρισμός</span>
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
                   <input
                     type="text"
                     value={searchFilter}
                     onChange={(e) => setSearchFilter(e.target.value)}
-                    placeholder="Αναζήτηση λέξης ή αριθμού..."
-                    className="w-full px-3 py-2 pl-8 rounded-lg bg-[#0c0805] border border-[#332415] text-[#f5ecd8] text-xs font-serif placeholder-[#5a4836] outline-none"
+                    placeholder="Αναζήτηση (π.χ. ΟΥΔΟΣ, κατώφλι, 744)..."
+                    className="w-full px-3 py-2 pl-8 pr-7 rounded-lg bg-[#0c0805] border border-[#332415] text-[#f5ecd8] text-xs font-serif placeholder-[#5a4836] outline-none"
                   />
                   <Search className="w-3.5 h-3.5 text-[#8a7662] absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  {searchFilter && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchFilter("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8a7662] hover:text-[#f5ecd8] cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
+
+            {/* Quick Sacred & Highlighted Word Chips (1-click search & focus) */}
+            {keySacredHighlights.length > 0 && (
+              <div className="pt-3 border-t border-[#2d1e12] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-serif font-bold text-[#ffd700] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#ffd700]" />
+                    <span>Εξέχοντα Ιερά &amp; Φιλοσοφικά Ευρήματα (Άμεση Εστίαση):</span>
+                  </span>
+                  <span className="text-[10px] text-[#9a8570] font-sans">
+                    {keySacredHighlights.length} εντοπίστηκαν
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {keySacredHighlights.map((k) => {
+                    const isActive = searchFilter.trim().toUpperCase() === k.word;
+                    return (
+                      <button
+                        key={k.word}
+                        type="button"
+                        onClick={() => setSearchFilter(isActive ? "" : k.word)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-serif transition-all cursor-pointer flex items-center gap-1.5 border ${
+                          isActive
+                            ? "bg-[#ffd700] text-black font-bold border-[#ffd700] shadow-sm shadow-[#ffd700]/30"
+                            : "bg-[#1c120a] hover:bg-[#281a0f] text-[#f5ecd8] border-[#3e2716] hover:border-[#ffd700]/50"
+                        }`}
+                        title={`${k.word} = ${k.iso} (${k.tag})`}
+                      >
+                        <span className="font-bold text-[#ffd700]">{k.word}</span>
+                        <span className="text-[10px] font-mono opacity-80">({k.iso})</span>
+                        <span className="text-[9px] px-1 py-0.2 rounded bg-black/30 opacity-75">{k.tag}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Action Toolbar: Save to DB & Export to Excel / PDF / CSV */}
@@ -631,9 +800,52 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
             </div>
           </div>
 
-          {/* Matches Grouped by Word Length (2, 3, 4, 5, 6, 7, 8, 9... letters) */}
+          {/* Quick Length Selection Chip Bar */}
+          {availableLengthsWithMatches.length > 0 && (
+            <div className="p-3 rounded-2xl bg-[#140e0a] border border-[#2b1e13] flex items-center gap-2 flex-wrap shadow-md">
+              <span className="text-xs font-serif text-[#a89984] font-semibold mr-1">
+                Γρήγορη Επιλογή Μήκους:
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveLengthChip(null)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold transition-all cursor-pointer ${
+                  activeLengthChip === null
+                    ? "bg-[#ffd700] text-black shadow-md shadow-[#ffd700]/20"
+                    : "bg-[#0c0805] text-[#c9baa6] border border-[#2d1e12] hover:border-[#ffd700]/40"
+                }`}
+              >
+                Όλα τα Μήκη ({totalFilteredMatches})
+              </button>
+              {availableLengthsWithMatches.map(({ len, count }) => (
+                <button
+                  key={len}
+                  type="button"
+                  onClick={() => setActiveLengthChip(activeLengthChip === len ? null : len)}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-serif transition-all flex items-center gap-1.5 cursor-pointer border ${
+                    activeLengthChip === len
+                      ? "bg-[#e6a817] text-black font-bold border-[#e6a817] shadow-md"
+                      : "bg-[#0c0805] text-[#e6c670] border-[#2b1e13] hover:border-[#ffd700]/50"
+                  }`}
+                >
+                  <span>{len} γράμματα</span>
+                  <span
+                    className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                      activeLengthChip === len
+                        ? "bg-black/20 text-black font-bold"
+                        : "bg-[#1f140c] text-[#ffd700]"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Matches Grouped by Word Length (2, 3, 4, 5, 6, 7, 8, 9, 10... letters) */}
           <div className="space-y-6">
-            {Array.from({ length: maxLen - minLen + 1 }, (_, i) => minLen + i).map((len) => {
+            {(activeLengthChip ? [activeLengthChip] : Array.from({ length: maxLen - minLen + 1 }, (_, i) => minLen + i)).map((len) => {
               const matches = processedMatchesByLength[len] || [];
               if (matches.length === 0) return null;
 
@@ -665,7 +877,17 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
                         item.word === "ΙΗΣΟΥΣ" ||
                         item.word === "ΙΑΝΕΥΣ" ||
                         item.word === "ΟΥΔΟΣ" ||
-                        item.word === "ΒΕΛΟΣ";
+                        item.word === "ΒΕΛΟΣ" ||
+                        item.word === "ΔΙΟΝΥΣΟΣ" ||
+                        item.word === "ΟΔΥΣΣΕΙΑ" ||
+                        item.word === "ΔΙΑΒΟΛΟΣ" ||
+                        item.word === "ΒΑΣΙΛΕΥΣ" ||
+                        item.word === "ΑΙΩΝ" ||
+                        item.word === "ΔΙΑΣ" ||
+                        item.word === "ΑΔΗΣ" ||
+                        item.word === "ΗΔΟΝΩΝ" ||
+                        item.word === "ΙΑΣΩΝ" ||
+                        item.word === "ΑΙΣΩΝ";
 
                       return (
                         <div

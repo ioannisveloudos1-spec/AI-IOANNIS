@@ -1,6 +1,6 @@
-import React from "react";
-import { ANCIENT_GREEK_FONTS, AncientGreekFont } from "../utils/greekFonts";
-import { Type, Check, Sparkles, X, BookOpen, Layers } from "lucide-react";
+import React, { useState } from "react";
+import { ANCIENT_GREEK_FONTS, AncientGreekFont, getFontScope, saveFontScope } from "../utils/greekFonts";
+import { Type, Check, Sparkles, X, Globe, Feather, BookOpen, Layers } from "lucide-react";
 
 interface GreekFontSelectorModalProps {
   isOpen: boolean;
@@ -15,9 +15,30 @@ export const GreekFontSelectorModal: React.FC<GreekFontSelectorModalProps> = ({
   currentFontId,
   onSelectFont,
 }) => {
+  const [scope, setScope] = useState<"global" | "selective">(() => getFontScope());
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+
   if (!isOpen) return null;
 
   const currentFont = ANCIENT_GREEK_FONTS.find((f) => f.id === currentFontId) || ANCIENT_GREEK_FONTS[0];
+
+  const handleScopeChange = (newScope: "global" | "selective") => {
+    setScope(newScope);
+    saveFontScope(newScope);
+  };
+
+  const filteredFonts = ANCIENT_GREEK_FONTS.filter((font) => {
+    if (filterCategory === "calligraphy") {
+      return font.category.includes("Καλλιγραφ") || font.era.includes("Καλλιγραφ") || font.id === "alegreya" || font.id === "philosopher" || font.id === "playfair";
+    }
+    if (filterCategory === "epigraphic") {
+      return font.category.includes("Επιγραφ") || font.id === "cinzel" || font.id === "alegreya-sc" || font.id === "gfs-neohellenic";
+    }
+    if (filterCategory === "classical") {
+      return font.category.includes("Κλασικ") || font.id === "gfs-didot" || font.id === "cardo" || font.id === "cormorant" || font.id === "eb-garamond" || font.id === "old-standard";
+    }
+    return true;
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
@@ -36,14 +57,14 @@ export const GreekFontSelectorModal: React.FC<GreekFontSelectorModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base sm:text-lg font-serif font-bold text-[#f5ecd8]">
-                  Αρχαιοελληνικές Γραμματοσειρές
+                  Ελληνικές & Καλλιγραφικές Γραμματοσειρές
                 </h3>
-                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#2a2116] text-[#c89b3c] border border-[#4a3925]">
-                  8 Στυλ
+                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#2a2116] text-[#c89b3c] border border-[#4a3925] whitespace-nowrap">
+                  {ANCIENT_GREEK_FONTS.length} Στυλ
                 </span>
               </div>
               <p className="text-xs text-[#a69680] font-sans">
-                Επιλέξτε το ύφος εμφάνισης των λέξεων και των λεξαριθμικών αποτελεσμάτων
+                Επιλέξτε γραμματοσειρά και εύρος εφαρμογής σε όλες τις καρτέλες της εφαρμογής
               </p>
             </div>
           </div>
@@ -57,8 +78,92 @@ export const GreekFontSelectorModal: React.FC<GreekFontSelectorModalProps> = ({
           </button>
         </div>
 
+        {/* Global vs Selective Scope Control */}
+        <div className="px-4 sm:px-6 py-2.5 bg-[#1a140e] border-b border-[#2d2419] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-1.5 text-xs text-[#c89b3c]">
+            <Globe className="w-4 h-4 text-[#ffd700]" />
+            <span className="font-semibold text-[#f5ecd8]">Εμβέλεια Εφαρμογής:</span>
+          </div>
+
+          <div className="flex items-center gap-1 bg-[#120e0a] p-1 rounded-xl border border-[#2d2216]">
+            <button
+              type="button"
+              onClick={() => handleScopeChange("global")}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                scope === "global"
+                  ? "bg-[#c89b3c] text-[#14100c] font-bold shadow"
+                  : "text-[#a69680] hover:text-[#f5ecd8]"
+              }`}
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>Σε Όλες τις Καρτέλες (Καθολικά)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleScopeChange("selective")}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                scope === "selective"
+                  ? "bg-[#c89b3c] text-[#14100c] font-bold shadow"
+                  : "text-[#a69680] hover:text-[#f5ecd8]"
+              }`}
+            >
+              <span>Ελληνικές Λέξεις &amp; Τίτλοι</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Categories Ribbon */}
+        <div className="px-4 sm:px-6 py-2 bg-[#120f0c] border-b border-[#2d2419] flex items-center gap-1.5 overflow-x-auto gold-scrollbar">
+          <span className="text-[11px] text-[#8a7b69] font-sans shrink-0 mr-1">Φίλτρο:</span>
+          <button
+            type="button"
+            onClick={() => setFilterCategory("all")}
+            className={`px-2.5 py-1 rounded-lg text-xs transition-colors cursor-pointer shrink-0 ${
+              filterCategory === "all"
+                ? "bg-[#2d2215] text-[#ffd700] border border-[#c89b3c]"
+                : "bg-[#18130e] text-[#a69680] hover:text-[#f5ecd8] border border-transparent"
+            }`}
+          >
+            Όλες ({ANCIENT_GREEK_FONTS.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterCategory("calligraphy")}
+            className={`px-2.5 py-1 rounded-lg text-xs transition-colors cursor-pointer shrink-0 flex items-center gap-1 ${
+              filterCategory === "calligraphy"
+                ? "bg-[#2d2215] text-[#ffd700] border border-[#c89b3c]"
+                : "bg-[#18130e] text-[#a69680] hover:text-[#f5ecd8] border border-transparent"
+            }`}
+          >
+            <Feather className="w-3 h-3 text-[#c89b3c]" />
+            <span>Καλλιγραφικές &amp; Χειρόγραφες</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterCategory("epigraphic")}
+            className={`px-2.5 py-1 rounded-lg text-xs transition-colors cursor-pointer shrink-0 ${
+              filterCategory === "epigraphic"
+                ? "bg-[#2d2215] text-[#ffd700] border border-[#c89b3c]"
+                : "bg-[#18130e] text-[#a69680] hover:text-[#f5ecd8] border border-transparent"
+            }`}
+          >
+            Επιγραφικές &amp; Μνημειακές
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterCategory("classical")}
+            className={`px-2.5 py-1 rounded-lg text-xs transition-colors cursor-pointer shrink-0 ${
+              filterCategory === "classical"
+                ? "bg-[#2d2215] text-[#ffd700] border border-[#c89b3c]"
+                : "bg-[#18130e] text-[#a69680] hover:text-[#f5ecd8] border border-transparent"
+            }`}
+          >
+            Κλασικές &amp; Φιλολογικές
+          </button>
+        </div>
+
         {/* Active Font Showcase / Hero Banner */}
-        <div className="px-4 sm:px-6 py-3.5 bg-[#120f0c] border-b border-[#2d2419]">
+        <div className="px-4 sm:px-6 py-3 bg-[#14100c] border-b border-[#2d2419]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-[#1b1611] border border-[#3a2d1d]">
             <div>
               <span className="text-[10px] uppercase font-bold tracking-widest text-[#c89b3c]">
@@ -69,10 +174,10 @@ export const GreekFontSelectorModal: React.FC<GreekFontSelectorModalProps> = ({
               </div>
             </div>
             <div
-              className="text-lg sm:text-xl font-bold tracking-wider text-[#e6c670] px-3 py-1 rounded-lg bg-[#14100c] border border-[#2d2216]"
+              className="text-lg sm:text-xl font-bold tracking-wider text-[#ffd700] px-3 py-1 rounded-lg bg-[#14100c] border border-[#2d2216]"
               style={{ fontFamily: currentFont.fontFamily }}
             >
-              ΙΩΑΝΝΗΣ = 1119 • ΛΑΥΡΕΙΟΝ
+              ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ • ΟΥΔΟΣ = 744
             </div>
           </div>
         </div>
@@ -80,7 +185,7 @@ export const GreekFontSelectorModal: React.FC<GreekFontSelectorModalProps> = ({
         {/* Scrollable Font Cards List */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-3 gold-scrollbar flex-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {ANCIENT_GREEK_FONTS.map((font) => {
+            {filteredFonts.map((font) => {
               const isSelected = font.id === currentFontId;
               return (
                 <button
@@ -100,7 +205,7 @@ export const GreekFontSelectorModal: React.FC<GreekFontSelectorModalProps> = ({
                         <span className="font-sans font-bold text-sm text-[#f5ecd8] group-hover:text-[#fff]">
                           {font.name}
                         </span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#2a2016] text-[#c89b3c] border border-[#443321]">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#2a2016] text-[#c89b3c] border border-[#443321] whitespace-nowrap">
                           {font.era}
                         </span>
                       </div>
@@ -149,14 +254,16 @@ export const GreekFontSelectorModal: React.FC<GreekFontSelectorModalProps> = ({
         {/* Modal Footer */}
         <div className="px-4 sm:px-6 py-3.5 border-t border-[#2d2419] bg-[#14100c] flex items-center justify-between gap-3">
           <span className="text-xs text-[#8c7d6b] font-sans hidden sm:inline">
-            Η επιλογή αποθηκεύεται αυτόματα για όλες τις καρτέλες.
+            {scope === "global"
+              ? "✓ Ενεργή καθολική εφαρμογή σε όλες τις καρτέλες"
+              : "✓ Εφαρμογή στις ελληνικές λέξεις & λεξαρίθμους"}
           </span>
           <button
             type="button"
             onClick={onClose}
             className="w-full sm:w-auto px-6 py-2 rounded-xl bg-gradient-to-r from-[#8a6825] via-[#c89b3c] to-[#e6c670] text-[#14100c] font-sans font-bold text-xs sm:text-sm hover:brightness-110 active:scale-95 transition-all shadow-md shadow-[#c89b3c]/20 cursor-pointer"
           >
-            Εφαρμογή & Κλείσιμο
+            Εφαρμογή &amp; Κλείσιμο
           </button>
         </div>
       </div>

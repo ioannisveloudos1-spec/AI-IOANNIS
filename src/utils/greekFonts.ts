@@ -73,6 +73,51 @@ export const ANCIENT_GREEK_FONTS: AncientGreekFont[] = [
     era: "Φιλοσοφικό",
   },
   {
+    id: "alegreya",
+    name: "Alegreya Καλλιγραφική",
+    category: "Ανθρωπιστική Καλλιγραφία",
+    fontFamily: "'Alegreya', serif",
+    description: "Εξαιρετική ανθρωπιστική καλλιγραφία με ρέουσα, λογοτεχνική ελληνική χάραξη.",
+    sampleText: "Ἰωάννης • Λαύρειον • Οὐδός",
+    era: "Καλλιγραφικό / Ανθρωπιστικό",
+  },
+  {
+    id: "philosopher",
+    name: "Philosopher",
+    category: "Μοντέρνα Καλλιγραφία",
+    fontFamily: "'Philosopher', serif",
+    description: "Κομψές, καλλιγραφικές καμπύλες με φιλοσοφικό χαρακτήρα και μοντέρνα αύρα.",
+    sampleText: "ΙΩΑΝΝΗΣ • ΛΑΥΡΕΙΟΝ • ΟΥΔΟΣ",
+    era: "Καλλιγραφικό & Φιλοσοφικό",
+  },
+  {
+    id: "playfair",
+    name: "Playfair Display",
+    category: "Υψηλή Αισθητική / Display",
+    fontFamily: "'Playfair Display', serif",
+    description: "Υψηλού κοντράστ καλλιγραφική σχεδίαση με επιβλητικά και αριστοκρατικά ελληνικά στοιχεία.",
+    sampleText: "Ἰωάννης • Λαύρειον • Οὐδός",
+    era: "Καλλιγραφία / Τίτλοι",
+  },
+  {
+    id: "old-standard",
+    name: "Old Standard TT",
+    category: "Κλασική Τυπογραφία 19ου Αι.",
+    fontFamily: "'Old Standard TT', serif",
+    description: "Η παραδοσιακή ιστορική ελληνική γραμματοσειρά των πανεπιστημιακών και εκκλησιαστικών εκδόσεων.",
+    sampleText: "Ἰωάννης • Λαύρειον • Οὐδός",
+    era: "Ιστορικό / 19ος Αιών",
+  },
+  {
+    id: "alegreya-sc",
+    name: "Alegreya SC (Κεφαλαία)",
+    category: "Επιγραφικά Μικρά Κεφαλαία",
+    fontFamily: "'Alegreya SC', serif",
+    description: "Καλλιγραφικά επιγραφικά κεφαλαία, ιδανικά για ισοψηφικές επιγραφές και ιερά ονόματα.",
+    sampleText: "ΙΩΑΝΝΗΣ • ΛΑΥΡΕΙΟΝ • ΟΥΔΟΣ",
+    era: "Επιγραφικά Κεφαλαία",
+  },
+  {
     id: "gentium",
     name: "Gentium Plus",
     category: "Πολυτονική / Ακαδημαϊκή",
@@ -84,6 +129,31 @@ export const ANCIENT_GREEK_FONTS: AncientGreekFont[] = [
 ];
 
 export const GREEK_FONT_STORAGE_KEY = "ancient_greek_display_font_id_v1";
+export const GREEK_FONT_SCOPE_KEY = "greek_font_scope_v1";
+
+export function getFontScope(): "global" | "selective" {
+  if (typeof window === "undefined") return "global";
+  try {
+    const saved = localStorage.getItem(GREEK_FONT_SCOPE_KEY);
+    if (saved === "selective" || saved === "global") return saved;
+  } catch (e) {
+    console.error(e);
+  }
+  return "global";
+}
+
+export function saveFontScope(scope: "global" | "selective"): void {
+  try {
+    localStorage.setItem(GREEK_FONT_SCOPE_KEY, scope);
+    if (scope === "global") {
+      document.body.classList.add("font-mode-global");
+    } else {
+      document.body.classList.remove("font-mode-global");
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
 
 export function getInitialAncientFont(): string {
   if (typeof window === "undefined") return "gfs-didot";
@@ -98,12 +168,19 @@ export function getInitialAncientFont(): string {
   return "gfs-didot";
 }
 
-export function saveAncientFont(fontId: string): void {
+export function saveAncientFont(fontId: string, scope?: "global" | "selective"): void {
   try {
     localStorage.setItem(GREEK_FONT_STORAGE_KEY, fontId);
+    const effectiveScope = scope || getFontScope();
     const font = ANCIENT_GREEK_FONTS.find((f) => f.id === fontId);
     if (font) {
       document.documentElement.style.setProperty("--ancient-greek-font", font.fontFamily);
+      document.documentElement.style.setProperty("--app-display-font", font.fontFamily);
+      if (effectiveScope === "global") {
+        document.body.classList.add("font-mode-global");
+      } else {
+        document.body.classList.remove("font-mode-global");
+      }
     }
   } catch (e) {
     console.error(e);

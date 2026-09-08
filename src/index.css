@@ -2,14 +2,35 @@
 
 :root {
   --ancient-greek-font: 'GFS Didot', serif;
+  --app-display-font: 'GFS Didot', serif;
 }
 
-.font-ancient-greek {
-  font-family: var(--ancient-greek-font), 'GFS Didot', 'Cinzel', 'Cardo', serif !important;
-}
-
+.font-ancient-greek,
 .font-serif {
   font-family: var(--ancient-greek-font), 'GFS Didot', 'Cinzel', 'Cardo', serif !important;
+}
+
+/* Global Font Mode: Universal application across all tabs & controls */
+body.font-mode-global,
+body.font-mode-global button,
+body.font-mode-global input,
+body.font-mode-global h1,
+body.font-mode-global h2,
+body.font-mode-global h3,
+body.font-mode-global h4,
+body.font-mode-global h5,
+body.font-mode-global h6,
+body.font-mode-global p,
+body.font-mode-global span,
+body.font-mode-global label {
+  font-family: var(--ancient-greek-font), 'GFS Didot', 'Cardo', serif !important;
+}
+
+/* Prevent unwanted word wrapping / line hyphenation breaks across Greek text */
+h1, h2, h3, h4, h5, .no-word-break, .tab-label, .greek-title {
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  word-break: normal !important;
 }
 
 /* Ensure proper mobile layout & prevent unwanted horizontal scroll/zoom */
@@ -263,12 +284,12 @@ body.theme-ancient-calligraphy,
 }
 
 /* SECONDARY BUTTONS: Clean parchment tint with deep dark ink text */
-.theme-parchment button[class*="bg-[#"],
-.theme-parchment button[class*="from-amber-800"],
+.theme-parchment button[class*="bg-[#"]:not([class*="from-amber"]):not([class*="from-[#7"]):not([class*="from-[#8"]):not([class*="from-[#b"]):not([class*="text-white"]),
+.theme-parchment button[class*="from-amber-800"]:not([class*="text-white"]),
 .theme-parchment button.bg-black\/40,
 .theme-parchment button.bg-black\/20,
-.theme-ancient-calligraphy button[class*="bg-[#"],
-.theme-ancient-calligraphy button[class*="from-amber-800"],
+.theme-ancient-calligraphy button[class*="bg-[#"]:not([class*="from-amber"]):not([class*="from-[#7"]):not([class*="from-[#8"]):not([class*="from-[#b"]):not([class*="text-white"]),
+.theme-ancient-calligraphy button[class*="from-amber-800"]:not([class*="text-white"]),
 .theme-ancient-calligraphy button.bg-black\/40,
 .theme-ancient-calligraphy button.bg-black\/20 {
   background-color: #ebdcc5 !important;
@@ -278,20 +299,42 @@ body.theme-ancient-calligraphy,
   font-weight: 600 !important;
 }
 
-.theme-parchment button[class*="bg-[#"]:hover,
-.theme-parchment button[class*="from-amber-800"]:hover,
-.theme-ancient-calligraphy button[class*="bg-[#"]:hover,
-.theme-ancient-calligraphy button[class*="from-amber-800"]:hover {
+.theme-parchment button[class*="bg-[#"]:hover:not([class*="from-amber"]):not([class*="text-white"]),
+.theme-parchment button[class*="from-amber-800"]:hover:not([class*="text-white"]),
+.theme-ancient-calligraphy button[class*="bg-[#"]:hover:not([class*="from-amber"]):not([class*="text-white"]),
+.theme-ancient-calligraphy button[class*="from-amber-800"]:hover:not([class*="text-white"]) {
   background-color: #dfcdb4 !important;
   color: #170900 !important;
   border-color: #9c7b50 !important;
 }
 
-.theme-parchment button[class*="bg-[#"] *,
-.theme-parchment button[class*="from-amber-800"] *,
-.theme-ancient-calligraphy button[class*="bg-[#"] *,
-.theme-ancient-calligraphy button[class*="from-amber-800"] * {
-  color: #241203 !important;
+/* Explicit white text protection for primary actions and badges in parchment */
+.theme-parchment button.text-white,
+.theme-parchment button.text-white *,
+.theme-parchment button[class*="text-white"],
+.theme-parchment button[class*="text-white"] *,
+.theme-parchment button[class*="text-[#fff]"],
+.theme-parchment button[class*="text-[#fff]"] *,
+.theme-parchment button[class*="from-[#783d07]"],
+.theme-parchment button[class*="from-[#783d07]"] *,
+.theme-parchment button[class*="from-[#8c4709]"],
+.theme-parchment button[class*="from-[#8c4709]"] *,
+.theme-parchment button[class*="bg-[#783d07]"],
+.theme-parchment button[class*="bg-[#783d07]"] *,
+.theme-ancient-calligraphy button.text-white,
+.theme-ancient-calligraphy button.text-white *,
+.theme-ancient-calligraphy button[class*="text-white"],
+.theme-ancient-calligraphy button[class*="text-white"] *,
+.theme-ancient-calligraphy button[class*="text-[#fff]"],
+.theme-ancient-calligraphy button[class*="text-[#fff]"] *,
+.theme-ancient-calligraphy button[class*="from-[#783d07]"],
+.theme-ancient-calligraphy button[class*="from-[#783d07]"] *,
+.theme-ancient-calligraphy button[class*="from-[#8c4709]"],
+.theme-ancient-calligraphy button[class*="from-[#8c4709]"] *,
+.theme-ancient-calligraphy button[class*="bg-[#783d07]"],
+.theme-ancient-calligraphy button[class*="bg-[#783d07]"] * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 /* ACTIVE TOGGLE BUTTONS (active filter, active layout, active speech rate) */
@@ -318,22 +361,22 @@ body.theme-ancient-calligraphy,
 
 /* TEXT COLOR OVERRIDES - CRITICAL CONTRAST FIX */
 /* Primary text & Polytonic ancient Greek text & white text -> Deepest Ancient Dark Ink */
-.theme-parchment [class*="text-[#f"],
-.theme-parchment [class*="text-[#e8"],
-.theme-parchment [class*="text-[#d"],
-.theme-parchment [class*="text-amber-50"],
-.theme-parchment [class*="text-amber-100"],
-.theme-parchment .text-white,
-.theme-parchment .text-stone-100,
-.theme-parchment .text-stone-200,
-.theme-ancient-calligraphy [class*="text-[#f"],
-.theme-ancient-calligraphy [class*="text-[#e8"],
-.theme-ancient-calligraphy [class*="text-[#d"],
-.theme-ancient-calligraphy [class*="text-amber-50"],
-.theme-ancient-calligraphy [class*="text-amber-100"],
-.theme-ancient-calligraphy .text-white,
-.theme-ancient-calligraphy .text-stone-100,
-.theme-ancient-calligraphy .text-stone-200 {
+.theme-parchment [class*="text-[#f"]:not(button):not(button *):not([class*="from-[#"]):not([class*="bg-[#7"]):not([class*="bg-[#8"]):not([class*="bg-[#9"]):not([class*="bg-[#b"]),
+.theme-parchment [class*="text-[#e8"]:not(button):not(button *):not([class*="from-[#"]):not([class*="bg-[#7"]):not([class*="bg-[#8"]):not([class*="bg-[#9"]):not([class*="bg-[#b"]),
+.theme-parchment [class*="text-[#d"]:not(button):not(button *):not([class*="from-[#"]):not([class*="bg-[#7"]):not([class*="bg-[#8"]):not([class*="bg-[#9"]):not([class*="bg-[#b"]),
+.theme-parchment [class*="text-amber-50"]:not(button):not(button *),
+.theme-parchment [class*="text-amber-100"]:not(button):not(button *),
+.theme-parchment .text-white:not(button):not(button *):not([class*="from-"]):not([class*="bg-[#7"]):not([class*="bg-[#8"]):not([class*="bg-[#9"]):not([class*="bg-[#b"]):not([class*="rounded-full"]),
+.theme-parchment .text-stone-100:not(button):not(button *),
+.theme-parchment .text-stone-200:not(button):not(button *),
+.theme-ancient-calligraphy [class*="text-[#f"]:not(button):not(button *):not([class*="from-[#"]):not([class*="bg-[#7"]):not([class*="bg-[#8"]):not([class*="bg-[#9"]):not([class*="bg-[#b"]),
+.theme-ancient-calligraphy [class*="text-[#e8"]:not(button):not(button *):not([class*="from-[#"]):not([class*="bg-[#7"]):not([class*="bg-[#8"]):not([class*="bg-[#9"]):not([class*="bg-[#b"]),
+.theme-ancient-calligraphy [class*="text-[#d"]:not(button):not(button *):not([class*="from-[#"]):not([class*="bg-[#7"]):not([class*="bg-[#8"]):not([class*="bg-[#9"]):not([class*="bg-[#b"]),
+.theme-ancient-calligraphy [class*="text-amber-50"]:not(button):not(button *),
+.theme-ancient-calligraphy [class*="text-amber-100"]:not(button):not(button *),
+.theme-ancient-calligraphy .text-white:not(button):not(button *):not([class*="from-"]):not([class*="bg-[#7"]):not([class*="bg-[#8"]):not([class*="bg-[#9"]):not([class*="bg-[#b"]):not([class*="rounded-full"]),
+.theme-ancient-calligraphy .text-stone-100:not(button):not(button *),
+.theme-ancient-calligraphy .text-stone-200:not(button):not(button *) {
   color: #241203 !important; /* Deepest ancient brown ink */
 }
 
@@ -624,28 +667,47 @@ body.theme-solar,
 }
 
 /* Secondary Buttons in Solar */
-.theme-solar button[class*="bg-[#"],
-.theme-solar button[class*="from-amber-800"] {
+.theme-solar button[class*="bg-[#"]:not([class*="from-amber"]):not([class*="from-[#b"]):not([class*="from-[#d"]):not([class*="text-white"]),
+.theme-solar button[class*="from-amber-800"]:not([class*="text-white"]) {
   background-color: #faebd0 !important;
   color: #2a1400 !important;
   border-color: #deb673 !important;
   font-weight: 600 !important;
 }
 
-.theme-solar button[class*="bg-[#"] *,
-.theme-solar button[class*="from-amber-800"] * {
-  color: #2a1400 !important;
+.theme-solar button[class*="bg-[#"]:hover:not([class*="from-amber"]):not([class*="text-white"]),
+.theme-solar button[class*="from-amber-800"]:hover:not([class*="text-white"]) {
+  background-color: #f5deb3 !important;
+  color: #170700 !important;
+  border-color: #c99c4c !important;
+}
+
+/* Explicit white text protection for primary actions and badges in Solar */
+.theme-solar button.text-white,
+.theme-solar button.text-white *,
+.theme-solar button[class*="text-white"],
+.theme-solar button[class*="text-white"] *,
+.theme-solar button[class*="text-[#fff]"],
+.theme-solar button[class*="text-[#fff]"] *,
+.theme-solar button[class*="from-[#b45309]"],
+.theme-solar button[class*="from-[#b45309]"] *,
+.theme-solar button[class*="from-[#d97706]"],
+.theme-solar button[class*="from-[#d97706]"] *,
+.theme-solar button[class*="bg-[#b45309]"],
+.theme-solar button[class*="bg-[#b45309]"] * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 /* Text in Solar */
-.theme-solar [class*="text-[#f"],
-.theme-solar [class*="text-[#e8"],
-.theme-solar [class*="text-[#d"],
-.theme-solar [class*="text-amber-50"],
-.theme-solar [class*="text-amber-100"],
-.theme-solar .text-white,
-.theme-solar .text-stone-100,
-.theme-solar .text-stone-200 {
+.theme-solar [class*="text-[#f"]:not(button):not(button *):not([class*="from-[#"]):not([class*="bg-[#b"]):not([class*="bg-[#d"]),
+.theme-solar [class*="text-[#e8"]:not(button):not(button *):not([class*="from-[#"]):not([class*="bg-[#b"]):not([class*="bg-[#d"]),
+.theme-solar [class*="text-[#d"]:not(button):not(button *):not([class*="from-[#"]):not([class*="bg-[#b"]):not([class*="bg-[#d"]),
+.theme-solar [class*="text-amber-50"]:not(button):not(button *),
+.theme-solar [class*="text-amber-100"]:not(button):not(button *),
+.theme-solar .text-white:not(button):not(button *):not([class*="from-"]):not([class*="bg-[#b"]):not([class*="bg-[#d"]):not([class*="rounded-full"]),
+.theme-solar .text-stone-100:not(button):not(button *),
+.theme-solar .text-stone-200:not(button):not(button *) {
   color: #241000 !important;
 }
 
