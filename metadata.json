@@ -1,6 +1,6 @@
 {
   "name": "Λεξάριθμος - Ελληνική Ιωνική Ισοψηφία",
   "description": "Εφαρμογή υπολογισμού και ανάλυσης ελληνικής ισοψηφίας (λεξαρίθμων) με βάση την αρχαία Ιωνική Αρίθμηση, πολυτονική υποστήριξη, τα Χρυσά Έπη, το Ηλιακόν Ι & ΔΑ-ΝΑΟΣ, ανάλυση κειμένου και αρχείο.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

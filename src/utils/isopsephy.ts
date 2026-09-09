@@ -16,6 +16,7 @@ export interface WordBreakdown {
   word: string;
   value: number;
   letters: LetterValue[];
+  operator?: string; // '+', '-', '×', '÷'
 }
 
 export interface MathProperties {
@@ -172,30 +173,55 @@ export function calculateIsopsephy(
     };
   }
 
-  // Support mathematical expressions with + and -
-  const isExpression = cleanInput.includes('+') || cleanInput.includes('-');
+  // Support mathematical expressions with +, -, *, /
+  // Normalize unicode dashes and operator characters
+  const normalizedExpr = cleanInput
+    .replace(/[\u2212\u2013\u2014]/g, '-')
+    .replace(/[\u00D7\u00B7\u2022]/g, '*')
+    .replace(/[\u00F7:]/g, '/');
+
+  const isExpression = /[+\-*\/]/.test(normalizedExpr);
   
   if (isExpression) {
-    // Parse expression tokens
-    const tokens = cleanInput.split(/([+-])/).map(t => t.trim()).filter(Boolean);
+    // Parse expression tokens while preserving operator delimiters
+    const tokens = normalizedExpr.split(/([+\-*\/])/).map(t => t.trim()).filter(Boolean);
     let total = 0;
     let currentOp = '+';
     const allBreakdowns: WordBreakdown[] = [];
     const explanationParts: string[] = [];
 
     for (const token of tokens) {
-      if (token === '+' || token === '-') {
+      if (token === '+' || token === '-' || token === '*' || token === '/') {
         currentOp = token;
       } else {
         const subResult = calculateSingleText(token, system);
-        if (currentOp === '+') {
-          total += subResult.total;
+        const displayOp = currentOp === '*' ? '×' : currentOp === '/' ? '÷' : currentOp;
+        
+        // Apply operation
+        if (allBreakdowns.length === 0) {
+          total = subResult.total;
           explanationParts.push(`${token} (${subResult.total})`);
         } else {
-          total -= subResult.total;
-          explanationParts.push(`- ${token} (${subResult.total})`);
+          if (currentOp === '+') {
+            total += subResult.total;
+            explanationParts.push(`+ ${token} (${subResult.total})`);
+          } else if (currentOp === '-') {
+            total -= subResult.total;
+            explanationParts.push(`- ${token} (${subResult.total})`);
+          } else if (currentOp === '*') {
+            total *= subResult.total;
+            explanationParts.push(`× ${token} (${subResult.total})`);
+          } else if (currentOp === '/') {
+            total = subResult.total !== 0 ? Math.floor(total / subResult.total) : total;
+            explanationParts.push(`÷ ${token} (${subResult.total})`);
+          }
         }
-        allBreakdowns.push(...subResult.wordBreakdowns);
+
+        // Attach operator to breakdowns
+        subResult.wordBreakdowns.forEach((wb, i) => {
+          wb.operator = (allBreakdowns.length === 0 && i === 0) ? '+' : displayOp;
+          allBreakdowns.push(wb);
+        });
       }
     }
 
@@ -210,6 +236,9 @@ export function calculateIsopsephy(
   }
 
   const single = calculateSingleText(cleanInput, system);
+  single.wordBreakdowns.forEach(wb => {
+    wb.operator = '+';
+  });
   return {
     finalValue: single.total,
     wordBreakdowns: single.wordBreakdowns,
@@ -273,4 +302,93 @@ function calculateSingleText(text: string, system: IsopsephySystem) {
   }
 
   return { total, wordBreakdowns };
+}
+
+export interface PythagoreanHarmonics {
+  phiRatio: number;          // Value / 1.6180339887...
+  phiMultiplied: number;     // Value * 1.6180339887...
+  solfeggioFreq?: number;    // Closest solfeggio or matching
+  musicalNote: string;       // Note in Pythagorean tuning (e.g. A 432Hz base)
+  frequencyHz: number;       // Equivalent frequency in audible range
+  intervalRatio: string;     // Pythagorean interval (e.g. 3:2 Diapente, 2:1 Diapason, 4:3 Diatessaron)
+  pythagoreanDescription: string;
+}
+
+export function computePythagoreanHarmonics(value: number): PythagoreanHarmonics {
+  const PHI = 1.618033988749895;
+  const phiRatio = value !== 0 ? +(value / PHI).toFixed(3) : 0;
+  const phiMultiplied = +(value * PHI).toFixed(3);
+
+  // Solfeggio sacred frequencies
+  const solfeggioList = [174, 285, 396, 417, 432, 528, 639, 741, 852, 963];
+  let closestSolfeggio = solfeggioList[0];
+  let minDiff = Infinity;
+  for (const s of solfeggioList) {
+    // compare either direct or octave normalized
+    let normalizedVal = value;
+    while (normalizedVal > 1000) normalizedVal /= 2;
+    while (normalizedVal < 100 && normalizedVal > 0) normalizedVal *= 2;
+    const diff = Math.abs(normalizedVal - s);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestSolfeggio = s;
+    }
+  }
+
+  // Musical note mapping based on Pythagorean A=432 Hz scale
+  // Pythagorean notes ratio to A4 (432Hz):
+  // C: 256 Hz (or 259.2), D: 288 Hz, E: 324 Hz, F: 341.3 Hz, G: 384 Hz, A: 432 Hz, B: 486 Hz
+  const notes = [
+    { name: 'ΝΤΟ (C)', freq: 256, interval: '1:1 (Τόνος)', desc: 'Θεμέλιος Φθόγγος' },
+    { name: 'ΡΕ (D)', freq: 288, interval: '9:8 (Επόγδοον)', desc: 'Μείζων Τόνος' },
+    { name: 'ΜΙ (E)', freq: 324, interval: '81:64 (Δίτονον)', desc: 'Πυθαγόρεια Τρίτη' },
+    { name: 'ΦΑ (F)', freq: 341.3, interval: '4:3 (Συλλαβά / Διά Τεσσάρων)', desc: 'Τέταρτη Καθαρά' },
+    { name: 'ΣΟΛ (G)', freq: 384, interval: '3:2 (Διοξεία / Διά Πέντε)', desc: 'Πέμπτη Καθαρά' },
+    { name: 'ΛΑ (A)', freq: 432, interval: '27:16 (Τόνος & Πέμπτη)', desc: 'Κοσμικός Συντονισμός 432 Hz' },
+    { name: 'ΣΙ (B)', freq: 486, interval: '243:128', desc: 'Έβδομη Πυθαγόρεια' },
+    { name: "ΝΤΟ² (C')", freq: 512, interval: '2:1 (Διά Πασών)', desc: 'Οκτάβα / Αρμονική Ταυτοφωνία' }
+  ];
+
+  // Octave reduction to 256-512 Hz audible band
+  let fAudible = value;
+  if (fAudible > 0) {
+    while (fAudible > 512) fAudible /= 2;
+    while (fAudible < 256) fAudible *= 2;
+  } else {
+    fAudible = 432;
+  }
+
+  let matchedNote = notes[0];
+  let minNoteDiff = Infinity;
+  for (const n of notes) {
+    const d = Math.abs(fAudible - n.freq);
+    if (d < minNoteDiff) {
+      minNoteDiff = d;
+      matchedNote = n;
+    }
+  }
+
+  // Determine interval description based on pythmen or ratio
+  const pyth = ((value - 1) % 9) + 1;
+  const intervals: Record<number, string> = {
+    1: '1:1 Μονάς - Ταυτοφωνία',
+    2: '2:1 Δυάς - Διά Πασών (Οκτάβα)',
+    3: '3:2 Τριάς - Διά Πέντε (Πέμπτη / Διοξεία)',
+    4: '4:3 Τετράς - Διά Τεσσάρων (Τέταρτη / Συλλαβά)',
+    5: '5:4 Πεντάς - Μείζων Τρίτη',
+    6: '6:5 Εξάς - Ελάσσων Τρίτη',
+    7: '9:8 Επτάς - Επόγδοον (Πυθαγόρειος Τόνος)',
+    8: '8:5 Οκτάς - Ελάσσων Έκτη',
+    9: '9:4 Εννεάς - Μείζων Ένατη (Τετρακτύς Αρμονίας)'
+  };
+
+  return {
+    phiRatio,
+    phiMultiplied,
+    solfeggioFreq: closestSolfeggio,
+    musicalNote: matchedNote.name,
+    frequencyHz: +fAudible.toFixed(2),
+    intervalRatio: intervals[pyth] || matchedNote.interval,
+    pythagoreanDescription: matchedNote.desc
+  };
 }

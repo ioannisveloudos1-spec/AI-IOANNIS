@@ -13,7 +13,7 @@ import {
   Sparkles,
   Sliders
 } from 'lucide-react';
-import { MathProperties, WordBreakdown } from '../utils/isopsephy';
+import { MathProperties, WordBreakdown, computePythagoreanHarmonics } from '../utils/isopsephy';
 import emblemLogo from '../assets/images/ego_eimi_logo_1788939371013.jpg';
 
 export interface ExportCardImageModalProps {
@@ -49,6 +49,7 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
   const [showMathProps, setShowMathProps] = useState(true);
   const [showNumeral, setShowNumeral] = useState(true);
   const [showFooter, setShowFooter] = useState(true);
+  const [showHarmonics, setShowHarmonics] = useState(true);
   const [showDate, setShowDate] = useState(true);
   const [customSubtitle, setCustomSubtitle] = useState('Αρχαία Ελληνική Αρίθμηση & Λεξάριθμοι');
 
@@ -86,7 +87,9 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
       const dataUrl = await toPng(cardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        quality: 1
+        quality: 1,
+        skipFonts: true,
+        fontEmbedCSS: ''
       });
       const link = document.createElement('a');
       link.download = getSafeFileName('png');
@@ -113,7 +116,9 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
       const dataUrl = await toPng(cardRef.current, {
         cacheBust: true,
         pixelRatio: 2.5,
-        quality: 1
+        quality: 1,
+        skipFonts: true,
+        fontEmbedCSS: ''
       });
       const img = new Image();
       img.src = dataUrl;
@@ -163,7 +168,9 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
       const blob = await toBlob(cardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        quality: 1
+        quality: 1,
+        skipFonts: true,
+        fontEmbedCSS: ''
       });
       if (!blob) throw new Error('Blob creation failed');
 
@@ -190,7 +197,9 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
       const blob = await toBlob(cardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        quality: 1
+        quality: 1,
+        skipFonts: true,
+        fontEmbedCSS: ''
       });
       if (!blob) throw new Error('Blob creation failed');
 
@@ -432,6 +441,15 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
                   />
                   <span>Μαθηματικές Ιδιότητες (Πυθμένας, Τρίγωνος κ.λπ.)</span>
                 </label>
+                <label className="flex items-center gap-2 text-[#d6c7b2] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showHarmonics}
+                    onChange={e => setShowHarmonics(e.target.checked)}
+                    className="rounded border-[#443625] text-[#c89b3c] focus:ring-[#c89b3c] bg-[#14110e]"
+                  />
+                  <span>Πυθαγόρεια Αρμονία, Μουσικές Νότες & Φ</span>
+                </label>
                 {greekNumeral && (
                   <label className="flex items-center gap-2 text-[#d6c7b2] cursor-pointer">
                     <input
@@ -645,17 +663,84 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
                     </div>
                   )}
 
-                  {/* Letter Decomposition */}
+                  {/* Letter Decomposition with dynamic mathematical operators (+, -, ×, ÷) */}
                   {showDecomposition && wordBreakdowns.length > 0 && (
                     <div className={`p-3.5 rounded-xl border ${themeStyles.innerCard} text-[11px] font-mono space-y-1.5 shrink-0`}>
                       <div className={`text-[10px] font-serif font-bold uppercase tracking-wider ${themeStyles.textSecondary}`}>
-                        Ανάλυση Γραμμάτων &amp; Αθροίσματος:
+                        Ανάλυση Γραμμάτων &amp; Αποτελέσματος:
                       </div>
                       <div className={`${themeStyles.textPrimary} break-words leading-relaxed font-semibold`}>
-                        {wordBreakdowns
-                          .flatMap(w => w.letters.map(l => `${l.char}(${l.value})`))
-                          .join(' + ')}{' '}
-                        = <span className={`${themeStyles.accent} font-bold`}>{totalValue}</span>
+                        {wordBreakdowns.map((wb, wIdx) => {
+                          const opSymbol = wb.operator || '+';
+                          const lettersStr = wb.letters.map(l => `${l.char}(${l.value})`).join(' + ');
+                          
+                          if (wIdx === 0) {
+                            return <span key={wIdx}>{lettersStr}</span>;
+                          }
+
+                          // If subsequent word has subtraction, multiplication or division
+                          if (opSymbol === '-') {
+                            return (
+                              <span key={wIdx}>
+                                {' '}<strong className="text-rose-600 dark:text-rose-400 font-black text-sm">-</strong>{' '}
+                                [{lettersStr}]
+                              </span>
+                            );
+                          } else if (opSymbol === '×' || opSymbol === '*') {
+                            return (
+                              <span key={wIdx}>
+                                {' '}<strong className="text-amber-600 dark:text-amber-400 font-black text-sm">×</strong>{' '}
+                                [{lettersStr}]
+                              </span>
+                            );
+                          } else if (opSymbol === '÷' || opSymbol === '/') {
+                            return (
+                              <span key={wIdx}>
+                                {' '}<strong className="text-sky-600 dark:text-sky-400 font-black text-sm">÷</strong>{' '}
+                                [{lettersStr}]
+                              </span>
+                            );
+                          } else {
+                            return (
+                              <span key={wIdx}>
+                                {' '}<strong className="text-[#ffd700] font-black text-sm">+</strong>{' '}
+                                {lettersStr}
+                              </span>
+                            );
+                          }
+                        })}{' '}
+                        = <span className={`${themeStyles.accent} font-bold text-xs`}>{totalValue}</span>
+                      </div>
+                    </div>
+                  )}
+
+
+                  {/* Pythagorean Harmonics, Music Notes, Frequency & Phi (Φ) */}
+                  {showHarmonics && (
+                    <div className={'p-2.5 rounded-xl border ' + themeStyles.innerCard + ' text-[10px] font-mono grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0'}>
+                      <div className="space-y-0.5">
+                        <span className={'text-[9px] uppercase tracking-wider block ' + themeStyles.textSecondary}>Χρυσή Τομή (Φ)</span>
+                        <div className={'font-bold font-mono ' + themeStyles.accent}>
+                          {(totalValue / 1.6180339887).toFixed(2)} <span className="text-[8px] opacity-75">(Ν/Φ)</span>
+                        </div>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className={'text-[9px] uppercase tracking-wider block ' + themeStyles.textSecondary}>Πυθαγόρεια Νότα</span>
+                        <div className={'font-bold font-serif ' + themeStyles.textPrimary}>
+                          {computePythagoreanHarmonics(totalValue).musicalNote}
+                        </div>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className={'text-[9px] uppercase tracking-wider block ' + themeStyles.textSecondary}>Συντονισμός</span>
+                        <div className="font-bold font-mono text-emerald-500 dark:text-emerald-400">
+                          {computePythagoreanHarmonics(totalValue).frequencyHz} Hz
+                        </div>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className={'text-[9px] uppercase tracking-wider block ' + themeStyles.textSecondary}>Ιερό Solfeggio</span>
+                        <div className="font-bold font-mono text-amber-500 dark:text-amber-400">
+                          {computePythagoreanHarmonics(totalValue).solfeggioFreq} Hz
+                        </div>
                       </div>
                     </div>
                   )}

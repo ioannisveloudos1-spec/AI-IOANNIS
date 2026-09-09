@@ -5,6 +5,9 @@
     font-family: 'EB Garamond', Georgia, serif;
     background-color: #0d0b09;
     color: #f3eee3;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 }
 
