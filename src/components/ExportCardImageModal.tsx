@@ -1,52 +1,35 @@
-import React, { useState, useRef } from "react";
-import { toPng, toBlob } from "html-to-image";
-import {
-  Download,
-  Copy,
-  Share2,
-  Check,
-  X,
+import React, { useRef, useState } from 'react';
+import { toPng, toBlob } from 'html-to-image';
+import { jsPDF } from 'jspdf';
+import { 
+  Download, 
+  Share2, 
+  Copy, 
+  Check, 
+  X, 
+  FileText, 
+  Printer, 
+  Loader2,
   Sparkles,
-  Palette,
-  Image as ImageIcon,
-  Layers,
-  Hash,
-  Eye,
-  Settings,
-  RefreshCw,
-} from "lucide-react";
-import { NumberingSystem } from "../types";
+  Sliders
+} from 'lucide-react';
+import { MathProperties, WordBreakdown } from '../utils/isopsephy';
+import emblemLogo from '../assets/images/ego_eimi_logo_1788939371013.jpg';
 
 export interface ExportCardImageModalProps {
   isOpen: boolean;
   onClose: () => void;
   expression: string;
   totalValue: number;
-  greekNumeral?: string;
-  system: NumberingSystem;
+  greekNumeral: string;
   systemName: string;
-  mathProps: {
-    pythmen: number;
-    isPrime?: boolean;
-    isTriangular?: boolean;
-    triangularRoot?: number;
-    isSquare?: boolean;
-    squareRoot?: number;
-    isEven?: boolean;
-    divisors?: number[];
-  };
-  wordBreakdowns: Array<{
-    rawWord: string;
-    normalizedWord: string;
-    value: number;
-    root: number;
-    letters: Array<{ char: string; originalChar: string; value: number }>;
-  }>;
+  mathProps: MathProperties;
+  wordBreakdowns: WordBreakdown[];
   stepsExplanation?: string;
 }
 
-type CardTheme = "dark-gold" | "parchment" | "solar" | "cosmic";
-type CardAspect = "square" | "landscape" | "story" | "auto";
+type CardTheme = 'dark-gold' | 'parchment' | 'solar' | 'cosmic' | 'clean-white';
+type CardRatio = 'landscape' | 'square' | 'story' | 'auto';
 
 export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
   isOpen,
@@ -54,400 +37,446 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
   expression,
   totalValue,
   greekNumeral,
-  system,
   systemName,
   mathProps,
   wordBreakdowns,
-  stepsExplanation,
+  stepsExplanation
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [theme, setTheme] = useState<CardTheme>('parchment');
+  const [ratio, setRatio] = useState<CardRatio>('landscape');
+  const [showDecomposition, setShowDecomposition] = useState(true);
+  const [showMathProps, setShowMathProps] = useState(true);
+  const [showNumeral, setShowNumeral] = useState(true);
+  const [showFooter, setShowFooter] = useState(true);
+  const [showDate, setShowDate] = useState(true);
+  const [customSubtitle, setCustomSubtitle] = useState('Αρχαία Ελληνική Αρίθμηση & Λεξάριθμοι');
 
-  const [theme, setTheme] = useState<CardTheme>("dark-gold");
-  const [aspect, setAspect] = useState<CardAspect>("landscape");
-  const [showLetterBreakdown, setShowLetterBreakdown] = useState<boolean>(true);
-  const [showMathProps, setShowMathProps] = useState<boolean>(true);
-  const [showGreekNumeral, setShowGreekNumeral] = useState<boolean>(true);
-  const [showWatermark, setShowWatermark] = useState<boolean>(true);
-  const [showDate, setShowDate] = useState<boolean>(true);
-  const [researcherSignature, setResearcherSignature] = useState<string>("Ελληνική Ισοψηφία & Λεξάριθμοι");
-
-  const [isExporting, setIsExporting] = useState<boolean>(false);
-  const [copiedSuccess, setCopiedSuccess] = useState<boolean>(false);
-  const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isExportingPng, setIsExportingPng] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [isPngDownloaded, setIsPngDownloaded] = useState(false);
+  const [isPdfDownloaded, setIsPdfDownloaded] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   if (!isOpen) return null;
 
-  const isEnglish =
-    system === NumberingSystem.ENGLISH_BASE6 || system === NumberingSystem.ENGLISH_SIMPLE;
-
-  const dateFormatted = new Date().toLocaleDateString("el-GR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+  const currentDate = new Date().toLocaleDateString('el-GR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
 
-  const getCleanFileName = () => {
-    const cleanExpr = expression
+  const getSafeFileName = (ext: string) => {
+    const slug = expression
       .trim()
-      .replace(/[^a-zA-Z0-9α-ωΑ-Ωά-ώΆ-Ώ]/g, "_")
-      .slice(0, 24);
-    return `isopsephy-${cleanExpr || "card"}-${totalValue}.png`;
+      .replace(/[^a-zA-Z0-9α-ωΑ-Ωά-ώΆ-Ώ]/g, '_')
+      .slice(0, 24) || 'isopsephy';
+    return `isopsephy-${slug}-${totalValue}.${ext}`;
   };
 
-  const handleDownloadPng = async () => {
+  const exportPng = async () => {
     if (!cardRef.current) return;
-    setIsExporting(true);
-    setErrorMessage("");
+    setIsExportingPng(true);
+    setErrorMessage('');
     try {
+      if (document.fonts) {
+        try { await document.fonts.ready; } catch {}
+      }
       const dataUrl = await toPng(cardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        quality: 1,
+        quality: 1
       });
-      const link = document.createElement("a");
-      link.download = getCleanFileName();
+      const link = document.createElement('a');
+      link.download = getSafeFileName('png');
       link.href = dataUrl;
       link.click();
-      setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 2500);
+      setIsPngDownloaded(true);
+      setTimeout(() => setIsPngDownloaded(false), 3000);
     } catch (err) {
-      console.error("PNG export error:", err);
-      setErrorMessage("Παρουσιάστηκε σφάλμα κατά τη δημιουργία της εικόνας PNG.");
+      console.error('PNG export error:', err);
+      setErrorMessage('Παρουσιάστηκε σφάλμα κατά τη δημιουργία της εικόνας PNG.');
     } finally {
-      setIsExporting(false);
+      setIsExportingPng(false);
     }
   };
 
-  const handleCopyImage = async () => {
+  const exportPdf = async () => {
     if (!cardRef.current) return;
-    setIsExporting(true);
-    setErrorMessage("");
+    setIsExportingPdf(true);
+    setErrorMessage('');
+    try {
+      if (document.fonts) {
+        try { await document.fonts.ready; } catch {}
+      }
+      const dataUrl = await toPng(cardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2.5,
+        quality: 1
+      });
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise(resolve => { img.onload = resolve; });
+
+      const isPortrait = img.naturalHeight > img.naturalWidth;
+      const pdf = new jsPDF({
+        orientation: isPortrait ? 'portrait' : 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 12;
+      const maxWidth = pageWidth - margin * 2;
+      const maxHeight = pageHeight - margin * 2;
+
+      let renderWidth = maxWidth;
+      let renderHeight = (img.naturalHeight * renderWidth) / img.naturalWidth;
+
+      if (renderHeight > maxHeight) {
+        renderHeight = maxHeight;
+        renderWidth = (img.naturalWidth * renderHeight) / img.naturalHeight;
+      }
+
+      const posX = (pageWidth - renderWidth) / 2;
+      const posY = (pageHeight - renderHeight) / 2;
+
+      pdf.addImage(dataUrl, 'PNG', posX, posY, renderWidth, renderHeight, undefined, 'FAST');
+      pdf.save(getSafeFileName('pdf'));
+      setIsPdfDownloaded(true);
+      setTimeout(() => setIsPdfDownloaded(false), 3000);
+    } catch (err) {
+      console.error('PDF export error:', err);
+      setErrorMessage('Παρουσιάστηκε σφάλμα κατά τη δημιουργία του αρχείου PDF.');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const copyToClipboard = async () => {
+    if (!cardRef.current) return;
+    setIsExportingPng(true);
+    setErrorMessage('');
     try {
       const blob = await toBlob(cardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        quality: 1,
+        quality: 1
       });
-      if (!blob) throw new Error("Could not create blob");
+      if (!blob) throw new Error('Blob creation failed');
 
-      if (navigator.clipboard && typeof ClipboardItem !== "undefined") {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "image/png": blob,
-          }),
-        ]);
-        setCopiedSuccess(true);
-        setTimeout(() => setCopiedSuccess(false), 2500);
+      if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2500);
       } else {
-        // Fallback to downloading
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.download = getCleanFileName();
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
-        setDownloadSuccess(true);
-        setTimeout(() => setDownloadSuccess(false), 2500);
+        exportPng();
       }
     } catch (err) {
-      console.error("Copy image error:", err);
-      setErrorMessage("Η αντιγραφή εικόνας δεν υποστηρίζεται απευθείας. Χρησιμοποιήστε «Λήψη PNG».");
+      console.error('Copy image error:', err);
+      setErrorMessage('Η απευθείας αντιγραφή δεν υποστηρίζεται. Χρησιμοποιήστε «Λήψη PNG».');
     } finally {
-      setIsExporting(false);
+      setIsExportingPng(false);
     }
   };
 
-  const handleShareNative = async () => {
+  const handleShare = async () => {
     if (!cardRef.current) return;
-    setIsExporting(true);
-    setErrorMessage("");
+    setIsExportingPng(true);
+    setErrorMessage('');
     try {
       const blob = await toBlob(cardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        quality: 1,
+        quality: 1
       });
-      if (!blob) throw new Error("Could not create blob");
+      if (!blob) throw new Error('Blob creation failed');
 
-      const file = new File([blob], getCleanFileName(), { type: "image/png" });
-
+      const file = new File([blob], getSafeFileName('png'), { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: `Ισοψηφία: ${expression} = ${totalValue}`,
-          text: `Υπολογισμός Ισοψηφίας & Λεξαρίθμου: ${expression} = ${totalValue} (Πυθμένας: ${mathProps.pythmen})`,
-          files: [file],
+          text: `Υπολογισμός Ισοψηφίας: ${expression} = ${totalValue} (Πυθμένας: ${mathProps.pythmen})`,
+          files: [file]
         });
       } else if (navigator.share) {
         await navigator.share({
           title: `Ισοψηφία: ${expression} = ${totalValue}`,
-          text: `Υπολογισμός Ισοψηφίας: ${expression} = ${totalValue} [${greekNumeral || ""}] - Σύστημα: ${systemName}`,
+          text: `Υπολογισμός Ισοψηφίας: ${expression} = ${totalValue}`
         });
       } else {
-        handleDownloadPng();
+        exportPng();
       }
-    } catch (err) {
-      if ((err as Error)?.name !== "AbortError") {
-        console.error("Share error:", err);
-        handleDownloadPng();
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') {
+        console.error('Share error:', err);
+        exportPng();
       }
     } finally {
-      setIsExporting(false);
+      setIsExportingPng(false);
     }
   };
 
-  // Card Aspect Ratio dimension styling
-  const getAspectContainerClass = () => {
-    switch (aspect) {
-      case "square":
-        return "w-full max-w-[500px] aspect-square";
-      case "story":
-        return "w-full max-w-[420px] aspect-[9/16]";
-      case "landscape":
-        return "w-full max-w-[620px] aspect-[1.91/1]";
-      case "auto":
+  const getRatioStyle = () => {
+    switch (ratio) {
+      case 'square':
+        return 'w-full max-w-[540px] min-h-[540px]';
+      case 'story':
+        return 'w-full max-w-[440px] min-h-[720px]';
+      case 'landscape':
+        return 'w-full max-w-[660px] min-h-[420px]';
+      case 'auto':
       default:
-        return "w-full max-w-[560px] min-h-[380px]";
+        return 'w-full max-w-[580px] min-h-[400px]';
     }
   };
 
-  // Theme styling rules for the exported canvas
-  const getThemeStyles = () => {
+  const themeStyles = (() => {
     switch (theme) {
-      case "parchment":
+      case 'parchment':
         return {
-          bg: "bg-[#fbf7ee]",
-          border: "border-2 border-[#b89758]",
-          textPrimary: "text-[#2a1b0c]",
-          textSecondary: "text-[#73512e]",
-          accent: "text-[#9e6f21]",
-          numGrad: "from-[#6e460e] via-[#9e6f21] to-[#b88628]",
-          badgeBg: "bg-[#f0e4cc] border-[#b89758]/50 text-[#543513]",
-          innerCard: "bg-[#f5ebd7] border-[#d8c5a4]",
-          watermarkText: "text-[#b89758]/40",
-          glowColor: "rgba(184, 151, 88, 0.15)",
+          bg: 'bg-[#fbf7ee]',
+          border: 'border-2 border-[#b89758]',
+          textPrimary: 'text-[#2a1b0c]',
+          textSecondary: 'text-[#73512e]',
+          accent: 'text-[#9e6f21]',
+          numGrad: 'from-[#6e460e] via-[#9e6f21] to-[#b88628]',
+          badgeBg: 'bg-[#f0e4cc] border-[#b89758]/50 text-[#543513]',
+          innerCard: 'bg-[#f5ebd7] border-[#d8c5a4]',
+          glowColor: 'rgba(184, 151, 88, 0.15)',
+          cornerColor: '#9e6f21',
+          headerBorder: 'border-[#b89758]/40'
         };
-      case "solar":
+      case 'solar':
         return {
-          bg: "bg-gradient-to-br from-[#fffdf5] via-[#fff5d6] to-[#ffeed0]",
-          border: "border-2 border-[#e69d00]",
-          textPrimary: "text-[#2d1900]",
-          textSecondary: "text-[#874f00]",
-          accent: "text-[#d97706]",
-          numGrad: "from-[#b45309] via-[#d97706] to-[#f59e0b]",
-          badgeBg: "bg-[#fde68a]/60 border-[#f59e0b]/50 text-[#78350f]",
-          innerCard: "bg-[#fffbeb] border-[#fde68a]",
-          watermarkText: "text-[#f59e0b]/30",
-          glowColor: "rgba(245, 158, 11, 0.2)",
+          bg: 'bg-gradient-to-br from-[#fffdf5] via-[#fff5d6] to-[#ffeed0]',
+          border: 'border-2 border-[#e69d00]',
+          textPrimary: 'text-[#2d1900]',
+          textSecondary: 'text-[#874f00]',
+          accent: 'text-[#d97706]',
+          numGrad: 'from-[#b45309] via-[#d97706] to-[#f59e0b]',
+          badgeBg: 'bg-[#fde68a]/60 border-[#f59e0b]/50 text-[#78350f]',
+          innerCard: 'bg-[#fffbeb] border-[#fde68a]',
+          glowColor: 'rgba(245, 158, 11, 0.2)',
+          cornerColor: '#f59e0b',
+          headerBorder: 'border-[#f59e0b]/40'
         };
-      case "cosmic":
+      case 'cosmic':
         return {
-          bg: "bg-gradient-to-b from-[#060b18] via-[#0b1329] to-[#040814]",
-          border: "border-2 border-[#38bdf8]/60",
-          textPrimary: "text-[#f0f9ff]",
-          textSecondary: "text-[#7dd3fc]",
-          accent: "text-[#38bdf8]",
-          numGrad: "from-[#38bdf8] via-[#67e8f9] to-[#a5f3fc]",
-          badgeBg: "bg-[#0c2340] border-[#38bdf8]/40 text-[#bae6fd]",
-          innerCard: "bg-[#09152b] border-[#1e3a5f]",
-          watermarkText: "text-[#38bdf8]/20",
-          glowColor: "rgba(56, 189, 248, 0.25)",
+          bg: 'bg-gradient-to-b from-[#060b18] via-[#0b1329] to-[#040814]',
+          border: 'border-2 border-[#38bdf8]/60',
+          textPrimary: 'text-[#f0f9ff]',
+          textSecondary: 'text-[#7dd3fc]',
+          accent: 'text-[#38bdf8]',
+          numGrad: 'from-[#38bdf8] via-[#67e8f9] to-[#a5f3fc]',
+          badgeBg: 'bg-[#0c2340] border-[#38bdf8]/40 text-[#bae6fd]',
+          innerCard: 'bg-[#09152b] border-[#1e3a5f]',
+          glowColor: 'rgba(56, 189, 248, 0.25)',
+          cornerColor: '#38bdf8',
+          headerBorder: 'border-[#38bdf8]/40'
         };
-      case "dark-gold":
+      case 'clean-white':
+        return {
+          bg: 'bg-[#ffffff]',
+          border: 'border-2 border-[#b89758]',
+          textPrimary: 'text-[#1a1510]',
+          textSecondary: 'text-[#5a4836]',
+          accent: 'text-[#8a6825]',
+          numGrad: 'from-[#8a6825] via-[#a87a2a] to-[#c89b3c]',
+          badgeBg: 'bg-[#f8f5ee] border-[#b89758]/50 text-[#3d2c18]',
+          innerCard: 'bg-[#faf7f0] border-[#e2d5c3]',
+          glowColor: 'rgba(184, 151, 88, 0.12)',
+          cornerColor: '#b89758',
+          headerBorder: 'border-[#b89758]/40'
+        };
+      case 'dark-gold':
       default:
         return {
-          bg: "bg-gradient-to-b from-[#181410] via-[#120f0c] to-[#0a0806]",
-          border: "border-2 border-[#d4af37]",
-          textPrimary: "text-[#fdfaf2]",
-          textSecondary: "text-[#a89984]",
-          accent: "text-[#e6c670]",
-          numGrad: "from-[#fef0cd] via-[#e6c670] to-[#c89b3c]",
-          badgeBg: "bg-[#251d14] border-[#594223] text-[#f5ebd8]",
-          innerCard: "bg-[#16120e] border-[#332617]",
-          watermarkText: "text-[#d4af37]/20",
-          glowColor: "rgba(212, 175, 55, 0.2)",
+          bg: 'bg-gradient-to-b from-[#181410] via-[#120f0c] to-[#0a0806]',
+          border: 'border-2 border-[#d4af37]',
+          textPrimary: 'text-[#fdfaf2]',
+          textSecondary: 'text-[#a89984]',
+          accent: 'text-[#e6c670]',
+          numGrad: 'from-[#fef0cd] via-[#e6c670] to-[#c89b3c]',
+          badgeBg: 'bg-[#251d14] border-[#594223] text-[#f5ebd8]',
+          innerCard: 'bg-[#16120e] border-[#332617]',
+          glowColor: 'rgba(212, 175, 55, 0.2)',
+          cornerColor: '#ffd700',
+          headerBorder: 'border-[#d4af37]/40'
         };
     }
-  };
-
-  const tStyles = getThemeStyles();
+  })();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fadeIn overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-[#14110e] border border-[#3e3223] rounded-2xl shadow-2xl shadow-black/80 flex flex-col max-h-[92vh] overflow-hidden my-auto">
+    <div id="export-card-modal-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md overflow-y-auto">
+      <div id="export-card-modal-container" className="relative w-full max-w-4xl bg-[#14110e] border border-[#3e3223] rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden my-auto">
         
         {/* Header */}
         <div className="px-5 py-4 border-b border-[#2d2419] flex items-center justify-between bg-[#191511] shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-[#292015] border border-[#523e25] text-[#e6c670]">
-              <ImageIcon className="w-5 h-5" />
+            <div className="p-2 rounded-xl bg-[#292015] border border-[#523e25] text-[#ffd700]">
+              <FileText className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
-                <span>Εξαγωγή Κάρτας ως Εικόνα (PNG)</span>
+                <span>Εξαγωγή Κάρτας Λεξαρίθμου</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#2e2316] text-[#ffd700] border border-[#4d3a22]">
-                  Social Media Ready
+                  PNG &amp; PDF (A4)
                 </span>
               </h2>
               <p className="text-xs text-[#a69680]">
-                Δημιουργήστε κάρτα υψηλής ανάλυσης για εύκολη κοινοποίηση σε Instagram, X, Facebook, Viber & WhatsApp.
+                Καθαρή διάταξη χωρίς επικαλύψεις κειμένων με το επίσημο έμβλημα «ΕΓΩ ΕΙΜΙ».
               </p>
             </div>
           </div>
-
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#8c7e6c] hover:text-[#f5ecd8] hover:bg-[#251d16] transition-colors"
+            id="btn-close-export-modal"
+            className="p-2 rounded-lg text-[#8c7e6c] hover:text-[#f5ecd8] hover:bg-[#251d16] transition-colors cursor-pointer"
             title="Κλείσιμο"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content Body */}
+        {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* Controls Column (Left) */}
+          {/* Controls Column */}
           <div className="lg:col-span-5 space-y-4">
             
             {/* Theme Selector */}
             <div className="p-3.5 rounded-xl bg-[#1a1511] border border-[#2d2419] space-y-2">
               <label className="text-xs font-serif font-bold text-[#e6c670] flex items-center gap-1.5 uppercase tracking-wider">
-                <Palette className="w-3.5 h-3.5 text-[#c89b3c]" />
+                <Sparkles className="w-3.5 h-3.5 text-[#c89b3c]" />
                 <span>Αισθητικό Θέμα Κάρτας</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { id: "dark-gold" as CardTheme, label: "Χρυσό & Οψιδιανός", icon: "🏛️" },
-                  { id: "parchment" as CardTheme, label: "Αρχαία Περγαμηνή", icon: "📜" },
-                  { id: "solar" as CardTheme, label: "Ηλιακός Απόλλων", icon: "☀️" },
-                  { id: "cosmic" as CardTheme, label: "Κοσμικό Αιθέριο", icon: "🌌" },
-                ].map((th) => (
+                  { id: 'parchment', label: 'Αρχαία Περγαμηνή', icon: '📜' },
+                  { id: 'dark-gold', label: 'Αρχαιοελληνικό Χρυσό', icon: '🏛️' },
+                  { id: 'solar', label: 'Ηλιακόν (Solar)', icon: '☀️' },
+                  { id: 'cosmic', label: 'Κοσμικό Αιθέριο', icon: '🌌' },
+                  { id: 'clean-white', label: 'Καλλιγραφικό Λευκό', icon: '📄' }
+                ].map(item => (
                   <button
-                    key={th.id}
+                    key={item.id}
                     type="button"
-                    onClick={() => setTheme(th.id)}
+                    onClick={() => setTheme(item.id as CardTheme)}
                     className={`px-3 py-2 rounded-xl text-left text-xs font-serif transition-all border flex items-center gap-2 cursor-pointer ${
-                      theme === th.id
-                        ? "bg-[#2d2216] border-[#ffd700] text-[#f5ecd8] ring-1 ring-[#ffd700]/40 font-bold"
-                        : "bg-[#14110e] border-[#292017] hover:bg-[#1f1913] text-[#a69680]"
+                      theme === item.id
+                        ? 'bg-[#2d2216] border-[#ffd700] text-[#f5ecd8] ring-1 ring-[#ffd700]/40 font-bold'
+                        : 'bg-[#14110e] border-[#292017] hover:bg-[#1f1913] text-[#a69680]'
                     }`}
                   >
-                    <span className="text-sm">{th.icon}</span>
-                    <span>{th.label}</span>
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Aspect Ratio / Format Selector */}
+            {/* Ratio Selector */}
             <div className="p-3.5 rounded-xl bg-[#1a1511] border border-[#2d2419] space-y-2">
               <label className="text-xs font-serif font-bold text-[#e6c670] flex items-center gap-1.5 uppercase tracking-wider">
-                <Layers className="w-3.5 h-3.5 text-[#c89b3c]" />
-                <span>Μορφή & Διαστάσεις Κοινοποίησης</span>
+                <Sliders className="w-3.5 h-3.5 text-[#c89b3c]" />
+                <span>Μορφή &amp; Αναλογία</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { id: "landscape" as CardAspect, label: "Τοπίο (1.91:1)", desc: "X, Facebook, Feed" },
-                  { id: "square" as CardAspect, label: "Τετράγωνο (1:1)", desc: "Instagram, Threads" },
-                  { id: "story" as CardAspect, label: "Ιστορία (9:16)", desc: "Stories, TikTok" },
-                  { id: "auto" as CardAspect, label: "Συμπαγές (Auto)", desc: "Κλασική Κάρτα" },
-                ].map((asp) => (
+                  { id: 'landscape', label: 'Τοπίο (1.91:1)', desc: 'X, Facebook' },
+                  { id: 'square', label: 'Τετράγωνο (1:1)', desc: 'Instagram' },
+                  { id: 'story', label: 'Ιστορία (9:16)', desc: 'Stories, Mobile' },
+                  { id: 'auto', label: 'Συμπαγές (Auto)', desc: 'Κλασική' }
+                ].map(item => (
                   <button
-                    key={asp.id}
+                    key={item.id}
                     type="button"
-                    onClick={() => setAspect(asp.id)}
+                    onClick={() => setRatio(item.id as CardRatio)}
                     className={`p-2.5 rounded-xl text-left text-xs font-serif transition-all border cursor-pointer ${
-                      aspect === asp.id
-                        ? "bg-[#2d2216] border-[#ffd700] text-[#f5ecd8] ring-1 ring-[#ffd700]/40 font-bold"
-                        : "bg-[#14110e] border-[#292017] hover:bg-[#1f1913] text-[#a69680]"
+                      ratio === item.id
+                        ? 'bg-[#2d2216] border-[#ffd700] text-[#f5ecd8] ring-1 ring-[#ffd700]/40 font-bold'
+                        : 'bg-[#14110e] border-[#292017] hover:bg-[#1f1913] text-[#a69680]'
                     }`}
                   >
-                    <div className="font-semibold">{asp.label}</div>
-                    <div className="text-[10px] text-[#7d7061] mt-0.5">{asp.desc}</div>
+                    <div className="font-semibold">{item.label}</div>
+                    <div className="text-[10px] text-[#7d7061] mt-0.5">{item.desc}</div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Customization Options */}
+            {/* Content Toggles */}
             <div className="p-3.5 rounded-xl bg-[#1a1511] border border-[#2d2419] space-y-2.5">
-              <label className="text-xs font-serif font-bold text-[#e6c670] flex items-center gap-1.5 uppercase tracking-wider">
-                <Settings className="w-3.5 h-3.5 text-[#c89b3c]" />
-                <span>Στοιχεία Κάρτας</span>
+              <label className="text-xs font-serif font-bold text-[#e6c670] uppercase tracking-wider block">
+                Στοιχεία Προβολής
               </label>
-
               <div className="space-y-2 text-xs font-serif">
                 <label className="flex items-center gap-2 text-[#d6c7b2] cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={showLetterBreakdown}
-                    onChange={(e) => setShowLetterBreakdown(e.target.checked)}
+                    checked={showDecomposition}
+                    onChange={e => setShowDecomposition(e.target.checked)}
                     className="rounded border-[#443625] text-[#c89b3c] focus:ring-[#c89b3c] bg-[#14110e]"
                   />
-                  <span>Αποδόμηση & Άθροισμα Γραμμάτων</span>
+                  <span>Ανάλυση Γραμμάτων &amp; Αθροίσματος</span>
                 </label>
-
                 <label className="flex items-center gap-2 text-[#d6c7b2] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={showMathProps}
-                    onChange={(e) => setShowMathProps(e.target.checked)}
+                    onChange={e => setShowMathProps(e.target.checked)}
                     className="rounded border-[#443625] text-[#c89b3c] focus:ring-[#c89b3c] bg-[#14110e]"
                   />
-                  <span>Μαθηματικές Ιδιότητες (Πυθμένας, Πρώτος, Τρίγωνος κ.λπ.)</span>
+                  <span>Μαθηματικές Ιδιότητες (Πυθμένας, Τρίγωνος κ.λπ.)</span>
                 </label>
-
                 {greekNumeral && (
                   <label className="flex items-center gap-2 text-[#d6c7b2] cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={showGreekNumeral}
-                      onChange={(e) => setShowGreekNumeral(e.target.checked)}
+                      checked={showNumeral}
+                      onChange={e => setShowNumeral(e.target.checked)}
                       className="rounded border-[#443625] text-[#c89b3c] focus:ring-[#c89b3c] bg-[#14110e]"
                     />
                     <span>Εμφάνιση Ιωνικού Αριθμού ({greekNumeral})</span>
                   </label>
                 )}
-
-                <label className="flex items-center gap-2 text-[#d6c7b2] cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showWatermark}
-                    onChange={(e) => setShowWatermark(e.target.checked)}
-                    className="rounded border-[#443625] text-[#c89b3c] focus:ring-[#c89b3c] bg-[#14110e]"
-                  />
-                  <span>Υδατογράφημα / Υπογραφή Εφαρμογής</span>
-                </label>
-
                 <label className="flex items-center gap-2 text-[#d6c7b2] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={showDate}
-                    onChange={(e) => setShowDate(e.target.checked)}
+                    onChange={e => setShowDate(e.target.checked)}
                     className="rounded border-[#443625] text-[#c89b3c] focus:ring-[#c89b3c] bg-[#14110e]"
                   />
                   <span>Ημερομηνία Έκδοσης</span>
                 </label>
+                <label className="flex items-center gap-2 text-[#d6c7b2] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showFooter}
+                    onChange={e => setShowFooter(e.target.checked)}
+                    className="rounded border-[#443625] text-[#c89b3c] focus:ring-[#c89b3c] bg-[#14110e]"
+                  />
+                  <span>Υποσέλιδο &amp; Ερευνητής</span>
+                </label>
               </div>
 
-              {showWatermark && (
-                <div className="pt-2 border-t border-[#292017]">
-                  <label className="text-[11px] text-[#8c7e6c] font-serif block mb-1">
-                    Κείμενο Υπογραφής / Ερευνητή:
-                  </label>
-                  <input
-                    type="text"
-                    value={researcherSignature}
-                    onChange={(e) => setResearcherSignature(e.target.value)}
-                    placeholder="π.χ. Ιωάννης Βελούδος / Λεξάριθμος"
-                    className="w-full px-2.5 py-1.5 bg-[#12100e] border border-[#3e3020] rounded-lg text-xs font-serif text-[#f5ecd8] focus:border-[#c89b3c] outline-none"
-                  />
-                </div>
-              )}
+              <div className="pt-2 border-t border-[#292017]">
+                <label className="text-[11px] text-[#8c7e6c] font-serif block mb-1">
+                  Κείμενο Επικεφαλίδας / Υπότιτλος:
+                </label>
+                <input
+                  type="text"
+                  value={customSubtitle}
+                  onChange={e => setCustomSubtitle(e.target.value)}
+                  placeholder="Αρχαία Ελληνική Αρίθμηση & Λεξάριθμοι"
+                  className="w-full px-2.5 py-1.5 bg-[#12100e] border border-[#3e3020] rounded-lg text-xs font-serif text-[#f5ecd8] focus:border-[#c89b3c] outline-none"
+                />
+              </div>
             </div>
 
-            {/* Error banner if any */}
             {errorMessage && (
               <div className="p-3 rounded-xl bg-red-950/60 border border-red-500/50 text-xs text-red-200">
                 {errorMessage}
@@ -455,188 +484,204 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
             )}
           </div>
 
-          {/* Live Preview Column (Right) */}
+          {/* Card Live Preview Column */}
           <div className="lg:col-span-7 flex flex-col items-center justify-center">
-            
             <div className="w-full flex items-center justify-between mb-2">
               <span className="text-xs font-serif text-[#8c7e6c] flex items-center gap-1.5">
-                <Eye className="w-3.5 h-3.5 text-[#c89b3c]" />
+                <Sparkles className="w-3.5 h-3.5 text-[#c89b3c]" />
                 <span>Ζωντανή Προεπισκόπηση Κάρτας</span>
               </span>
               <span className="text-[10px] font-mono text-[#a69680]">
-                2x Retina PNG Render
+                Καθαρή εκτύπωση χωρίς επικαλύψεις
               </span>
             </div>
 
-            {/* Container where the rendered card lives */}
             <div className="w-full bg-[#0b0a08] p-3 sm:p-4 rounded-2xl border border-[#2a2218] flex items-center justify-center overflow-hidden shadow-inner">
               
-              {/* THE EXPORTABLE CARD NODE */}
+              {/* THE CARD TO EXPORT */}
               <div
                 ref={cardRef}
-                className={`${getAspectContainerClass()} ${tStyles.bg} ${tStyles.border} rounded-2xl p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between shadow-2xl transition-all select-none`}
+                id="isopsephy-export-card"
+                className={`${getRatioStyle()} ${themeStyles.bg} ${themeStyles.border} rounded-2xl p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between shadow-2xl transition-all select-none`}
                 style={{
-                  boxShadow: `0 20px 40px -15px ${tStyles.glowColor}`,
+                  boxShadow: `0 20px 40px -15px ${themeStyles.glowColor}`
                 }}
               >
-                {/* Decorative Greek Meander / Corner Accents */}
+                {/* Decorative corners */}
                 <div
                   className="absolute top-2 left-2 text-xs font-serif opacity-30 pointer-events-none"
-                  style={{ color: theme === "parchment" ? "#9e6f21" : "#ffd700" }}
+                  style={{ color: themeStyles.cornerColor }}
                 >
                   ╔════
                 </div>
                 <div
                   className="absolute top-2 right-2 text-xs font-serif opacity-30 pointer-events-none"
-                  style={{ color: theme === "parchment" ? "#9e6f21" : "#ffd700" }}
+                  style={{ color: themeStyles.cornerColor }}
                 >
                   ════╗
                 </div>
                 <div
                   className="absolute bottom-2 left-2 text-xs font-serif opacity-30 pointer-events-none"
-                  style={{ color: theme === "parchment" ? "#9e6f21" : "#ffd700" }}
+                  style={{ color: themeStyles.cornerColor }}
                 >
                   ╚════
                 </div>
                 <div
                   className="absolute bottom-2 right-2 text-xs font-serif opacity-30 pointer-events-none"
-                  style={{ color: theme === "parchment" ? "#9e6f21" : "#ffd700" }}
+                  style={{ color: themeStyles.cornerColor }}
                 >
                   ════╝
                 </div>
 
-                {/* Big Background Watermark Numeral */}
+                {/* Top Header Row with Official Emblem & Title */}
                 <div
-                  className={`absolute right-4 bottom-2 text-[120px] sm:text-[140px] font-serif font-black ${tStyles.watermarkText} pointer-events-none select-none leading-none`}
+                  className={`flex ${ratio === 'story' ? 'flex-col items-center' : 'flex-col sm:flex-row items-center justify-between'} gap-3 sm:gap-4 pb-4 mb-3 border-b ${themeStyles.headerBorder} relative z-10 shrink-0`}
                 >
-                  {greekNumeral || (isEnglish ? "G" : "Ω")}
-                </div>
-
-                {/* Top Card Header: App Branding & System */}
-                <div className="flex items-center justify-between gap-2 relative z-10 border-b pb-3 border-current/10">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm sm:text-base">🏛️</span>
-                    <div>
-                      <div className={`text-xs font-serif font-bold uppercase tracking-wider ${tStyles.accent}`}>
-                        ΛΕΞΑΡΙΘΜΟΣ • ΙΣΟΨΗΦΙΑ
-                      </div>
-                      <div className={`text-[10px] font-mono ${tStyles.textSecondary}`}>
-                        {systemName.split("(")[0]}
-                      </div>
-                    </div>
+                  {/* Emblem Logo */}
+                  <div
+                    className={`${ratio === 'story' ? 'w-24 h-24 sm:w-28 sm:h-28' : 'w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32'} rounded-xl p-1.5 shrink-0 shadow-2xl relative border`}
+                    style={{
+                      borderColor: themeStyles.cornerColor,
+                      backgroundColor: theme === 'clean-white' || theme === 'parchment' ? 'rgba(255,255,255,0.95)' : 'rgba(16, 13, 9, 0.85)',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.35)'
+                    }}
+                  >
+                    <img
+                      src={emblemLogo}
+                      alt="Επίσημο Έμβλημα"
+                      className="w-full h-full object-contain rounded-lg filter contrast-110"
+                    />
                   </div>
 
-                  {showDate && (
-                    <div className={`text-[10px] font-mono ${tStyles.textSecondary}`}>
-                      {dateFormatted}
+                  {/* Header Titles - FIXED: No redundant black text or overlapping phrases! */}
+                  <div
+                    className={`${ratio === 'story' ? 'text-center items-center' : 'text-center sm:text-right items-center sm:items-end'} flex flex-col justify-center w-full sm:w-auto mt-1 sm:mt-0 shrink-0 space-y-1`}
+                  >
+                    {/* Official badge */}
+                    <div
+                      className={`text-[11px] sm:text-xs font-mono uppercase tracking-widest ${themeStyles.accent} font-bold px-3 py-1 rounded-md border ${themeStyles.badgeBg} inline-block whitespace-nowrap shadow-sm mb-1`}
+                    >
+                      ✦ ΕΠΙΣΗΜΗ ΚΑΡΤΕΛΑ ΙΣΟΨΗΦΙΑΣ ✦
                     </div>
-                  )}
+
+                    {/* Single clear subtitle - As requested by user, eliminating duplicate / overlapping text! */}
+                    <div
+                      className={`text-xs sm:text-sm font-serif font-bold ${themeStyles.textSecondary} leading-relaxed block tracking-wide`}
+                    >
+                      {customSubtitle || 'Αρχαία Ελληνική Αρίθμηση & Λεξάριθμοι'}
+                    </div>
+
+                    {/* Date */}
+                    {showDate && (
+                      <div
+                        className={`text-[10px] sm:text-[11px] font-mono ${themeStyles.textSecondary} opacity-85 leading-normal block pt-0.5`}
+                      >
+                        {currentDate}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Main Content Area */}
-                <div className="my-auto py-4 relative z-10 space-y-4">
+                <div className="py-2 relative z-10 space-y-4 shrink-0">
                   
-                  {/* Phrase / Word Display */}
-                  <div>
-                    <div className={`text-[11px] font-mono uppercase tracking-widest ${tStyles.textSecondary}`}>
-                      {isEnglish ? "Αγγλική Έκφραση (Ισοψηφία)" : "Ελληνική Έκφραση / Λέξη"}
+                  {/* Expression */}
+                  <div className="shrink-0">
+                    <div className={`text-[11px] font-mono uppercase tracking-widest ${themeStyles.textSecondary}`}>
+                      Ελληνική Έκφραση / Λέξη
                     </div>
-                    <div
-                      className={`text-xl sm:text-3xl font-ancient-greek font-black tracking-wide ${tStyles.textPrimary} mt-0.5 break-words`}
-                    >
+                    <div className={`text-xl sm:text-2xl md:text-3xl font-ancient-greek font-black tracking-wide ${themeStyles.textPrimary} mt-1 break-words leading-relaxed`}>
                       «{expression.trim()}»
                     </div>
                   </div>
 
-                  {/* Big Number & Numeral Hero Block */}
-                  <div className="flex flex-wrap items-baseline gap-4">
-                    <div className="flex items-baseline gap-2">
-                      <span
-                        className={`text-5xl sm:text-6xl font-serif font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r ${tStyles.numGrad} drop-shadow-sm`}
-                      >
-                        {totalValue.toLocaleString("el-GR")}
+                  {/* Number & Ionian Badge */}
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 shrink-0">
+                    <div className="flex items-baseline">
+                      <span className={`text-5xl sm:text-6xl font-serif font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r ${themeStyles.numGrad} drop-shadow-sm leading-none`}>
+                        {totalValue.toLocaleString('el-GR')}
                       </span>
                     </div>
 
-                    {showGreekNumeral && greekNumeral && (
-                      <div
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-xl border ${tStyles.badgeBg} shadow-sm`}
-                      >
-                        <span className="text-[10px] font-sans opacity-70">Ιωνικό:</span>
-                        <span className="text-base sm:text-lg font-serif font-bold tracking-wider">
+                    {showNumeral && greekNumeral && (
+                      <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border ${themeStyles.badgeBg} shadow-sm whitespace-nowrap`}>
+                        <span className="text-[11px] font-sans opacity-75">Ιωνικό:</span>
+                        <span className="text-base sm:text-lg font-serif font-bold tracking-wider ml-1 leading-normal">
                           {greekNumeral}
                         </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Mathematical Properties Badges */}
+                  {/* Mathematical badges */}
                   {showMathProps && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <div
-                        className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg border text-[11px] font-mono font-semibold ${tStyles.badgeBg}`}
-                      >
-                        <span className="opacity-70">Πυθμένας:</span>
-                        <span className="font-bold">{mathProps.pythmen}</span>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <div className={`inline-flex items-center px-3 py-1 rounded-lg border text-[11px] font-mono font-semibold whitespace-nowrap ${themeStyles.badgeBg}`}>
+                        <span className="opacity-75">Πυθμένας:</span>
+                        <span className="font-bold ml-1.5">{mathProps.pythmen}</span>
                       </div>
+
                       {mathProps.isPrime && (
-                        <span className="px-2 py-0.5 rounded-lg bg-emerald-900/30 border border-emerald-500/40 text-emerald-600 dark:text-emerald-300 text-[10px] font-mono font-bold">
+                        <div className="px-2.5 py-1 rounded-lg bg-emerald-900/30 border border-emerald-500/40 text-emerald-600 dark:text-emerald-300 text-[10px] font-mono font-bold whitespace-nowrap">
                           Πρώτος Αριθμός
-                        </span>
+                        </div>
                       )}
+
                       {mathProps.isTriangular && (
-                        <span className="px-2 py-0.5 rounded-lg bg-amber-900/30 border border-amber-500/40 text-amber-600 dark:text-amber-300 text-[10px] font-mono font-bold">
+                        <div className="px-2.5 py-1 rounded-lg bg-amber-900/30 border border-amber-500/40 text-amber-600 dark:text-amber-300 text-[10px] font-mono font-bold whitespace-nowrap">
                           Τρίγωνος (T{mathProps.triangularRoot})
-                        </span>
+                        </div>
                       )}
+
                       {mathProps.isSquare && (
-                        <span className="px-2 py-0.5 rounded-lg bg-indigo-900/30 border border-indigo-500/40 text-indigo-600 dark:text-indigo-300 text-[10px] font-mono font-bold">
+                        <div className="px-2.5 py-1 rounded-lg bg-indigo-900/30 border border-indigo-500/40 text-indigo-600 dark:text-indigo-300 text-[10px] font-mono font-bold whitespace-nowrap">
                           Τετράγωνος ({mathProps.squareRoot}²)
-                        </span>
+                        </div>
                       )}
-                      <span className={`px-2 py-0.5 rounded-lg border text-[10px] font-mono ${tStyles.badgeBg}`}>
-                        {mathProps.isEven ? "Άρτιος" : "Περιττός"}
-                      </span>
+
+                      <div className={`px-2.5 py-1 rounded-lg border text-[10px] font-mono whitespace-nowrap ${themeStyles.badgeBg}`}>
+                        {mathProps.isEven ? 'Άρτιος' : 'Περιττός'}
+                      </div>
                     </div>
                   )}
 
-                  {/* Letter Breakdown Formula */}
-                  {showLetterBreakdown && wordBreakdowns.length > 0 && (
-                    <div
-                      className={`p-2.5 rounded-xl border ${tStyles.innerCard} text-[11px] font-mono space-y-1`}
-                    >
-                      <div className={`text-[10px] font-serif font-bold uppercase tracking-wider ${tStyles.textSecondary}`}>
-                        Ανάλυση Γραμμάτων & Αθροίσματος:
+                  {/* Letter Decomposition */}
+                  {showDecomposition && wordBreakdowns.length > 0 && (
+                    <div className={`p-3.5 rounded-xl border ${themeStyles.innerCard} text-[11px] font-mono space-y-1.5 shrink-0`}>
+                      <div className={`text-[10px] font-serif font-bold uppercase tracking-wider ${themeStyles.textSecondary}`}>
+                        Ανάλυση Γραμμάτων &amp; Αθροίσματος:
                       </div>
-                      <div className={`${tStyles.textPrimary} break-words leading-relaxed font-semibold`}>
+                      <div className={`${themeStyles.textPrimary} break-words leading-relaxed font-semibold`}>
                         {wordBreakdowns
-                          .flatMap((wb) => wb.letters.map((l) => `${l.char}(${l.value})`))
-                          .join(" + ")}{" "}
-                        = <span className={`${tStyles.accent} font-bold`}>{totalValue}</span>
+                          .flatMap(w => w.letters.map(l => `${l.char}(${l.value})`))
+                          .join(' + ')}{' '}
+                        = <span className={`${themeStyles.accent} font-bold`}>{totalValue}</span>
                       </div>
                     </div>
                   )}
 
+                  {/* Expression steps */}
                   {stepsExplanation && (
-                    <div className={`text-[10px] font-mono ${tStyles.textSecondary} italic truncate`}>
+                    <div className={`text-[10px] font-mono ${themeStyles.textSecondary} italic break-words leading-relaxed shrink-0`}>
                       {stepsExplanation}
                     </div>
                   )}
                 </div>
 
-                {/* Bottom Card Footer: Watermark & Attribution */}
-                {showWatermark && (
-                  <div className="pt-2 border-t border-current/10 flex items-center justify-between text-[10px] font-serif relative z-10">
-                    <span className={`${tStyles.textSecondary} font-semibold flex items-center gap-1`}>
+                {/* Card Footer */}
+                {showFooter && (
+                  <div className={`pt-3 mt-2 border-t ${themeStyles.headerBorder} flex flex-wrap items-center justify-between gap-2 text-[10px] font-serif relative z-10 shrink-0`}>
+                    <div className={`${themeStyles.textSecondary} font-semibold flex items-center gap-1.5`}>
                       <span>✨</span>
-                      <span>{researcherSignature || "Ελληνική Ισοψηφία & Λεξάριθμοι"}</span>
-                    </span>
-                    <span className={`${tStyles.accent} font-mono text-[9px]`}>
+                      <span>Αρχαία Ελληνική Ισοψηφία &amp; Λεξάριθμοι</span>
+                    </div>
+                    <div className={`${themeStyles.accent} font-mono text-[9px] whitespace-nowrap`}>
                       #Isopsephy #Lexarithms #{totalValue}
-                    </span>
+                    </div>
                   </div>
                 )}
               </div>
+
             </div>
           </div>
 
@@ -644,20 +689,22 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
 
         {/* Modal Footer Actions */}
         <div className="px-5 py-4 border-t border-[#2d2419] bg-[#191511] flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="text-xs text-[#8c7e6c] font-serif hidden sm:block">
-            Υψηλή πιστότητα (2x Resolution PNG) • Ιδανικό για αποθήκευση και αναρτήσεις
+          <div className="text-xs text-[#8c7e6c] font-serif hidden md:block">
+            Επίσημο έγγραφο με το λογότυπο «ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ — ΕΓΩ ΕΙΜΙ» • Υψηλή ανάλυση (PNG 2x Retina &amp; A4 PDF)
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            {/* Copy to Clipboard */}
+          <div className="flex items-center gap-2 w-full md:w-auto flex-wrap sm:flex-nowrap">
+            
+            {/* Copy Button */}
             <button
               type="button"
-              onClick={handleCopyImage}
-              disabled={isExporting}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#251d15] hover:bg-[#34271c] border border-[#443625] text-xs font-serif text-[#d6c7b2] transition-all cursor-pointer disabled:opacity-50"
+              onClick={copyToClipboard}
+              disabled={isExportingPng || isExportingPdf}
+              id="btn-copy-card-image"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#251d15] hover:bg-[#34271c] border border-[#443625] text-xs font-serif text-[#d6c7b2] transition-all cursor-pointer disabled:opacity-50"
               title="Αντιγραφή εικόνας στο Πρόχειρο"
             >
-              {copiedSuccess ? (
+              {isCopied ? (
                 <>
                   <Check className="w-4 h-4 text-emerald-400" />
                   <span className="text-emerald-300 font-bold">Αντιγράφηκε!</span>
@@ -665,47 +712,78 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
               ) : (
                 <>
                   <Copy className="w-4 h-4 text-[#c89b3c]" />
-                  <span>Αντιγραφή Εικόνας</span>
+                  <span>Αντιγραφή</span>
                 </>
               )}
             </button>
 
-            {/* Native Share (Web Share API) */}
+            {/* Share Button */}
             <button
               type="button"
-              onClick={handleShareNative}
-              disabled={isExporting}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#282015] hover:bg-[#382b1c] border border-[#c89b3c]/40 text-xs font-serif text-[#e6c670] transition-all cursor-pointer disabled:opacity-50"
-              title="Κοινοποίηση σε εφαρμογές"
+              onClick={handleShare}
+              disabled={isExportingPng || isExportingPdf}
+              id="btn-share-card"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#282015] hover:bg-[#382b1c] border border-[#c89b3c]/40 text-xs font-serif text-[#e6c670] transition-all cursor-pointer disabled:opacity-50"
+              title="Κοινοποίηση σε άλλες εφαρμογές"
             >
               <Share2 className="w-4 h-4" />
               <span>Κοινοποίηση</span>
             </button>
 
-            {/* Primary Download Button */}
+            {/* PNG Download Button */}
             <button
               type="button"
-              onClick={handleDownloadPng}
-              disabled={isExporting}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#8a6825] via-[#c89b3c] to-[#dbaa42] hover:from-[#a0792c] hover:to-[#ebbb4e] text-[#120f0c] text-xs sm:text-sm font-bold font-serif shadow-lg shadow-[#c89b3c]/20 transition-all cursor-pointer disabled:opacity-50"
+              onClick={exportPng}
+              disabled={isExportingPng || isExportingPdf}
+              id="btn-download-png"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#2b2114] hover:bg-[#3d2e1b] border border-[#d4af37]/60 text-xs font-bold font-serif text-[#ffd700] transition-all cursor-pointer disabled:opacity-50"
+              title="Λήψη της κάρτας ως εικόνα PNG"
             >
-              {isExporting ? (
+              {isExportingPng ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-[#120f0c]" />
-                  <span>Δημιουργία PNG...</span>
+                  <Loader2 className="w-4 h-4 animate-spin text-[#ffd700]" />
+                  <span>PNG...</span>
                 </>
-              ) : downloadSuccess ? (
+              ) : isPngDownloaded ? (
                 <>
-                  <Check className="w-4 h-4 text-emerald-950 font-black" />
-                  <span>Λήφθηκε Επιτυχώς!</span>
+                  <Check className="w-4 h-4 text-emerald-400 font-bold" />
+                  <span className="text-emerald-300">Λήφθηκε PNG!</span>
                 </>
               ) : (
                 <>
-                  <Download className="w-4 h-4 text-[#120f0c]" />
-                  <span>Λήψη Εικόνας (PNG)</span>
+                  <Download className="w-4 h-4 text-[#ffd700]" />
+                  <span>Λήψη PNG</span>
                 </>
               )}
             </button>
+
+            {/* PDF Download Button */}
+            <button
+              type="button"
+              onClick={exportPdf}
+              disabled={isExportingPng || isExportingPdf}
+              id="btn-export-card-pdf"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#b38328] via-[#e5b342] to-[#ffd700] hover:from-[#c99532] hover:to-[#ffe033] text-[#1a140b] text-xs sm:text-sm font-black font-serif shadow-lg shadow-[#ffd700]/25 transition-all cursor-pointer disabled:opacity-50"
+              title="Εξαγωγή της καρτέλας σε αρχείο PDF (A4)"
+            >
+              {isExportingPdf ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-[#1a140b]" />
+                  <span>PDF...</span>
+                </>
+              ) : isPdfDownloaded ? (
+                <>
+                  <Check className="w-4 h-4 text-[#1a140b] font-bold" />
+                  <span>Λήφθηκε PDF!</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4 text-[#1a140b]" />
+                  <span>Εξαγωγή PDF</span>
+                </>
+              )}
+            </button>
+
           </div>
         </div>
 
