@@ -1,0 +1,907 @@
+import React, { useState } from "react";
+import { IONIC_ALPHABET } from "../utils/isopsephy";
+import { BookOpen, Sparkles, Hash, Layers, CheckCircle2, Sun, Calculator, ChevronRight, Compass } from "lucide-react";
+import { LavreionStoryView } from "./LavreionStoryView";
+import { AncientSymbolsTable } from "./AncientSymbolsTable";
+
+type GuideSubTab = "all" | "lavreion" | "symbols" | "ionian" | "awakening" | "orphic";
+
+export const GuideTab: React.FC = () => {
+  const [activeGuideTab, setActiveGuideTab] = useState<GuideSubTab>("all");
+  const [selectedLetterChar, setSelectedLetterChar] = useState<string>("Α");
+  const [activeSquareRow, setActiveSquareRow] = useState<number | null>(null);
+
+  const monades = IONIC_ALPHABET.filter((l) => l.category === "monas");
+  const dekades = IONIC_ALPHABET.filter((l) => l.category === "dekas");
+  const ekatontades = IONIC_ALPHABET.filter((l) => l.category === "ekatontas");
+
+  const selectedLetter = IONIC_ALPHABET.find((l) => l.char === selectedLetterChar) || IONIC_ALPHABET[0];
+
+  // The ancient 6x6 Magic Square of the Sun (sum of each row/col/diag = 111, total = 666)
+  const magicSquareOfSun = [
+    [6, 32, 3, 34, 35, 1],
+    [7, 11, 27, 28, 8, 30],
+    [19, 14, 16, 15, 23, 24],
+    [18, 20, 22, 21, 17, 13],
+    [25, 29, 10, 9, 26, 12],
+    [36, 5, 33, 4, 2, 31],
+  ];
+
+  return (
+    <div className="space-y-8 max-w-6xl mx-auto">
+      
+      {/* Top Introduction Banner */}
+      <div className="p-4 sm:p-6 rounded-2xl bg-[#181512] border border-[#2d251e] space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg sm:text-xl font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-[#c89b3c]" />
+              <span>Οδηγός Ιωνικής Αρίθμησης & Ελληνικής Ισοψηφίας</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-[#a69680] font-serif leading-relaxed mt-1">
+              Η <strong>Ισοψηφία</strong> (υπολογισμός λεξαρίθμων) σύμφωνα με το <strong>27ψήφιο Ιωνικό Σύστημα</strong>, τα γεωμετρικά μυστήρια του 666 και η πορεία της ψυχής.
+            </p>
+          </div>
+        </div>
+
+        {/* Sub-Tab Navigation Bar */}
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-[#292017]">
+          <button
+            onClick={() => setActiveGuideTab("all")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "all"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>📜 Πλήρης Οδηγός</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGuideTab("lavreion")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "lavreion"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>🏛️ Η Πύλη ΛΑΥΡΕΙΟΝ (Ιανεύς Τελιανός)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGuideTab("symbols")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "symbols"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>🏛️ Πίνακας Αρχαίων Συμβόλων &amp; Επισήμων</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGuideTab("ionian")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "ionian"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <Sun className="w-3.5 h-3.5" />
+            <span>☀️ Ιωνική Αρίθμηση &amp; 666</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGuideTab("awakening")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "awakening"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>📐 Γεωμετρία 144.000</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGuideTab("orphic")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+              activeGuideTab === "orphic"
+                ? "bg-[#c89b3c] text-[#120f0c] shadow-md shadow-[#c89b3c]/20"
+                : "bg-[#14110d] text-[#c5b59e] border border-[#2b2217] hover:border-[#c89b3c]/50"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>🌌 Ορφική Ενότητα</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 1. ΙΩΝΙΚΗ ΑΡΙΘΜΗΣΗ & 666 SECTION */}
+      {(activeGuideTab === "all" || activeGuideTab === "ionian") && (
+        <>
+          {/* SPECIAL SECTION: Ο ΑΡΙΘΜΟΣ 666, ΤΡΙΓΩΝΟΙ ΑΡΙΘΜΟΙ & ΜΑΓΙΚΟ ΤΕΤΡΑΓΩΝΟ ΤΟΥ ΗΛΙΟΥ */}
+      <div className="p-5 sm:p-7 rounded-2xl bg-[#14120f] border-2 border-[#c89b3c]/40 shadow-2xl shadow-black/50 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2d2419] pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#261e14] border border-[#c89b3c]/60 flex items-center justify-center text-[#e6c670]">
+              <Sun className="w-5 h-5 text-[#e6c670]" />
+            </div>
+            <div>
+              <div className="text-[11px] font-serif uppercase tracking-widest text-[#c89b3c] font-bold">
+                Μαθηματική & Πυθαγόρεια Ανάλυση
+              </div>
+              <h3 className="text-lg sm:text-xl font-serif font-bold text-[#f5ecd8]">
+                Ο Αριθμός 666 (χξϛ´) & Το Μαγικό Τετράγωνο του Ηλίου
+              </h3>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-lg bg-[#221a12] border border-[#3e3223] text-xs font-mono font-bold text-[#e6c670]">
+              36ος Τρίγωνος Αριθμός (T₃₆)
+            </span>
+          </div>
+        </div>
+
+        {/* 4 Core Mathematical Pillars */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-3.5 rounded-xl bg-[#1a1612] border border-[#2e2419]">
+            <div className="text-[11px] font-serif text-[#8c7e6c]">Πλήθος Διαιρετών</div>
+            <div className="text-xl font-serif font-bold text-[#e6c670] mt-0.5">12 Διαιρέτες</div>
+            <p className="text-[10px] text-[#a69680] font-serif mt-1">
+              1, 2, 3, 6, 9, 18, 37, 74, 111, 222, 333, 666
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-[#1a1612] border border-[#2e2419]">
+            <div className="text-[11px] font-serif text-[#8c7e6c]">Τριγωνική Ιδιότητα</div>
+            <div className="text-xl font-serif font-bold text-[#38bdf8] mt-0.5">T₃₆ = Σ(1..36)</div>
+            <p className="text-[10px] text-[#a69680] font-serif mt-1">
+              Το άθροισμα όλων των ακεραίων από το 1 έως το 36
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-[#1a1612] border border-[#2e2419]">
+            <div className="text-[11px] font-serif text-[#8c7e6c]">Μαγικό Τετράγωνο Ηλίου</div>
+            <div className="text-xl font-serif font-bold text-[#f5ecd8] mt-0.5">6 × 6 = 36 Κελιά</div>
+            <p className="text-[10px] text-[#a69680] font-serif mt-1">
+              Άθροισμα γραμμών/στηλών: 111. Σύνολο: 6 × 111 = 666
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-[#1a1612] border border-[#2e2419]">
+            <div className="text-[11px] font-serif text-[#8c7e6c]">Πυθαγόρειος Πυθμένας</div>
+            <div className="text-xl font-serif font-bold text-[#ec4899] mt-0.5">9 (6+6+6=18→9)</div>
+            <p className="text-[10px] text-[#a69680] font-serif mt-1">
+              Ψηφιακή ρίζα της εννεάδας των Πυθαγορείων
+            </p>
+          </div>
+        </div>
+
+        {/* Step-by-Step Mathematical Derivation Formula */}
+        <div className="p-4 sm:p-5 rounded-xl bg-[#0e0c0a] border border-[#30261b] space-y-4">
+          <div className="flex items-center gap-2 text-xs font-serif font-bold text-[#e6c670]">
+            <Calculator className="w-4 h-4 text-[#c89b3c]" />
+            <span>Βήμα προς Βήμα Μαθηματικός Υπολογισμός Τριγώνου Αριθμού:</span>
+          </div>
+
+          <p className="text-xs text-[#d6c7b2] font-serif leading-relaxed">
+            Ο γενικός μαθηματικός τύπος για τον υπολογισμό του $n$-οστού τριγώνου αριθμού είναι:
+          </p>
+
+          <div className="p-3 rounded-lg bg-[#181410] border border-[#292017] text-center font-mono text-sm sm:text-base font-bold text-[#f5ecd8]">
+            s = [ n · (n + 1) ] / 2
+          </div>
+
+          <div className="space-y-3 font-serif text-xs text-[#d6c7b2] pt-1">
+            <div className="p-3 rounded-lg bg-[#15120f] border border-[#241c14] space-y-1">
+              <strong className="text-[#f5ecd8] text-xs flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-[#2a2116] text-[#e6c670] flex items-center justify-center text-[10px] font-mono font-bold">1</span>
+                Βήμα 1: Αντικατάσταση του n
+              </strong>
+              <p className="text-[#a69680] pl-6">
+                Βάζουμε το <strong>36</strong> στη θέση του $n$ μέσα στον τύπο:
+              </p>
+              <div className="pl-6 font-mono text-xs text-[#e6c670] font-bold">
+                s = [ 36 · (36 + 1) ] / 2
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-[#15120f] border border-[#241c14] space-y-1">
+              <strong className="text-[#f5ecd8] text-xs flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-[#2a2116] text-[#e6c670] flex items-center justify-center text-[10px] font-mono font-bold">2</span>
+                Βήμα 2: Πράξη εντός της παρένθεσης
+              </strong>
+              <p className="text-[#a69680] pl-6">
+                Υπολογίζουμε το άθροισμα μέσα στην παρένθεση (36 + 1 = 37):
+              </p>
+              <div className="pl-6 font-mono text-xs text-[#e6c670] font-bold">
+                s = ( 36 · 37 ) / 2
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-[#15120f] border border-[#241c14] space-y-2">
+              <strong className="text-[#f5ecd8] text-xs flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-[#2a2116] text-[#e6c670] flex items-center justify-center text-[10px] font-mono font-bold">3</span>
+                Βήμα 3: Πολλαπλασιασμός (ή Απλοποίηση)
+              </strong>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-6">
+                <div className="p-2.5 rounded bg-[#100e0b] border border-[#251d16] space-y-1">
+                  <span className="text-[11px] text-[#c89b3c] font-bold block">Εναλλακτικός τρόπος (Απλοποίηση πρώτα):</span>
+                  <p className="text-[11px] text-[#a69680]">
+                    Διαιρούμε το 36 με το 2 (36 / 2 = 18) και μετά πολλαπλασιάζουμε επί 37:
+                  </p>
+                  <div className="font-mono text-xs text-[#f5ecd8] font-bold">
+                    18 · 37 = 666
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded bg-[#100e0b] border border-[#251d16] space-y-1">
+                  <span className="text-[11px] text-[#c89b3c] font-bold block">Κανονικός τρόπος:</span>
+                  <p className="text-[11px] text-[#a69680]">
+                    Πολλαπλασιάζουμε 36 · 37 = 1332 και μετά διαιρούμε με το 2:
+                  </p>
+                  <div className="font-mono text-xs text-[#f5ecd8] font-bold">
+                    s = 1332 / 2
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-[#1d160e] border border-[#44331e] space-y-1">
+              <strong className="text-[#e6c670] text-xs flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-[#3d2c16] text-[#e6c670] flex items-center justify-center text-[10px] font-mono font-bold">4</span>
+                Βήμα 4: Τελική Διαίρεση
+              </strong>
+              <div className="pl-6 font-mono text-sm text-[#f5ecd8] font-bold">
+                s = 666
+              </div>
+              <p className="text-[11px] text-[#c89b3c] pl-6">
+                Το τελικό αποτέλεσμα είναι <strong>666</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Visual Interactive 6x6 Magic Square of the Sun */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs sm:text-sm font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
+              <Sun className="w-4 h-4 text-[#e6c670]" />
+              <span>Το Μαγικό Τετράγωνο του Ηλίου (6 × 6 = 36 κελιά)</span>
+            </h4>
+            <span className="text-[11px] font-mono text-[#c89b3c]">Κάθε σειρά = 111 | Σύνολο = 666</span>
+          </div>
+
+          <div className="overflow-x-auto pb-2">
+            <div className="inline-block min-w-full sm:min-w-[500px] p-3 rounded-xl bg-[#0c0a08] border border-[#2e2318]">
+              <div className="grid grid-cols-7 gap-1.5 sm:gap-2 text-center font-mono">
+                {/* Headers */}
+                <div className="text-[10px] text-[#706454] font-serif self-center">Σειρά</div>
+                {[1, 2, 3, 4, 5, 6].map((col) => (
+                  <div key={col} className="text-[10px] text-[#8c7e6c] font-serif py-1">
+                    Στήλη {col}
+                  </div>
+                ))}
+
+                {/* 6 Rows */}
+                {magicSquareOfSun.map((row, rIdx) => (
+                  <React.Fragment key={`row-${rIdx}`}>
+                    <div className="text-[10px] font-serif text-[#8c7e6c] flex items-center justify-center bg-[#15120f] rounded">
+                      Σειρά {rIdx + 1}
+                    </div>
+                    {row.map((val, cIdx) => (
+                      <div
+                        key={`cell-${rIdx}-${cIdx}`}
+                        onMouseEnter={() => setActiveSquareRow(rIdx)}
+                        onMouseLeave={() => setActiveSquareRow(null)}
+                        className={`p-2 sm:p-2.5 rounded-lg border text-xs sm:text-sm font-bold transition-all ${
+                          activeSquareRow === rIdx
+                            ? "bg-[#2d2214] border-[#c89b3c] text-[#e6c670] scale-105"
+                            : "bg-[#181410] border-[#251e17] text-[#f5ecd8] hover:border-[#3d3020]"
+                        }`}
+                      >
+                        {val}
+                      </div>
+                    ))}
+                  </React.Fragment>
+                ))}
+
+                {/* Footer Sums */}
+                <div className="text-[10px] font-serif font-bold text-[#c89b3c] flex items-center justify-center bg-[#1e170f] rounded py-1">
+                  Άθροισμα
+                </div>
+                {[111, 111, 111, 111, 111, 111].map((sum, idx) => (
+                  <div
+                    key={`sum-${idx}`}
+                    className="p-1 rounded bg-[#20180f] border border-[#3e301d] text-[11px] font-bold text-[#e6c670]"
+                  >
+                    = {sum}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <p className="text-[11px] text-[#8c7e6c] font-serif text-center">
+            Κάθε γραμμή, στήλη και διαγώνιος ισούται με <strong>111</strong>. Το άθροισμα και των 6 γραμμών είναι <strong>6 × 111 = 666</strong>.
+          </p>
+        </div>
+      </div>
+
+      {/* 27 Ionic Numerals Interactive Grid */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm uppercase tracking-wider text-[#e6c670] font-serif font-bold flex items-center gap-2">
+            <span>Ο Πινακας των 27 Ιωνικων Ψηφιων</span>
+            <span className="text-xs font-normal text-[#8c7e6c] font-sans">(9 Μονάδες, 9 Δεκάδες, 9 Εκατοντάδες)</span>
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          {/* 1. ΜΟΝΑΔΕΣ (1-9) */}
+          <div className="p-4 rounded-2xl bg-[#15120f] border border-[#2d251e] space-y-3">
+            <div className="flex items-center justify-between border-b border-[#251e17] pb-2">
+              <span className="text-xs uppercase tracking-wider font-serif font-bold text-[#f5ecd8]">
+                Μονάδες (1 - 9)
+              </span>
+              <span className="text-[10px] font-mono text-[#c89b3c]">α´ έως θ´</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {monades.map((letter) => (
+                <button
+                  key={letter.char}
+                  onClick={() => setSelectedLetterChar(letter.char)}
+                  className={`p-2.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                    selectedLetterChar === letter.char
+                      ? "bg-[#2d2419] border-[#c89b3c] shadow-md shadow-[#c89b3c]/20"
+                      : "bg-[#1a1612] border-[#292219] hover:border-[#3d3122]"
+                  }`}
+                >
+                  <span className="text-lg font-serif font-bold text-[#f5ecd8]">
+                    {letter.upper} {letter.lower}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-[#e6c670] mt-0.5">
+                    = {letter.value}
+                  </span>
+                  {letter.archaic && (
+                    <span className="text-[9px] text-[#c89b3c] font-sans">Αρχαίο</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 2. ΔΕΚΑΔΕΣ (10-90) */}
+          <div className="p-4 rounded-2xl bg-[#15120f] border border-[#2d251e] space-y-3">
+            <div className="flex items-center justify-between border-b border-[#251e17] pb-2">
+              <span className="text-xs uppercase tracking-wider font-serif font-bold text-[#f5ecd8]">
+                Δεκάδες (10 - 90)
+              </span>
+              <span className="text-[10px] font-mono text-[#c89b3c]">ι´ έως ϟ´</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {dekades.map((letter) => (
+                <button
+                  key={letter.char}
+                  onClick={() => setSelectedLetterChar(letter.char)}
+                  className={`p-2.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                    selectedLetterChar === letter.char
+                      ? "bg-[#2d2419] border-[#c89b3c] shadow-md shadow-[#c89b3c]/20"
+                      : "bg-[#1a1612] border-[#292219] hover:border-[#3d3122]"
+                  }`}
+                >
+                  <span className="text-lg font-serif font-bold text-[#f5ecd8]">
+                    {letter.upper} {letter.lower}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-[#e6c670] mt-0.5">
+                    = {letter.value}
+                  </span>
+                  {letter.archaic && (
+                    <span className="text-[9px] text-[#c89b3c] font-sans">Αρχαίο</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. ΕΚΑΤΟΝΤΑΔΕΣ (100-900) */}
+          <div className="p-4 rounded-2xl bg-[#15120f] border border-[#2d251e] space-y-3">
+            <div className="flex items-center justify-between border-b border-[#251e17] pb-2">
+              <span className="text-xs uppercase tracking-wider font-serif font-bold text-[#f5ecd8]">
+                Εκατοντάδες (100 - 900)
+              </span>
+              <span className="text-[10px] font-mono text-[#c89b3c]">ρ´ έως ϡ´</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {ekatontades.map((letter) => (
+                <button
+                  key={letter.char}
+                  onClick={() => setSelectedLetterChar(letter.char)}
+                  className={`p-2.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                    selectedLetterChar === letter.char
+                      ? "bg-[#2d2419] border-[#c89b3c] shadow-md shadow-[#c89b3c]/20"
+                      : "bg-[#1a1612] border-[#292219] hover:border-[#3d3122]"
+                  }`}
+                >
+                  <span className="text-lg font-serif font-bold text-[#f5ecd8]">
+                    {letter.upper} {letter.lower}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-[#e6c670] mt-0.5">
+                    = {letter.value}
+                  </span>
+                  {letter.archaic && (
+                    <span className="text-[9px] text-[#c89b3c] font-sans">Αρχαίο</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Selected Letter Detail Card */}
+        <div className="p-4 rounded-xl bg-[#191511] border border-[#3a2f21] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-[#12100d] border border-[#443624] flex items-center justify-center text-2xl font-serif font-bold text-[#e6c670]">
+              {selectedLetter.upper}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-serif font-bold text-[#f5ecd8]">
+                  {selectedLetter.name} ({selectedLetter.upper} / {selectedLetter.lower})
+                </span>
+                <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#251e16] text-[#c89b3c] border border-[#3e3223]">
+                  Αξία: {selectedLetter.value} ({selectedLetter.greekNumeral})
+                </span>
+              </div>
+              <p className="text-xs text-[#a69680] mt-0.5 font-serif">
+                {selectedLetter.description} {selectedLetter.archaic ? "— Θεμελιώδες ιστορικό σύμβολο του 27ψήφιου Ιωνικού συστήματος." : ""}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Archaic Numerals Special Section */}
+      <div className="rounded-2xl bg-[#15120f] border border-[#2d251e] p-6 space-y-4">
+        <h3 className="text-sm uppercase tracking-wider text-[#e6c670] font-serif font-bold">
+          Τα Τρία Ιστορικά Σύμβολα της Ιωνικής Αρίθμησης (Ϛ, Ϟ, Ϡ)
+        </h3>
+        
+        <div className="space-y-3 text-xs text-[#d6c7b2] leading-relaxed font-serif">
+          <p>
+            <strong>Η προέλευσή τους:</strong> Όταν οι Έλληνες δανείστηκαν το φοινικικό αλφάβητο γύρω στο 800 π.Χ., προσάρμοσαν τα σύμβολα στις φωνητικές ανάγκες της δικής τους γλώσσας. Κάποια από αυτά τα αρχικά γράμματα (όπως το <em>Κόππα</em> και το <em>Σαμπί</em>) υπήρχαν από την αρχή στα αρχαία τοπικά ελληνικά αλφάβητα, απλώς αργότερα εγκαταλείφθηκαν σταδιακά ως φωνητικά σύμβολα επειδή άλλαξε η προφορά ή επικράτησαν άλλα γράμματα (όπως το Κάππα αντί του Κόππα). Το δε <em>Στίγμα</em> προέκυψε αργότερα ως τυπογραφική ένωση (λιγατούρα) του «στ» (παίρνοντας τη θέση του αρχαϊκού Διγάμματος Ϝ).
+          </p>
+          <p>
+            <strong>Ο ρόλος τους στον Λεξάριθμο:</strong> Στο παραδοσιακό ελληνικό σύστημα αρίθμησης (που χρησιμοποιείται και στον λεξάριθμο), τα γράμματα αυτά διατηρήθηκαν σταθερά στις θέσεις τους επειδή κάλυπταν τα κενά για τις δεκάδες και τις εκατοντάδες που δεν έφταναν τα 24 βασικά γράμματα, συγκροτώντας το πλήρες <strong>27ψήφιο Ιωνικό Σύστημα</strong> (9 Μονάδες + 9 Δεκάδες + 9 Εκατοντάδες):
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d251e] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-serif font-bold text-[#e6c670]">Ϛ´ (ϛ)</span>
+              <span className="text-sm font-mono font-bold text-[#f5ecd8] bg-[#251e16] px-2 py-0.5 rounded border border-[#3e3223]">= 6</span>
+            </div>
+            <h4 className="text-xs font-serif font-bold text-[#f5ecd8]">Στίγμα (ϛ / Ϛ) &amp; Δίγαμμα (Ϝ)</h4>
+            <p className="text-xs text-[#8c7e6c] font-serif leading-normal">
+              Καλύπτει την 6η θέση στις 9 μονάδες (1–9). Προήλθε από τη συνένωση «στ» και τη διατήρηση της θέσης του αρχαϊκού Διγάμματος (Ϝ).
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d251e] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-serif font-bold text-[#e6c670]">Ϟ´ (ϟ)</span>
+              <span className="text-sm font-mono font-bold text-[#f5ecd8] bg-[#251e16] px-2 py-0.5 rounded border border-[#3e3223]">= 90</span>
+            </div>
+            <h4 className="text-xs font-serif font-bold text-[#f5ecd8]">Κόππα (ϙ / Ϟ)</h4>
+            <p className="text-xs text-[#8c7e6c] font-serif leading-normal">
+              Καλύπτει την 9η θέση στις 9 δεκάδες (10–90). Υπήρχε στα αρχαία τοπικά ελληνικά αλφάβητα και διατηρήθηκε ως θεμελιώδες αριθμητικό ψηφίο του 90.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d251e] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-serif font-bold text-[#e6c670]">Ϡ´ (ϡ)</span>
+              <span className="text-sm font-mono font-bold text-[#f5ecd8] bg-[#251e16] px-2 py-0.5 rounded border border-[#3e3223]">= 900</span>
+            </div>
+            <h4 className="text-xs font-serif font-bold text-[#f5ecd8]">Σαμπί (ϡ / Ͳ)</h4>
+            <p className="text-xs text-[#8c7e6c] font-serif leading-normal">
+              Καλύπτει την 9η θέση στις 9 εκατοντάδες (100–900). Προέρχεται από το αρχαϊκό San/Tsan και ολοκληρώνει τον κύκλο των εκατοντάδων στο 900.
+            </p>
+          </div>
+        </div>
+
+        <div className="p-3 rounded-xl bg-[#1c1712] border border-[#3a2e20] text-xs text-[#e6c670] font-serif leading-relaxed">
+          💡 <strong>Ιστορική &amp; Αριθμητική Ταυτότητα:</strong> Επομένως, ιστορικά και αριθμητικά τα γράμματα αυτά <u>δεν θεωρούνται "ξένα σώματα" ή "επείσακτα"</u>, αλλά <strong>θεμελιώδη σύμβολα</strong> του κλασικού ελληνικού συστήματος γραφής και μέτρησης.
+        </div>
+      </div>
+
+      {/* Polytonic Rules */}
+      <div className="p-5 rounded-2xl bg-[#15120f] border border-[#2d251e] space-y-3">
+        <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold">
+          Κανόνες Πολυτονικής Κανονικοποίησης
+        </h3>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#a69680] font-serif leading-relaxed">
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
+            <span><strong>Τόνοι &amp; Πνεύματα:</strong> Οξεία, βαρεία, περισπωμένη, ψιλή, δασεία και διαλυτικά αγνοούνται και το γράμμα λαμβάνει την κανονική του αξία (π.χ. ἄ, ὰ, ᾶ, ἁ -&gt; Α = 1).</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
+            <span><strong>Υπογεγραμμένη:</strong> Χαρακτήρες με υπογεγραμμένη (ᾳ, ῃ, ῳ) υπολογίζονται ως το κύριο φωνήεν (Α=1, Η=8, Ω=800).</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
+            <span><strong>Τελικό Σίγμα (ς):</strong> Το τελικό σίγμα λαμβάνει πάντα την ίδια αξία με το αρχικό/μεσαίο σίγμα (Σ/σ/ς = 200).</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#c89b3c] shrink-0 mt-0.5" />
+            <span><strong>Σημεία Στίξης:</strong> Κόμματα, τελείες, άνω τελείες και παρενθέσεις εξαιρούνται αυτόματα από τον υπολογισμό.</span>
+          </li>
+        </ul>
+      </div>
+
+      {/* Step by step calculation examples & Famous 666 Names */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Step by step calculation example: ΛΑΥΡΕΙΟΝ */}
+        <div className="p-5 rounded-2xl bg-[#15120f] border border-[#2d251e] space-y-3">
+          <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold">
+            Υπολογιστικό Παράδειγμα: «ΛΑΥΡΕΙΟΝ» = 666
+          </h3>
+          <div className="p-3.5 rounded-xl bg-[#100e0b] border border-[#251e17] space-y-2 font-mono text-xs text-[#d6c7b2]">
+            <div className="flex justify-between border-b border-[#1f1913] pb-1.5">
+              <span>Λ (Λάμδα)</span>
+              <strong className="text-[#e6c670]">= 30</strong>
+            </div>
+            <div className="flex justify-between border-b border-[#1f1913] pb-1.5">
+              <span>Α (Άλφα)</span>
+              <strong className="text-[#e6c670]">= 1</strong>
+            </div>
+            <div className="flex justify-between border-b border-[#1f1913] pb-1.5">
+              <span>Υ (Ύψιλον)</span>
+              <strong className="text-[#e6c670]">= 400</strong>
+            </div>
+            <div className="flex justify-between border-b border-[#1f1913] pb-1.5">
+              <span>Ρ (Ρω)</span>
+              <strong className="text-[#e6c670]">= 100</strong>
+            </div>
+            <div className="flex justify-between border-b border-[#1f1913] pb-1.5">
+              <span>Ε (Έψιλον)</span>
+              <strong className="text-[#e6c670]">= 5</strong>
+            </div>
+            <div className="flex justify-between border-b border-[#1f1913] pb-1.5">
+              <span>Ι (Ιώτα)</span>
+              <strong className="text-[#e6c670]">= 10</strong>
+            </div>
+            <div className="flex justify-between border-b border-[#1f1913] pb-1.5">
+              <span>Ο (Όμικρον)</span>
+              <strong className="text-[#e6c670]">= 70</strong>
+            </div>
+            <div className="flex justify-between border-b border-[#1f1913] pb-1.5">
+              <span>Ν (Νι)</span>
+              <strong className="text-[#e6c670]">= 50</strong>
+            </div>
+            <div className="flex justify-between pt-1 font-bold text-sm text-[#f5ecd8]">
+              <span>ΣΥΝΟΛΟ</span>
+              <span className="text-[#e6c670]">= 666 (χξϛ´)</span>
+            </div>
+          </div>
+          <p className="text-[11px] text-[#8c7e6c] font-serif">
+            Πυθμένας (Ψηφιακή Ρίζα): 6 + 6 + 6 = 18 -&gt; 1 + 8 = <strong>9</strong>.
+          </p>
+        </div>
+
+        {/* 666 Names: ΙΑΝΕΥΣ & ΤΕΛΙΑΝΟΣ */}
+        <div className="p-5 rounded-2xl bg-[#15120f] border border-[#2d251e] space-y-3">
+          <h3 className="text-xs uppercase tracking-wider text-[#e6c670] font-serif font-bold">
+            Ισοψηφικά Ονόματα = 666: ΙΑΝΕΥΣ & ΤΕΛΙΑΝΟΣ
+          </h3>
+          <div className="space-y-3">
+            {/* ΙΑΝΕΥΣ */}
+            <div className="p-3.5 rounded-xl bg-[#100e0b] border border-[#251e17] space-y-2 font-serif text-xs">
+              <div className="flex items-center justify-between font-mono">
+                <span className="font-bold text-[#f5ecd8] text-sm">ΙΑΝΕΥΣ</span>
+                <span className="font-bold text-[#e6c670] text-sm">= 666 (χξϛ´)</span>
+              </div>
+              <div className="text-[11px] font-mono text-[#a69680]">
+                Ι(10) + Α(1) + Ν(50) + Ε(5) + Υ(400) + Σ(200) = <strong>666</strong>
+              </div>
+              <div className="p-2 rounded bg-[#181410] border border-[#2e2419] text-[11px] text-[#e6c670] leading-relaxed space-y-1">
+                <p><strong>📖 Διδακτική &amp; Ετυμολογική Ανάλυση:</strong></p>
+                <p className="text-[#d6c7b2] font-sans">
+                  • <strong>ΙΑ:</strong> Αρχαιοελληνική ρίζα για τα <em>«Βέλη»</em> (από το <em>ἰός</em> = βέλος, ἰά / ἴα = βέλη, ορμή).<br />
+                  • <strong>ΝΕΥΣ:</strong> Συνδέεται με τις ρίζες <em>Νέους / Νεότης</em>, <em>Νεύμα</em> (ένδειξη θεϊκής βούλησης) και τον <em>Νουν</em> (σκέψη, διάνοια).
+                </p>
+              </div>
+            </div>
+
+            {/* ΤΕΛΙΑΝΟΣ */}
+            <div className="p-3.5 rounded-xl bg-[#100e0b] border border-[#251e17] space-y-2 font-serif text-xs">
+              <div className="flex items-center justify-between font-mono">
+                <span className="font-bold text-[#f5ecd8] text-sm">ΤΕΛΙΑΝΟΣ</span>
+                <span className="font-bold text-[#e6c670] text-sm">= 666 (χξϛ´)</span>
+              </div>
+              <div className="text-[11px] font-mono text-[#a69680]">
+                Τ(300) + Ε(5) + Λ(30) + Ι(10) + Α(1) + Ν(50) + Ο(70) + Σ(200) = <strong>666</strong>
+              </div>
+              <div className="p-2 rounded bg-[#181410] border border-[#2e2419] text-[11px] text-[#e6c670] leading-relaxed space-y-1">
+                <p><strong>📖 Διδακτική &amp; Ετυμολογική Ανάλυση:</strong></p>
+                <p className="text-[#d6c7b2] font-sans">
+                  • <strong>ΤΕΛΕΙΟΣ ΙΑΝΟΣ:</strong> <em>Τέλειος</em> (ολοκληρωμένος, πεπληρωμένος σκοπός) + <em>Ιανός</em> (η αρχαία διπρόσωπη θεότητα των πυλών και των περασμάτων).<br />
+                  • <strong>Διαδοχή Εννοιών:</strong> Τέλειος Ιανός ➔ Ιανός ➔ Ιανέας ➔ Ιανεύς ➔ Ια Νους (Βέλη Νοός / Οξύνοια).
+                </p>
+              </div>
+            </div>
+          </div>
+          <p className="text-[11px] text-[#8c7e6c] font-serif">
+            Και τα δύο ονόματα έχουν πυθμένα 6+6+6=18 → 1+8=<strong>9</strong>.
+          </p>
+        </div>
+      </div>
+
+      {/* Historical Anecdotes & Etymological Insights */}
+      <div className="p-6 rounded-2xl bg-gradient-to-b from-[#181512] to-[#12100d] border border-[#2d251e] space-y-4">
+        <h3 className="text-sm uppercase tracking-wider text-[#e6c670] font-serif font-bold">
+          Ιστορικές Αναφορές &amp; Ετυμολογικές Προσεγγίσεις
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-[#a69680] font-serif leading-relaxed">
+          {/* 1. Πομπηία & Γκράφιτι */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#261e16] space-y-2">
+            <strong className="text-[#f5ecd8] text-sm block">1. Πομπηία &amp; Γκράφιτι (79 μ.Χ.)</strong>
+            <p>
+              Σε τοίχο της αρχαίας Πομπηίας βρέθηκε χαραγμένη η επιγραφή: <em>«φιλῶ ἧς ἀριθμὸς φμε´»</em> (Αγαπώ εκείνη της οποίας ο λεξάριθμος είναι 545).
+            </p>
+            <div className="p-2.5 rounded-lg bg-[#0f0d0a] border border-[#2d2319] space-y-1 text-[11px] text-[#e6c670]">
+              <strong>💡 Ετυμολογία:</strong>
+              <p className="text-[#d6c7b2] font-sans">
+                <strong>ΠΟΜΠΗΙΑ</strong> = <strong>ΠΟΜΠΗ</strong> (<em>πομπή, πομπός, πέμπω, ἐκπέμπω</em>) + <strong>ΙΑ</strong> (<em>Ἴος, Βέλος, ΙΑ: Βέλη</em>). Δηλώνει την πόλη της αποστολής, εκπομπής και των βελών.
+              </p>
+            </div>
+          </div>
+
+          {/* 2. Έφεσος */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#261e16] space-y-2">
+            <strong className="text-[#f5ecd8] text-sm block">2. Έφεσος</strong>
+            <p>
+              Η <strong>ΕΦΕΣΟΣ</strong> (Ιωνική πόλη της Αρτέμιδος και της σοφίας) συνδέεται ετυμολογικά με το ρήμα <em>ἐφίημι</em> (ἐπί + ἵημι: ρίχνω, στέλνω, αφήνω να εξορμήσει, επιθυμώ σφοδρά).
+            </p>
+            <div className="p-2.5 rounded-lg bg-[#0f0d0a] border border-[#2d2319] text-[11px] text-[#d6c7b2] font-sans">
+              Υποδηλώνει τον τόπο όπου εκπέμπεται η θεϊκή θέληση και το φως, σε άμεση αρμονία με την τοξοφόρο Άρτεμη (εκπομπή βέλους).
+            </div>
+          </div>
+
+          {/* 3. Πέργαμος & Πάπυρος */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#261e16] space-y-2">
+            <strong className="text-[#f5ecd8] text-sm block">3. Πέργαμος &amp; Πάπυρος (Paper)</strong>
+            <p>
+              Η αντιπαραβολή των δύο κορυφαίων υλικών γραφής του αρχαίου κόσμου:
+            </p>
+            <div className="p-2.5 rounded-lg bg-[#0f0d0a] border border-[#2d2319] space-y-2 text-[11px] text-[#d6c7b2] font-sans">
+              <div>
+                <strong>• ΠΕΡΓΑΜΟΣ:</strong> Από το <em>Περί + Γάμος</em> (ένωση, ανθεκτικότητα και ιερή συνένωση γνώσης και δέρματος).
+              </div>
+              <div>
+                <strong>• ΠΑΠΥΡΟΣ:</strong> Από <em>Πατήρ + Πυρός</em> (η πατρική φλόγα/δημιουργία), ρίζα από την οποία προήλθε η διεθνής λέξη <strong>Paper</strong>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </>
+      )}
+
+      {/* 2. Η ΠΥΛΗ ΛΑΥΡΕΙΟΝ SECTION */}
+      {(activeGuideTab === "all" || activeGuideTab === "lavreion") && (
+        <LavreionStoryView />
+      )}
+
+      {/* 3. Η Γεωμετρία της Αφύπνισης και ο Μυστικός Κύκλος των Αριθμών */}
+      {(activeGuideTab === "all" || activeGuideTab === "awakening") && (
+      <div className="p-6 rounded-2xl bg-[#14110d] border border-[#2d241c] space-y-6 font-serif">
+        <div className="flex items-center gap-2 text-[#e6c670]">
+          <BookOpen className="w-5 h-5 text-[#c89b3c]" />
+          <h3 className="text-sm uppercase tracking-wider font-bold">
+            Η Γεωμετρία της Αφύπνισης και ο Μυστικός Κύκλος των Αριθμών
+          </h3>
+        </div>
+
+        {/* Εισαγωγή */}
+        <p className="text-xs text-[#d6c7b2] leading-relaxed">
+          Υπάρχουν αριθμοί που διατρέχουν τα ιερά κείμενα, την αρχιτεκτονική και την κοσμική παράδοση όχι ως απλά σύμβολα ποσότητας, αλλά ως κλειδιά μιας συμπαντικής γεωμετρίας. Ανάμεσά τους, ο αριθμός <strong>144.000</strong> κατέχει εξέχουσα θέση, συνδεδεμένος με την ιδέα των αφυπνισμένων ψυχών μέσα από την αυστηρή αρμονία των αριθμών, τη γεωμετρία του φωτός και των αρχαίων μυστηρίων.
+        </p>
+
+        {/* 4 Θεματικές Ενότητες σε κάρτες */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          {/* Βήμα 1: Ακρόπολη & Αέτωμα 144° */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d2419] space-y-2">
+            <h4 className="font-bold text-[#e6c670] flex items-center gap-1.5">
+              <span>🏛️</span> 1. Γεωμετρία Αετώματος &amp; Αριθμός 144
+            </h4>
+            <ul className="space-y-1.5 text-[#c5b59e] leading-relaxed">
+              <li>• <strong>Κορυφή Αετώματος (Παρθενών):</strong> Γωνία <strong>144°</strong> = 72° + 72° (Ο.Β. = 72).</li>
+              <li>• <strong>Ο.Β. (72) &amp; ΝΟΥΣ = 720 = 6!:</strong> 144 / 2 = 72 = <strong>Ο.Β.</strong> (Ουρανία Βασίλειος). <strong>Ο.Β. × Ι (10 - Ιωάννης) = 720 = ΝΟΥΣ</strong>! Επίσης <strong>6! = 720</strong> (6 παραγοντικό: 1×2×3×4×5×6 = 720 = ΝΟΥΣ).</li>
+              <li>• <strong>Βάσεις Αετώματος:</strong> Δύο γωνίες των <strong>18°</strong> (18 + 18 = 36).</li>
+              <li>• <strong>ΙΗ = 18:</strong> Ιερά γράμματα Ηλίου / Απόλλωνος (<em>«ΙΗ Παιάν»</em>, <em>ΙΗΣΟΥΣ</em>).</li>
+              <li>• <strong>36 ➔ 72 ➔ 144:</strong> Το 36 διπλασιαζόμενο δίνει 72, και το 72 διπλασιαζόμενο επιστρέφει στο 144.</li>
+              <li>• <strong>Ακολουθία Fibonacci:</strong> Το 144 είναι ο <strong>12ος (ΙΒ)</strong> όρος (10η θέση = 55, 12η = 144).</li>
+              <li>• <strong>ΡΜΔ (144):</strong> Ρέα + Μήτις (Μαρία) + Δήμητρα (Κοσμική Μητρότητα) / <em>Η ΚΑΡΔΙΑ = 144</em>.</li>
+            </ul>
+          </div>
+
+          {/* Βήμα 2: 144.000, 666 και ο Ψυχογονικός Κύβος */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d2419] space-y-2">
+            <h4 className="font-bold text-[#e6c670] flex items-center gap-1.5">
+              <span>☀️</span> 2. 144.000, 666 &amp; Ψυχογονικός Κύβος (216)
+            </h4>
+            <ul className="space-y-1.5 text-[#c5b59e] leading-relaxed">
+              <li>• <strong>Τετράγωνο του Ήλιου (6x6 = 36):</strong> Άθροισμα 1 + 2 + ... + 36 = <strong>666</strong>.</li>
+              <li>• <strong>Ψυχογονικός Κύβος:</strong> 6 × 6 × 6 = <strong>216</strong>.</li>
+              <li>• <strong>Μαθηματική Γέφυρα:</strong> 144.000 ÷ 666 = <strong>216,216216...</strong></li>
+              <li>• <strong>Αντιστροφή (216 ➔ 612):</strong> 612 = <strong>ΖΕΥΣ</strong> (Ζ:7 + Ε:5 + Υ:400 + Σ:200 = 612).</li>
+              <li>• <strong>216 - 1 (Α) = 215 = ΔΙΑΣ</strong> (Δ:4 + Ι:10 + Α:1 + Σ:200 = 215).</li>
+              <li>• <strong>Μεγάλος Πλατωνικός Ενιαυτός:</strong> 12 × 2.160 έτη = <strong>25.920 έτη</strong> (12 × 12.000 = <strong>144.000</strong>).</li>
+            </ul>
+          </div>
+
+          {/* Βήμα 3: Ο Κύβος του 8, το 512 και η Αλήθεια */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d2419] space-y-2">
+            <h4 className="font-bold text-[#e6c670] flex items-center gap-1.5">
+              <span>⚡</span> 3. Οκτάδα, Κύβος 8³ = 512 &amp; 888
+            </h4>
+            <ul className="space-y-1.5 text-[#c5b59e] leading-relaxed">
+              <li>• <strong>ΕΙΜΑΙ ΟΤΙ ΕΙΜΑΙ = 512</strong> (Κύβος του 8: 8 × 8 × 8 = 512).</li>
+              <li>• <strong>ΟΙ ΘΕΙΟΙ ΕΛΛΗΝΕΣ = ΕΣ ΑΕΙ ΠΑΙΣ = 512</strong>.</li>
+              <li>• <strong>8 × 8 = 64 = ΑΛΗΘΕΙΑ</strong> (6+4 = 10 = Ι ➔ 1+0 = 1 = Α).</li>
+              <li>• <strong>6 × 4 = 24 = ΚΔ</strong> (Σύμβολο Διός ♃).</li>
+              <li>• <strong>ΙΗΣΟΥΣ = 888</strong> (888 = ΑΛΦΑ ΒΗΤΑ ΓΑΜΑ = ΑΒΓ = 1,2,3 ➔ 123 = <strong>ΕΛΛΗΝ</strong>).</li>
+              <li>• <strong>Πολλαπλάσια του 8:</strong> 888 ÷ 8 = 111, 1480 ÷ 8 = 185, 2368 ÷ 8 = 296.</li>
+              <li>• <strong>«Εγώ ειμί η οδός και η αλήθεια και η ζωή» (2182) + «Άγιον Αίμα» (186) = 2368 = ΙΗΣΟΥΣ ΧΡΙΣΤΟΣ</strong>.</li>
+            </ul>
+          </div>
+
+          {/* Βήμα 4: Ενοθεϊστική Θεώρηση της Μίας Οντότητας */}
+          <div className="p-4 rounded-xl bg-[#1a1612] border border-[#2d2419] space-y-2">
+            <h4 className="font-bold text-[#e6c670] flex items-center gap-1.5">
+              <span>🌌</span> 4. Ενοθεϊστική Σύγκλιση
+            </h4>
+            <ul className="space-y-1.5 text-[#c5b59e] leading-relaxed text-[11px]">
+              <li>• <strong>Ενοθεϊσμός:</strong> Η πολλαπλότητα των ονομάτων ως εκδήλωση της Μίας Αδιαίρετης Αρχής.</li>
+              <li>• <strong>Συμπαντική Συμμετρία:</strong> Ο Λόγος, η Γεωμετρία και οι Αριθμοί συγκλίνουν σε ενιαία τάξη.</li>
+              <li>• <strong>Αφύπνιση:</strong> Το πέρασμα από τη διαίρεση της ύλης στη συνειδησιακή ενότητα.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      )}
+
+      {/* 4. Ορφική Ενότητα: Οι Εκφράσεις της Μίας Οντότητας */}
+      {(activeGuideTab === "all" || activeGuideTab === "orphic") && (
+      <div className="p-6 rounded-2xl bg-gradient-to-b from-[#17130f] via-[#120f0c] to-[#0d0a08] border border-[#382b1e] space-y-6 font-serif shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#2d2217] pb-4">
+          <div className="flex items-center gap-2.5 text-[#e6c670]">
+            <BookOpen className="w-5 h-5 text-[#c89b3c]" />
+            <h3 className="text-base uppercase tracking-wider font-bold">
+              Ορφική Ενότητα: Οι Εκφράσεις της Μίας Οντότητας
+            </h3>
+          </div>
+          <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#241c14] border border-[#3d2e1f] text-[#d4af37] font-mono">
+            Ενοθεϊσμός &amp; Αρχέτυπα
+          </span>
+        </div>
+
+        {/* Το Κεντρικό Ορφικό Απόσπασμα */}
+        <div className="p-4 rounded-xl bg-[#1d1712] border-l-4 border-[#c89b3c] border border-[#33261a] space-y-2 shadow-inner">
+          <p className="text-sm font-semibold text-[#f5ecd8] tracking-wide italic">
+            «Εἷς Ζεύς, εἷς Ἀΐδης, εἷς Ἥλιος, εἷς Διόνυσος, εἷς θεὸς ἐν πάντεσσι»
+          </p>
+          <p className="text-xs text-[#a8967e]">
+            <em>(«Ένας είναι ο Ζεύς, ένας ο Άδης, ένας ο Ήλιος, ένας ο Διόνυσος, ένας θεός μέσα σε όλα»)</em> — <strong>Ορφικό Απόσπασμα</strong>
+          </p>
+          <p className="text-xs text-[#d6c7b2] leading-relaxed pt-1 border-t border-[#291f15]">
+            Στην ορφική και νεοπλατωνική θεώρηση, οι διαφορετικές θεότητες δεν νοούνται ως ξεχωριστά ανεξάρτητα πρόσωπα, αλλά ως <strong>επιμέρους ιδιότητες, δυνάμεις και προσωπεία</strong> μίας και μοναδικής, παγκόσμιας Οντότητας. Η πολλαπλότητα είναι η εμφάνιση, αλλά η Μονάδα είναι η αλήθεια.
+          </p>
+        </div>
+
+        {/* Τα Αρχέτυπα σε Κομψό Πλέγμα */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 text-xs">
+          {/* 1. ΖΕΥΣ - ΔΙΑΣ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">1. ΖΕΥΣ - ΔΙΑΣ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Η Αρχή της Ζωής</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Η κεντρική δημιουργική αρχή, η καθαρή ύπαρξη και ο συμπαντικός νόμος που οργανώνει το Σύμπαν. Το όνομα <em>Δίας</em> συνδέεται ετυμολογικά με τη <em>Ζωή</em> και το <em>«Διά»</em> (η ενέργεια που διαπερνά τα πάντα).
+            </p>
+          </div>
+
+          {/* 2. ΑΔΗΣ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">2. ΑΔΗΣ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Η Αόρατη Πηγή</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Ο <em>Ίδιος</em> στην «κρυφή» και αόρατη διάσταση. Η ιδιότητα της εσωστρέφειας, του βάθους της ψυχής και της μετουσίωσης, όπου η ζωή προετοιμάζεται και ανακυκλώνεται μακριά από τα επιφανειακά βλέμματα.
+            </p>
+          </div>
+
+          {/* 3. ΠΟΣΕΙΔΩΝ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">3. ΠΟΣΕΙΔΩΝ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Η Δόνηση &amp; Ροή</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Η εκδήλωση της ενιαίας αρχής στο υγρό στοιχείο, στα συναισθήματα και στη δυναμική κίνηση. Η δύναμη που μορφοποιεί την ύλη και δονεί τα θεμέλια του εκδηλωμένου κόσμου.
+            </p>
+          </div>
+
+          {/* 4. ΑΠΟΛΛΩΝ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">4. ΑΠΟΛΛΩΝ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Φως &amp; Αρμονία</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Ο Δίας ως καθαρό Ηλιακό Φως, Μουσική, Αρμονία, Μέτρο και Προφητεία. Η ακτινοβολούσα νόηση που διαλύει το σκοτάδι της αγνοίας και αποκαλύπτει τη γεωμετρία του σύμπαντος.
+            </p>
+          </div>
+
+          {/* 5. ΔΙΟΝΥΣΟΣ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">5. ΔΙΟΝΥΣΟΣ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Ζωτική Ορμή &amp; Έκσταση</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Η ζωτική ορμή, ο ιερός ενθουσιασμός και η αναγέννηση της φύσης. Συχνά θεωρείται ο «νέος Δίας» ή ο Δίας σε κατάσταση μυστηριακής έκστασης και αέναης αναδημιουργίας.
+            </p>
+          </div>
+
+          {/* 6. ΗΡΑΚΛΗΣ */}
+          <div className="p-3.5 rounded-xl bg-[#14100c] border border-[#2e2318] space-y-1.5 hover:border-[#c89b3c]/50 transition-colors">
+            <div className="flex items-center justify-between text-[#e6c670]">
+              <strong className="text-sm font-bold text-[#f5ecd8]">6. ΗΡΑΚΛΗΣ</strong>
+              <span className="text-[10px] text-[#c89b3c] font-mono">Η Ενσάρκωση &amp; Άθλοι</span>
+            </div>
+            <p className="text-[#c5b59e] leading-relaxed">
+              Η ενσάρκωση της θείας δύναμης στο πεδίο της δοκιμασίας. Μέσω των 12 άθλων (των δοκιμασιών της ψυχής), καθαίρει την ύπαρξη από τα «τέρατα» της ύλης και επιστρέφει στη θεία κατοικία του Ολύμπου.
+            </p>
+          </div>
+        </div>
+
+        {/* Συμπέρασμα: Το Κλειδί της Ενότητας */}
+        <div className="p-4 rounded-xl bg-[#16120e] border border-[#2b2116] text-xs text-[#d6c7b2] leading-relaxed space-y-2">
+          <h4 className="font-bold text-[#e6c670] text-xs uppercase tracking-wider">
+            🏛️ Το Κλειδί της Ενότητας (Ο Ίδιος)
+          </h4>
+          <p>
+            Ο <strong>Ζευς Δίας</strong> λειτουργεί ως η συνεκτική ουσία πίσω από κάθε όψη: είναι ο «Ορατός» που δίνει νόημα στον «Αόρατο» Άδη, η δόνηση του Ποσειδώνος, το Φως του Απόλλωνος, η έκσταση του Διονύσου και η συνείδηση που καθοδηγεί τον Ηρακλή. 
+          </p>
+          <p className="text-[#e6c670] italic">
+            Είναι ο <strong>Ίδιος</strong>, που ως <em>Δίας</em> δίνει πνοή και ζωή, ως <em>Άδης</em> προσφέρει εσωτερική ανάπαυση και ως <em>Ηρακλής</em> τελεί το έργο της επιστροφής στο Αιώνιο Φως.
+          </p>
+        </div>
+      </div>
+      )}
+
+      {/* 4. ANCIENT SYMBOLS & ARCHAIC LETTERS TABLE SECTION */}
+      {(activeGuideTab === "all" || activeGuideTab === "symbols") && (
+        <div className="pt-2">
+          <AncientSymbolsTable />
+        </div>
+      )}
+
+    </div>
+  );
+};
