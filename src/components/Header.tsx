@@ -35,6 +35,7 @@ import {
   LayoutGrid,
   BookOpenCheck,
   Smartphone,
+  Waves,
 } from "lucide-react";
 import appLogoImg from "../assets/images/ego_eimi_logo_1787417709332.jpg";
 
@@ -74,6 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
   const tabs = [
     { id: "europe" as TabType, label: "Ευρώπη", icon: BookOpenCheck, desc: "Μυθιστόρημα: Η Μυθική Ευρώπη, ο Ταύρος & τα Ιερά Σύμβολα" },
     { id: "calculator" as TabType, label: "Υπολογισμός", icon: Calculator, desc: "Μεμονωμένες λέξεις & πράξεις" },
+    { id: "acoustic-synth" as TabType, label: "Ακουστικός Συνθέτης", icon: Waves, desc: "Πυθαγόρειες συχνότητες, Web Audio, μικρόφωνο & Chladni" },
     { id: "search" as TabType, label: "Αναζήτηση", icon: Search, desc: "Ανάλυση κειμένου & συνδυασμοί" },
     { id: "golden-verses" as TabType, label: "Χρυσά Έπη", icon: ScrollText, desc: "Τα Χρυσά Έπη του Πυθαγόρα (Αρχαίο & Νεοελληνική)" },
     { id: "solar-iota-danaos" as TabType, label: "Ι & ΔΑ-ΝΑΟΣ", icon: Sun, desc: "Το Ηλιακόν Ι (1111), ο ΔΑ-ΝΑΟΣ, η Ιερά Τετρακτύς, Infernus, Beatrice (666=666) & Μακάρια" },
@@ -238,14 +240,14 @@ export const Header: React.FC<HeaderProps> = ({
 
   // Secondary Header Tools Buttons (Theme, Font, Report, Portal, Shortcut, Key)
   const secondaryBtnClass = isParchment
-    ? "bg-[#ebdcc5] hover:bg-[#dfcdb4] border-[#bfa37c] hover:border-[#783d07] text-[#2b1704] hover:text-[#000000] text-xs font-serif shadow-xs cursor-pointer min-h-[38px] transition-all"
+    ? "bg-[#ebdcc5] hover:bg-[#dfcdb4] border-[#bfa37c] hover:border-[#783d07] text-[#2b1704] hover:text-[#000000] text-xs font-serif shadow-xs cursor-pointer h-8 sm:h-9 transition-all"
     : isSolar
-    ? "bg-[#faebd0] hover:bg-[#f5deb3] border-[#deb673] hover:border-[#b45309] text-[#2b1400] hover:text-[#000000] text-xs font-serif shadow-xs cursor-pointer min-h-[38px] transition-all"
+    ? "bg-[#faebd0] hover:bg-[#f5deb3] border-[#deb673] hover:border-[#b45309] text-[#2b1400] hover:text-[#000000] text-xs font-serif shadow-xs cursor-pointer h-8 sm:h-9 transition-all"
     : isEthereal
-    ? "bg-[#0c1427] hover:bg-[#132242] border-[#1e3a8a] hover:border-[#38bdf8] text-[#cbd5e1] hover:text-[#38bdf8] text-xs font-serif shadow-xs cursor-pointer min-h-[38px] transition-all"
+    ? "bg-[#0c1427] hover:bg-[#132242] border-[#1e3a8a] hover:border-[#38bdf8] text-[#cbd5e1] hover:text-[#38bdf8] text-xs font-serif shadow-xs cursor-pointer h-8 sm:h-9 transition-all"
     : isCyberTech
-    ? "bg-[#0c1524] hover:bg-[#112035] border-[#065f46] hover:border-[#10b981] text-[#cbd5e1] hover:text-[#34d399] text-xs font-serif shadow-xs cursor-pointer min-h-[38px] transition-all"
-    : "bg-[#1c1610] hover:bg-[#281f15] border border-amber-600/50 hover:border-amber-500 text-[#d6c7b2] hover:text-[#ffd700] text-xs font-serif shadow-sm cursor-pointer min-h-[38px] transition-all";
+    ? "bg-[#0c1524] hover:bg-[#112035] border-[#065f46] hover:border-[#10b981] text-[#cbd5e1] hover:text-[#34d399] text-xs font-serif shadow-xs cursor-pointer h-8 sm:h-9 transition-all"
+    : "bg-[#1c1610] hover:bg-[#281f15] border border-amber-600/50 hover:border-amber-500 text-[#d6c7b2] hover:text-[#ffd700] text-xs font-serif shadow-sm cursor-pointer h-8 sm:h-9 transition-all";
 
   const secondaryIconClass = isLight
     ? "text-[#783d07]"
@@ -323,155 +325,173 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 w-full">
         <div className="flex flex-col gap-2.5 w-full">
           
-          {/* Row 1: Centered, Prominent, Large & Distinct Logo & Title */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-6 py-2 w-full text-center">
+          {/* Centered Majestic Altar: Dominant Large Logo on Top with Title & Subtitles */}
+          <div className="flex flex-col items-center justify-center py-2 sm:py-3 w-full text-center">
+            {/* Grand Dominant Logo */}
             <div
               onClick={() => onSelectTab("calculator")}
-              className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-3xl bg-gradient-to-br from-[#ffe270] via-[#c89b3c] to-[#6d4410] p-[3px] shadow-2xl shadow-amber-600/30 shrink-0 overflow-hidden ring-4 ring-amber-400/70 cursor-pointer hover:scale-105 transition-all duration-300"
+              className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 rounded-3xl bg-gradient-to-br from-[#ffe57e] via-[#c89b3c] to-[#4e3009] p-1 sm:p-1.5 shadow-[0_12px_40px_rgba(200,155,60,0.45)] shrink-0 overflow-hidden ring-4 ring-amber-400/80 cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300"
               title="ΕΓΩ ΕΙΜΙ - ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ (Μετάβαση στην Αρχική)"
             >
               <img
                 src={appLogoImg}
                 alt="ΕΓΩ ΕΙΜΙ - ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ"
-                className="w-full h-full object-cover rounded-[21px]"
+                className="w-full h-full object-cover rounded-[20px] sm:rounded-[22px]"
                 referrerPolicy="no-referrer"
               />
             </div>
 
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-              <div className="flex items-center gap-2.5 flex-wrap justify-center sm:justify-start">
-                <h1
-                  onClick={() => onSelectTab("calculator")}
-                  className={titleClass}
-                >
-                  ΛΕΞΑΡΙΘΜΟΣ
-                </h1>
-                <span className={ionianBadgeClass}>
-                  ΙΩΝΙΚΗ
-                </span>
-              </div>
-              <div className={`text-xs sm:text-base ${subtextClass} font-serif tracking-wide mt-1 flex flex-col sm:flex-row items-center sm:items-baseline gap-1 sm:gap-2`}>
-                <span className="whitespace-nowrap">Ελληνική Ισοψηφία & Στατιστική</span>
-                <span className="hidden sm:inline opacity-60">•</span>
-                <strong className={authorNameClass}>
-                  ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ
-                </strong>
-              </div>
-              <p className={quoteClass}>
-                «ΕΓΩ ΕΙΜΙ» • Αιώνιος Συμπαντικός Κώδικας
-              </p>
+            {/* Title & Badge */}
+            <div className="flex items-center justify-center gap-2.5 flex-wrap mt-3">
+              <h1
+                onClick={() => onSelectTab("calculator")}
+                className={titleClass}
+              >
+                ΛΕΞΑΡΙΘΜΟΣ
+              </h1>
+              <span className={ionianBadgeClass}>
+                ΙΩΝΙΚΗ
+              </span>
             </div>
+
+            {/* Subtitle & Author */}
+            <div className={`text-xs sm:text-base ${subtextClass} font-serif tracking-wide mt-1.5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2`}>
+              <span className="whitespace-nowrap">Ελληνική Ισοψηφία &amp; Στατιστική</span>
+              <span className="opacity-60">•</span>
+              <strong className={authorNameClass}>
+                ΙΩΑΝΝΗΣ ΒΕΛΟΥΔΟΣ
+              </strong>
+            </div>
+
+            {/* Sacred Motto */}
+            <p className={quoteClass}>
+              «ΕΓΩ ΕΙΜΙ» • Αιώνιος Συμπαντικός Κώδικας
+            </p>
           </div>
 
-          {/* Row 2: Action Tools Bar - Responsive, Centered & Contained Within Screen Bounds */}
-          <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap w-full py-1">
-            {/* The Prominent "ΚΑΡΤΕΛΕΣ" Button */}
-            <button
-              type="button"
-              onClick={() => onSelectTab("all-tabs")}
-              id="header-all-tabs-portal-btn"
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border font-serif font-bold transition-all shadow-md cursor-pointer shrink-0 min-h-[38px] ${allTabsBtnClass}`}
-              title="Πύλη Συντομεύσεων: Προβολή όλων των 21 καρτελών σε μεγάλο πίνακα"
-            >
-              <LayoutGrid className={`w-4 h-4 ${allTabsIconClass}`} />
-              <span className="tracking-wider uppercase text-xs sm:text-sm font-bold">
-                ΚΑΡΤΕΛΕΣ
-              </span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${allTabsBadgeClass}`}>
-                21
-              </span>
-            </button>
-
-            {/* Theme Selector */}
-            <button
-              onClick={onOpenThemeModal || onToggleTheme}
-              id="header-theme-toggle-btn"
-              className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border ${secondaryBtnClass}`}
-              title="Επιλογή Εμφάνισης (6 Θέματα)"
-            >
-              <Palette className={`w-3.5 h-3.5 ${secondaryIconClass}`} />
-              <span className="text-[11px] font-sans font-medium">Θέμα</span>
-            </button>
-
-            {/* Font Selector */}
-            {onOpenFontModal && (
-              <button
-                onClick={onOpenFontModal}
-                id="header-font-selector-btn"
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border ${secondaryBtnClass}`}
-                title={`Επιλογή Αρχαιοελληνικής Γραμματοσειράς (${currentFontName || "Didot"})`}
-              >
-                <Type className={`w-3.5 h-3.5 ${secondaryIconClass}`} />
-                <span className="text-[11px] font-sans font-medium">Γραμματοσειρά</span>
-              </button>
-            )}
-
-            {/* Report Export */}
-            {onOpenExportReport && (
-              <button
-                onClick={onOpenExportReport}
-                id="header-export-report-btn"
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border ${secondaryBtnClass}`}
-                title="Εξαγωγή Αναλυτικής Αναφοράς / PDF"
-              >
-                <FileText className={`w-3.5 h-3.5 ${secondaryIconClass}`} />
-                <span className="text-[11px] font-sans font-medium">Έκθεση</span>
-              </button>
-            )}
-
-            {/* Secret Portal Gate */}
-            {onOpenPortalGate && (
-              <button
-                onClick={onOpenPortalGate}
-                id="header-portal-gate-btn"
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border ${secondaryBtnClass}`}
-                title="Μυστική Πύλη Λαυρείου (ΒΕΛΟΣ + ΟΥΔΟΣ)"
-              >
-                <Compass className={`w-3.5 h-3.5 ${secondaryIconClass}`} />
-                <span className="text-[11px] font-sans font-medium">Πύλη</span>
-              </button>
-            )}
-
-            {/* PWA Shortcut / Add to Home Screen Button */}
-            {onOpenInstallModal && (
+          {/* Action Tools Section - Properly Arranged Two-Tier Layout */}
+          <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-2 sm:gap-2.5 py-1">
+            {/* Tier 1: Two Prominent Primary Pillars (Hero Buttons) */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full max-w-md px-1">
+              {/* Button 1: ΚΑΡΤΕΛΕΣ (21) */}
               <button
                 type="button"
-                onClick={onOpenInstallModal}
-                id="header-install-shortcut-btn"
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border ${secondaryBtnClass}`}
-                title="Προσθήκη Συντόμευσης / Εγκατάσταση στην Επιφάνεια Εργασίας του κινητού"
+                onClick={() => onSelectTab("all-tabs")}
+                id="header-all-tabs-portal-btn"
+                className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border font-serif font-bold transition-all shadow-md cursor-pointer h-10 sm:h-11 ${allTabsBtnClass}`}
+                title="Πύλη Συντομεύσεων: Προβολή όλων των 21 καρτελών σε μεγάλο πίνακα"
               >
-                <Smartphone className={`w-3.5 h-3.5 ${secondaryIconClass}`} />
-                <span className="text-[11px] font-sans font-medium whitespace-nowrap">Συντόμευση</span>
+                <LayoutGrid className={`w-4 h-4 shrink-0 ${allTabsIconClass}`} />
+                <span className="tracking-wider uppercase text-xs sm:text-sm font-bold whitespace-nowrap">
+                  ΚΑΡΤΕΛΕΣ
+                </span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold shrink-0 ${allTabsBadgeClass}`}>
+                  21
+                </span>
               </button>
-            )}
 
-            {/* Gemini API Key */}
-            <button
-              onClick={onOpenApiKeyModal}
-              id="header-api-key-btn"
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border relative ${secondaryBtnClass}`}
-              title="Ρύθμιση API Key (AI ΙΩΑΝΝΗΣ)"
-            >
-              <Key className={`w-3.5 h-3.5 ${secondaryIconClass}`} />
-              <span className="text-[11px] font-sans font-medium">API Key</span>
-              {hasCustomApiKey ? (
-                <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-950 animate-pulse" title="Προσωπικό κλειδί ενεργό" />
-              ) : (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#8c7e6c]" />
+              {/* Button 2: Τ.Ν. ΙΩΑΝΝΗΣ */}
+              <button
+                type="button"
+                onClick={onOpenAiAssistant}
+                id="header-ai-assistant-btn"
+                className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border font-serif font-bold transition-all shadow-md cursor-pointer h-10 sm:h-11 ${aiBtnClass}`}
+                title="Τ.Ν. ΙΩΑΝΝΗΣ 1.0 - Φιλολογική & Ισοψηφική Ερμηνεία"
+              >
+                <Sparkles className={`w-4 h-4 shrink-0 ${aiIconClass} animate-pulse`} />
+                <span className={`tracking-wider text-xs sm:text-sm font-bold whitespace-nowrap ${aiTextClass}`}>
+                  Τ.Ν. ΙΩΑΝΝΗΣ
+                </span>
+              </button>
+            </div>
+
+            {/* Tier 2: Secondary Tool Controls - Symmetrical Harmonious Toolbar */}
+            <div className="flex items-center justify-center flex-wrap gap-1.5 sm:gap-2 w-full px-1">
+              {/* Theme Selector */}
+              <button
+                type="button"
+                onClick={onOpenThemeModal || onToggleTheme}
+                id="header-theme-toggle-btn"
+                className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg sm:rounded-xl border h-8 sm:h-9 ${secondaryBtnClass}`}
+                title="Επιλογή Εμφάνισης (6 Θέματα)"
+              >
+                <Palette className={`w-3.5 h-3.5 shrink-0 ${secondaryIconClass}`} />
+                <span className="text-[11px] sm:text-xs font-sans font-medium whitespace-nowrap">Θέμα</span>
+              </button>
+
+              {/* Font Selector */}
+              {onOpenFontModal && (
+                <button
+                  type="button"
+                  onClick={onOpenFontModal}
+                  id="header-font-selector-btn"
+                  className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg sm:rounded-xl border h-8 sm:h-9 ${secondaryBtnClass}`}
+                  title={`Επιλογή Αρχαιοελληνικής Γραμματοσειράς (${currentFontName || "Didot"})`}
+                >
+                  <Type className={`w-3.5 h-3.5 shrink-0 ${secondaryIconClass}`} />
+                  <span className="text-[11px] sm:text-xs font-sans font-medium whitespace-nowrap">Γραμματοσειρά</span>
+                </button>
               )}
-            </button>
 
-            {/* AI Assistant */}
-            <button
-              onClick={onOpenAiAssistant}
-              id="header-ai-assistant-btn"
-              className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border text-xs font-serif ${aiBtnClass}`}
-              title="Τ.Ν. ΙΩΑΝΝΗΣ 1.0 - Φιλολογική & Ισοψηφική Ερμηνεία"
-            >
-              <Sparkles className={`w-3.5 h-3.5 ${aiIconClass} animate-pulse`} />
-              <span className={`text-[11px] sm:text-xs font-bold font-sans whitespace-nowrap ${aiTextClass}`}>Τ.Ν. ΙΩΑΝΝΗΣ</span>
-            </button>
+              {/* Report Export */}
+              {onOpenExportReport && (
+                <button
+                  type="button"
+                  onClick={onOpenExportReport}
+                  id="header-export-report-btn"
+                  className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg sm:rounded-xl border h-8 sm:h-9 ${secondaryBtnClass}`}
+                  title="Εξαγωγή Αναλυτικής Αναφοράς / PDF"
+                >
+                  <FileText className={`w-3.5 h-3.5 shrink-0 ${secondaryIconClass}`} />
+                  <span className="text-[11px] sm:text-xs font-sans font-medium whitespace-nowrap">Έκθεση</span>
+                </button>
+              )}
+
+              {/* Secret Portal Gate */}
+              {onOpenPortalGate && (
+                <button
+                  type="button"
+                  onClick={onOpenPortalGate}
+                  id="header-portal-gate-btn"
+                  className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg sm:rounded-xl border h-8 sm:h-9 ${secondaryBtnClass}`}
+                  title="Μυστική Πύλη Λαυρείου (ΒΕΛΟΣ + ΟΥΔΟΣ)"
+                >
+                  <Compass className={`w-3.5 h-3.5 shrink-0 ${secondaryIconClass}`} />
+                  <span className="text-[11px] sm:text-xs font-sans font-medium whitespace-nowrap">Πύλη</span>
+                </button>
+              )}
+
+              {/* PWA Shortcut (if available) */}
+              {onOpenInstallModal && (
+                <button
+                  type="button"
+                  onClick={onOpenInstallModal}
+                  id="header-install-shortcut-btn"
+                  className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg sm:rounded-xl border h-8 sm:h-9 ${secondaryBtnClass}`}
+                  title="Προσθήκη Συντόμευσης / Εγκατάσταση στην Επιφάνεια Εργασίας"
+                >
+                  <Smartphone className={`w-3.5 h-3.5 shrink-0 ${secondaryIconClass}`} />
+                  <span className="text-[11px] sm:text-xs font-sans font-medium whitespace-nowrap">Συντόμευση</span>
+                </button>
+              )}
+
+              {/* Gemini API Key */}
+              <button
+                type="button"
+                onClick={onOpenApiKeyModal}
+                id="header-api-key-btn"
+                className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg sm:rounded-xl border relative h-8 sm:h-9 ${secondaryBtnClass}`}
+                title="Ρύθμιση API Key (AI ΙΩΑΝΝΗΣ)"
+              >
+                <Key className={`w-3.5 h-3.5 shrink-0 ${secondaryIconClass}`} />
+                <span className="text-[11px] sm:text-xs font-sans font-medium whitespace-nowrap">API Key</span>
+                {hasCustomApiKey ? (
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-950 animate-pulse ml-0.5" title="Προσωπικό κλειδί ενεργό" />
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#8c7e6c] ml-0.5" />
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Navigation Bar with Theme Controls & Full Screen Width */}

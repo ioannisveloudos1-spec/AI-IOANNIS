@@ -26,6 +26,7 @@ import {
   Flame,
   CheckCircle2,
   ExternalLink,
+  Waves,
 } from "lucide-react";
 
 interface AllTabsPortalTabProps {
@@ -70,6 +71,18 @@ export const ALL_TAB_ITEMS: TabPortalItem[] = [
     icon: Calculator,
     bgImage: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=800&q=80",
     accentColor: "#f59e0b",
+  },
+  {
+    id: "acoustic-synth",
+    title: "Ακουστικός Συνθέτης & Εργαστήριο Hz",
+    subtitle: "Πυθαγόρειες συχνότητες, Web Audio API, μετρητής μικροφώνου, κύματα & Cymatics Chladni",
+    category: "tools",
+    categoryName: "Εργαλεία & Ακουστική",
+    icon: Waves,
+    bgImage: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",
+    accentColor: "#ffd700",
+    badge: "WEB AUDIO",
+    highlight: true,
   },
   {
     id: "search",

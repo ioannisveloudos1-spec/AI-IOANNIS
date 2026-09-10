@@ -252,12 +252,43 @@ export function analyzePythagoreanFrequencies(
 // WEB AUDIO SYNTHESIZER CLASS
 // ---------------------------------------------------------------------------------
 
-export type SynthTimbre = "PURE_SINE" | "GOLDEN_BOWL" | "MONOCHORD_PLUCK" | "CELESTIAL_PAD";
+export type SynthTimbre = "PURE_SINE" | "GOLDEN_BOWL" | "MONOCHORD_PLUCK" | "CELESTIAL_PAD" | "ANCIENT_LYRE";
+
+export interface PythagoreanScaleNote {
+  name: string;
+  greekName: string;
+  hz: number;
+  ratio: string;
+  ratioFraction: string;
+  isokrati: string;
+  mysticMeaning: string;
+}
+
+export const PYTHAGOREAN_OCTAVE: PythagoreanScaleNote[] = [
+  { name: "C4", greekName: "ΝΤΟ", hz: 256, ratio: "1:1", ratioFraction: "1/1", isokrati: "Βασική / Τόνος", mysticMeaning: "Επιστημονικό C - Θεμέλιος Μονάς & Φυσική Αρμονία" },
+  { name: "D4", greekName: "ΡΕ", hz: 288, ratio: "9:8", ratioFraction: "9/8", isokrati: "Επόγδοον (Τόνος)", mysticMeaning: "Μείζων Τόνος - Δυάς & Κίνηση" },
+  { name: "E4", greekName: "ΜΙ", hz: 324, ratio: "81:64", ratioFraction: "81/64", isokrati: "Δίτονος (Τρίτη)", mysticMeaning: "Πυθαγόρειος Τρίτη - Τριάς & Δημιουργία" },
+  { name: "F4", greekName: "ΦΑ", hz: 341.33, ratio: "4:3", ratioFraction: "4/3", isokrati: "Διατεσσάρων (Τετάρτη)", mysticMeaning: "Τετρακτύς - Η Ιερά Τετράς των στοιχείων" },
+  { name: "G4", greekName: "ΣΟΛ", hz: 384, ratio: "3:2", ratioFraction: "3/2", isokrati: "Διοξεία (Πέμπτη)", mysticMeaning: "Χρυσή Πέμπτη - Ουράνιος Συντονισμός & Απόλλων" },
+  { name: "A4", greekName: "ΛΑ", hz: 432, ratio: "27:16", ratioFraction: "27:16", isokrati: "Έκτη / Κοσμικό ΛΑ", mysticMeaning: "Κοσμικό ΛΑ 432 Hz - Συμπαντικός Κώδικας & Φυσικό Κούρδισμα" },
+  { name: "B4", greekName: "ΣΙ", hz: 486, ratio: "243:128", ratioFraction: "243:128", isokrati: "Έβδομη", mysticMeaning: "Επτάς - Ιερά Μύηση & Πνευματική Ανάταση" },
+  { name: "C5", greekName: "ΝΤΟ²", hz: 512, ratio: "2:1", ratioFraction: "2/1", isokrati: "Διά Πασών (Οκτάβα)", mysticMeaning: "Οκτάβα 512 Hz (Αντίστροφη ανάγνωση 215 = ΔΙΑΣ!)" },
+];
 
 class PythagoreanSynthesizer {
   private ctx: AudioContext | null = null;
   private activeNodes: { oscs: OscillatorNode[]; gains: GainNode[] }[] = [];
   private sequenceTimer: number | null = null;
+
+  // Continuous generator nodes
+  private continuousOsc: OscillatorNode | null = null;
+  private continuousGain: GainNode | null = null;
+  private continuousLimiter: DynamicsCompressorNode | null = null;
+
+  // Binaural beats nodes
+  private binauralLeftOsc: OscillatorNode | null = null;
+  private binauralRightOsc: OscillatorNode | null = null;
+  private binauralGain: GainNode | null = null;
 
   private initContext(): AudioContext {
     if (!this.ctx || this.ctx.state === "closed") {
@@ -272,7 +303,22 @@ class PythagoreanSynthesizer {
     return this.ctx;
   }
 
+  /**
+   * Safe limiter to protect hearing and speakers
+   */
+  private createLimiter(ctx: AudioContext): DynamicsCompressorNode {
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-12, ctx.currentTime); // dB
+    compressor.knee.setValueAtTime(6, ctx.currentTime);
+    compressor.ratio.setValueAtTime(16, ctx.currentTime);
+    compressor.attack.setValueAtTime(0.003, ctx.currentTime);
+    compressor.release.setValueAtTime(0.25, ctx.currentTime);
+    return compressor;
+  }
+
   public stopAll() {
+    this.stopContinuous();
+    this.stopBinaural();
     if (this.sequenceTimer) {
       window.clearTimeout(this.sequenceTimer);
       this.sequenceTimer = null;
@@ -298,6 +344,159 @@ class PythagoreanSynthesizer {
       } catch {}
       this.activeNodes = [];
     }
+  }
+
+  /**
+   * Starts continuous real-time oscillator with safe acoustic limiter
+   */
+  public startContinuous(
+    freq: number,
+    waveType: OscillatorType = "sine",
+    volume: number = 0.5
+  ) {
+    this.stopContinuous();
+    const ctx = this.initContext();
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const limiter = this.createLimiter(ctx);
+
+    osc.type = waveType;
+    osc.frequency.setValueAtTime(Math.max(10, Math.min(20000, freq)), now);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(Math.max(0, Math.min(1, volume)), now + 0.05);
+
+    osc.connect(gain);
+    gain.connect(limiter);
+    limiter.connect(ctx.destination);
+
+    osc.start(now);
+
+    this.continuousOsc = osc;
+    this.continuousGain = gain;
+    this.continuousLimiter = limiter;
+  }
+
+  /**
+   * Updates frequency, waveform or volume of continuous generator smoothly without audio clicks
+   */
+  public updateContinuous(
+    freq: number,
+    waveType?: OscillatorType,
+    volume?: number
+  ) {
+    if (!this.continuousOsc || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const clampedFreq = Math.max(10, Math.min(20000, freq));
+
+    try {
+      this.continuousOsc.frequency.cancelScheduledValues(now);
+      this.continuousOsc.frequency.setValueAtTime(this.continuousOsc.frequency.value, now);
+      this.continuousOsc.frequency.exponentialRampToValueAtTime(clampedFreq, now + 0.04);
+    } catch {
+      this.continuousOsc.frequency.setValueAtTime(clampedFreq, now);
+    }
+
+    if (waveType && this.continuousOsc.type !== waveType) {
+      this.continuousOsc.type = waveType;
+    }
+
+    if (volume !== undefined && this.continuousGain) {
+      const clampedVol = Math.max(0, Math.min(1, volume));
+      try {
+        this.continuousGain.gain.cancelScheduledValues(now);
+        this.continuousGain.gain.setValueAtTime(this.continuousGain.gain.value, now);
+        this.continuousGain.gain.linearRampToValueAtTime(clampedVol, now + 0.04);
+      } catch {
+        this.continuousGain.gain.setValueAtTime(clampedVol, now);
+      }
+    }
+  }
+
+  /**
+   * Stops continuous generator smoothly
+   */
+  public stopContinuous() {
+    if (this.continuousGain && this.continuousOsc && this.ctx) {
+      const now = this.ctx.currentTime;
+      try {
+        this.continuousGain.gain.cancelScheduledValues(now);
+        this.continuousGain.gain.setValueAtTime(this.continuousGain.gain.value, now);
+        this.continuousGain.gain.linearRampToValueAtTime(0.0001, now + 0.05);
+      } catch {}
+      const oldOsc = this.continuousOsc;
+      setTimeout(() => {
+        try {
+          oldOsc.stop();
+          oldOsc.disconnect();
+        } catch {}
+      }, 70);
+    }
+    this.continuousOsc = null;
+    this.continuousGain = null;
+    this.continuousLimiter = null;
+  }
+
+  /**
+   * Starts Binaural Beats (Stereo separation: L = baseHz, R = baseHz + deltaHz)
+   */
+  public startBinaural(baseHz: number, deltaHz: number, volume: number = 0.5) {
+    this.stopBinaural();
+    const ctx = this.initContext();
+    const now = ctx.currentTime;
+
+    const leftOsc = ctx.createOscillator();
+    const rightOsc = ctx.createOscillator();
+
+    leftOsc.type = "sine";
+    rightOsc.type = "sine";
+
+    leftOsc.frequency.setValueAtTime(baseHz, now);
+    rightOsc.frequency.setValueAtTime(baseHz + deltaHz, now);
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.0001, now);
+    masterGain.gain.linearRampToValueAtTime(volume, now + 0.08);
+
+    const merger = ctx.createChannelMerger(2);
+
+    leftOsc.connect(merger, 0, 0); // Left ear
+    rightOsc.connect(merger, 0, 1); // Right ear
+
+    merger.connect(masterGain);
+    masterGain.connect(ctx.destination);
+
+    leftOsc.start(now);
+    rightOsc.start(now);
+
+    this.binauralLeftOsc = leftOsc;
+    this.binauralRightOsc = rightOsc;
+    this.binauralGain = masterGain;
+  }
+
+  public stopBinaural() {
+    if (this.binauralGain && this.ctx) {
+      const now = this.ctx.currentTime;
+      try {
+        this.binauralGain.gain.cancelScheduledValues(now);
+        this.binauralGain.gain.linearRampToValueAtTime(0.0001, now + 0.06);
+      } catch {}
+      const l = this.binauralLeftOsc;
+      const r = this.binauralRightOsc;
+      setTimeout(() => {
+        try {
+          l?.stop();
+          l?.disconnect();
+          r?.stop();
+          r?.disconnect();
+        } catch {}
+      }, 80);
+    }
+    this.binauralLeftOsc = null;
+    this.binauralRightOsc = null;
+    this.binauralGain = null;
   }
 
   /**
@@ -412,6 +611,38 @@ class PythagoreanSynthesizer {
         oscs.push(osc);
         gains.push(gain);
       });
+    } else if (timbre === "ANCIENT_LYRE") {
+      // Ancient Greek Chelys Lyre (Homeric plucked gut string with resonant tortoise-shell body)
+      const osc = ctx.createOscillator();
+      const subOsc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const bodyFilter = ctx.createBiquadFilter();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(freq, now);
+
+      subOsc.type = "triangle";
+      subOsc.frequency.setValueAtTime(freq * 2, now);
+
+      bodyFilter.type = "bandpass";
+      bodyFilter.frequency.setValueAtTime(freq * 1.5, now);
+      bodyFilter.Q.setValueAtTime(3.5, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.5, now + 0.008); // rapid pluck transient
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(bodyFilter);
+      subOsc.connect(bodyFilter);
+      bodyFilter.connect(gain);
+      gain.connect(masterGain);
+
+      osc.start(now);
+      subOsc.start(now);
+      osc.stop(now + duration + 0.05);
+      subOsc.stop(now + duration + 0.05);
+      oscs.push(osc, subOsc);
+      gains.push(gain);
     }
 
     this.activeNodes.push({ oscs, gains });
@@ -479,3 +710,201 @@ class PythagoreanSynthesizer {
 
 // Global Singleton Instance
 export const pythagoreanSynth = new PythagoreanSynthesizer();
+
+/**
+ * High-accuracy autocorrelation algorithm for pitch detection (f0 in Hz)
+ * Used by the external microphone acoustic meter
+ */
+export function detectPitchAutocorrelation(
+  buf: Float32Array,
+  sampleRate: number
+): { pitch: number | null; rms: number } {
+  let sumSquares = 0;
+  for (let i = 0; i < buf.length; i++) {
+    sumSquares += buf[i] * buf[i];
+  }
+  const rms = Math.sqrt(sumSquares / buf.length);
+
+  // Background noise threshold
+  if (rms < 0.015) {
+    return { pitch: null, rms };
+  }
+
+  // Edge trimming to improve pitch detection
+  let r1 = 0;
+  let r2 = buf.length - 1;
+  const thres = 0.04;
+  for (let i = 0; i < buf.length / 2; i++) {
+    if (Math.abs(buf[i]) < thres) {
+      r1 = i;
+      break;
+    }
+  }
+  for (let i = 1; i < buf.length / 2; i++) {
+    if (Math.abs(buf[buf.length - i]) < thres) {
+      r2 = buf.length - i;
+      break;
+    }
+  }
+
+  const trimmed = buf.slice(r1, r2);
+  const len = trimmed.length;
+  if (len < 64) {
+    return { pitch: null, rms };
+  }
+
+  const c = new Float32Array(len);
+  for (let i = 0; i < len; i++) {
+    for (let j = 0; j < len - i; j++) {
+      c[i] = c[i] + trimmed[j] * trimmed[j + i];
+    }
+  }
+
+  let d = 0;
+  while (d < len - 1 && c[d] > c[d + 1]) d++;
+  let maxval = -1;
+  let maxpos = -1;
+  for (let i = d; i < len; i++) {
+    if (c[i] > maxval) {
+      maxval = c[i];
+      maxpos = i;
+    }
+  }
+
+  if (maxpos === -1 || maxval / c[0] < 0.75) {
+    return { pitch: null, rms };
+  }
+
+  let T0 = maxpos;
+  // Parabolic interpolation for sub-cent 0.1 Hz precision
+  if (T0 > 0 && T0 < len - 1) {
+    const x1 = c[T0 - 1];
+    const x2 = c[T0];
+    const x3 = c[T0 + 1];
+    const a = (x1 + x3 - 2 * x2) / 2;
+    const b = (x3 - x1) / 2;
+    if (a) {
+      T0 = T0 - b / (2 * a);
+    }
+  }
+
+  const pitch = sampleRate / T0;
+  if (pitch >= 35 && pitch <= 2500) {
+    return { pitch: Math.round(pitch * 10) / 10, rms };
+  }
+
+  return { pitch: null, rms };
+}
+
+/**
+ * Generates an in-memory 16-bit PCM WAV audio file of the pure frequency with golden envelope
+ * and triggers immediate browser download
+ */
+export function exportFrequencyToWav(
+  freq: number,
+  durationSeconds: number = 4.0,
+  waveType: "sine" | "triangle" = "sine",
+  volume: number = 0.7,
+  fileName: string = "pythagorean-harmonic.wav"
+) {
+  const sampleRate = 44100;
+  const numSamples = Math.floor(sampleRate * durationSeconds);
+  const buffer = new ArrayBuffer(44 + numSamples * 2);
+  const view = new DataView(buffer);
+
+  const writeString = (view: DataView, offset: number, string: string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+
+  // RIFF header
+  writeString(view, 0, "RIFF");
+  view.setUint32(4, 36 + numSamples * 2, true);
+  writeString(view, 8, "WAVE");
+  writeString(view, 12, "fmt ");
+  view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
+  view.setUint16(20, 1, true);  // AudioFormat (1 for PCM)
+  view.setUint16(22, 1, true);  // NumChannels (1 mono)
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true); // ByteRate
+  view.setUint16(32, 2, true); // BlockAlign
+  view.setUint16(34, 16, true); // BitsPerSample
+  writeString(view, 36, "data");
+  view.setUint32(40, numSamples * 2, true);
+
+  const attackSamples = Math.floor(sampleRate * 0.1);
+  const decaySamples = Math.floor(sampleRate * 0.3);
+  const releaseSamples = Math.floor(sampleRate * 0.8);
+  const sustainLevel = 0.65;
+
+  let offset = 44;
+  for (let i = 0; i < numSamples; i++, offset += 2) {
+    const t = i / sampleRate;
+
+    // ADSR Envelope
+    let env = 1.0;
+    if (i < attackSamples) {
+      env = i / attackSamples;
+    } else if (i < attackSamples + decaySamples) {
+      const k = (i - attackSamples) / decaySamples;
+      env = 1.0 - (1.0 - sustainLevel) * k;
+    } else if (i > numSamples - releaseSamples) {
+      const k = (numSamples - i) / releaseSamples;
+      env = sustainLevel * Math.max(0, k);
+    } else {
+      env = sustainLevel;
+    }
+
+    // Wave sample
+    let sample = 0;
+    if (waveType === "sine") {
+      // Fundamental + subtle 1.618 golden overtone
+      sample = Math.sin(2 * Math.PI * freq * t) * 0.85 +
+               Math.sin(2 * Math.PI * freq * 1.618034 * t) * 0.15;
+    } else {
+      // Triangle
+      sample = (2 / Math.PI) * Math.asin(Math.sin(2 * Math.PI * freq * t));
+    }
+
+    const finalVal = Math.max(-1, Math.min(1, sample * env * volume));
+    view.setInt16(offset, finalVal < 0 ? finalVal * 0x8000 : finalVal * 0x7FFF, true);
+  }
+
+  const blob = new Blob([view], { type: "audio/wav" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 300);
+}
+
+/**
+ * Calculates Chladni nodal vibration value at position (x, y) on a square plate [-1, 1]
+ * w(x,y) = a*sin(n*pi*x)*sin(m*pi*y) - b*sin(m*pi*x)*sin(n*pi*y)
+ */
+export function calculateChladniVibration(
+  x: number,
+  y: number,
+  freq: number
+): number {
+  // Derive n and m modal integers from frequency
+  const base = Math.max(1, Math.floor(Math.sqrt(Math.max(20, freq)) / 3.8));
+  const n = Math.max(1, (base % 6) + 1);
+  const m = Math.max(1, ((base * 2 + 1) % 7) + 1);
+  const a = 1.0;
+  const b = 0.85;
+
+  const val =
+    a * Math.sin(n * Math.PI * x) * Math.sin(m * Math.PI * y) -
+    b * Math.sin(m * Math.PI * x) * Math.sin(n * Math.PI * y);
+
+  return Math.abs(val);
+}
+

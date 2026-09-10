@@ -2,6 +2,7 @@ export type TabType =
   | "all-tabs"
   | "europe"
   | "calculator" 
+  | "acoustic-synth"
   | "search" 
   | "golden-verses"
   | "solar-iota-danaos"

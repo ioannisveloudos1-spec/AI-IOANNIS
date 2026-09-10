@@ -22,6 +22,7 @@ import { StatsTab } from "./components/StatsTab";
 import { ArchiveTab } from "./components/ArchiveTab";
 import { GuideTab } from "./components/GuideTab";
 import { EuropeTab } from "./components/EuropeTab";
+import { AcousticSynthesizerTab } from "./components/AcousticSynthesizerTab";
 import { AllTabsPortalTab } from "./components/AllTabsPortalTab";
 import { AiAnalysisModal } from "./components/AiAnalysisModal";
 import { ApiKeyModal } from "./components/ApiKeyModal";
@@ -438,6 +439,18 @@ export default function App() {
             theme={theme}
             onToggleTheme={handleToggleTheme}
             onOpenThemeModal={() => setThemeModalOpen(true)}
+          />
+        )}
+
+        {currentTab === "acoustic-synth" && (
+          <AcousticSynthesizerTab
+            theme={theme}
+            initialFrequency={432}
+            initialWord="ΕΓΩ ΕΙΜΙ"
+            onNavigateToCalculator={(word) => {
+              setCurrentTextForStats(word);
+              setCurrentTab("calculator");
+            }}
           />
         )}
 
