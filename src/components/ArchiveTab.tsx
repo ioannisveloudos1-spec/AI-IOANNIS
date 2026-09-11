@@ -6,6 +6,7 @@ import { HISTORICAL_ISOPSEPHIES, HistoricalIsopsephyEntry } from "../data/histor
 import { numberToGreekNumeral, getMathematicalProperties, calculateWordIsopsephy, cleanAndNormalizePolytonic } from "../utils/isopsephy";
 import { Search, Bookmark, Trash2, Download, Upload, Sparkles, Scale, BookOpen, Layers, Check, Copy, ExternalLink, Plus, Folder, Hash, ArrowUpDown, ArrowDownAZ, ArrowUpAZ, ArrowDown01, ArrowUp10, Clock, LayoutGrid, ListFilter, X, CheckSquare, Square, Filter, FileSpreadsheet, Tag, GitCompare, ArrowLeftRight, HelpCircle, FileText } from "lucide-react";
 import { TOPIC_CATEGORIES, categorizeTerm, exportToCsvFile } from "../utils/topicClustering";
+import { isEnglishText, translateEnglishToGreekSync } from "../utils/translation";
 
 type SortOption = "value_desc" | "value_asc" | "alpha_asc" | "alpha_desc" | "date_desc" | "date_asc" | "count_desc";
 type ViewMode = "folders" | "flat";
@@ -38,6 +39,44 @@ const renderHighlightedText = (text: string, query: string) => {
       {after}
     </>
   );
+};
+
+// Helper to render text with Greek translation in parentheses for English phrases/words
+const renderItemTextWithTranslation = (text: string, query: string) => {
+  if (!text) return null;
+  const trimmed = text.trim();
+  const hasParen = trimmed.includes("(") && trimmed.includes(")");
+  const isEng = isEnglishText(trimmed);
+
+  if (hasParen) {
+    const parts = trimmed.match(/^([^\(]+)\s*\(([^\)]+)\)$/);
+    if (parts) {
+      return (
+        <div className="flex flex-col">
+          <span className="leading-tight">{renderHighlightedText(parts[1].trim(), query)}</span>
+          <span className="text-xs font-serif text-[#e6c670] mt-0.5 italic">
+            ({parts[2].trim()})
+          </span>
+        </div>
+      );
+    }
+  }
+
+  if (isEng) {
+    const tr = translateEnglishToGreekSync(trimmed);
+    return (
+      <div className="flex flex-col">
+        <span className="leading-tight">{renderHighlightedText(trimmed, query)}</span>
+        {tr && tr.toLowerCase() !== trimmed.toLowerCase() && (
+          <span className="text-xs font-serif text-[#e6c670] mt-0.5 italic">
+            ({tr})
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  return <span>{renderHighlightedText(trimmed, query)}</span>;
 };
 
 export const ArchiveTab: React.FC<ArchiveTabProps> = ({
@@ -702,9 +741,9 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                           )}
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-lg font-serif font-bold text-[#f5ecd8] leading-tight block">
-                                {renderHighlightedText(item.text, searchTerm)}
-                              </span>
+                              <div className="text-lg font-serif font-bold text-[#f5ecd8] leading-tight">
+                                {renderItemTextWithTranslation(item.text, searchTerm)}
+                              </div>
                               <button
                                 onClick={() => onDeleteItem(item.id)}
                                 className="p-1 rounded-md bg-[#201812] hover:bg-red-950/70 border border-[#382b1d] hover:border-red-600/60 text-[#8c7e6c] hover:text-red-400 transition-all flex items-center justify-center cursor-pointer"
@@ -861,9 +900,9 @@ export const ArchiveTab: React.FC<ArchiveTabProps> = ({
                                     )}
                                   </button>
                                 )}
-                                <span className="text-base font-serif font-bold text-[#f5ecd8] leading-tight">
-                                  {renderHighlightedText(item.text, searchTerm)}
-                                </span>
+                                <div className="text-base font-serif font-bold text-[#f5ecd8] leading-tight">
+                                  {renderItemTextWithTranslation(item.text, searchTerm)}
+                                </div>
                               </div>
 
                               <button

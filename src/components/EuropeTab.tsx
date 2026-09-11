@@ -35,12 +35,15 @@ import {
   Printer,
   Download,
   X,
+  Scroll,
 } from "lucide-react";
 
 import europeNovelCoverImg from "../assets/images/europe_novel_cover_1789045266073.jpg";
+import europaMaidensFlowersImg from "../assets/images/europa_maidens_flowers_1789121509719.jpg";
 import europaSeaVoyageImg from "../assets/images/europa_sea_voyage_1789045282052.jpg";
 import sacredPlaneTreeImg from "../assets/images/sacred_plane_tree_1789045298039.jpg";
-import cadmusAlphabetImg from "../assets/images/cadmus_alphabet_1789045312494.jpg";
+import threeKingsCreteImg from "../assets/images/three_kings_crete_1789121528272.jpg";
+import cadmusSacredConsonantsImg from "../assets/images/cadmus_sacred_consonants_1789121548029.jpg";
 import taurusConstellationImg from "../assets/images/taurus_constellation_1789045328201.jpg";
 import talosCreteGuardianImg from "../assets/images/talos_crete_guardian_1789045344305.jpg";
 
@@ -99,7 +102,7 @@ const NOVEL_CHAPTERS: NovelChapter[] = [
     subtitle: "Το Όνειρο των Δύο Ηπείρων και το Πρωινό Παιχνίδι των Παρθένων",
     summary:
       "Η Ευρώπη ξυπνά ταραγμένη από ένα προφητικό όνειρο όπου δύο ήπειροι μάχονται για να την κατακτήσουν. Στις ακτές της Φοινίκης μαζεύει άνθη με τις συντρόφισσές της και μοιράζεται τους φόβους της.",
-    imageUrl: europeNovelCoverImg,
+    imageUrl: europaMaidensFlowersImg,
     imageCaption: "Η Ευρώπη και οι παρθένες της Τύρου συλλέγουν άνθη στους παραθαλάσσιους λειμώνες της Φοινίκης",
     paragraphs: [
       "Η αυγή ρόδιζε πάνω από τους κυπαρισσένιους λόφους της Τύρου, σκορπίζοντας την αλμύρα της Φοινίκης στα ορθάνοιχτα παράθυρα του ανακτόρου. Η Ευρώπη πετάχτηκε από το στρωσίδι της, με την καρδιά της να χτυπά σαν πιασμένο πουλί στα δίχτυα του ψαρά. Η τροφός της, η γερόντισσα Μελανθώ, έτρεξε κοντά της ανήσυχη:",
@@ -176,7 +179,7 @@ const NOVEL_CHAPTERS: NovelChapter[] = [
     subtitle: "Μίνως, Ραδάμανθυς, Σαρπηδών — Οι Στυλοβάτες της Δικαιοσύνης",
     summary:
       "Από την ένωση γεννώνται ο Μίνως, ο Ραδάμανθυς και ο Σαρπηδών. Ο διάλογος του βασιλιά Αστερίου με την Ευρώπη και οι όρκοι της δικαιοσύνης κάτω από το Ιδαίον Άντρον.",
-    imageUrl: talosCreteGuardianImg,
+    imageUrl: threeKingsCreteImg,
     imageCaption: "Μίνως, Ραδάμανθυς και Σαρπηδών: Οι τρεις βασιλείς και στυλοβάτες της μινωικής ευνομίας",
     paragraphs: [
       "Ο χρόνος κύλησε σαν γάργαρο νερό στα φαράγγια της Κρήτης, και η Ευρώπη έφερε στον κόσμο τρεις καρπούς του θεϊκού της έρωτα: τον Μίνωα, τον Ραδάμανθυ και τον Σαρπηδόνα. Κάθε παιδί έφερε στο βλέμμα του ένα διαφορετικό χάρισμα της αρχέγονης σοφίας.",
@@ -223,9 +226,9 @@ const NOVEL_CHAPTERS: NovelChapter[] = [
     title: "Η Αναζήτηση του Κάδμου",
     subtitle: "Από τη Φοινίκη στους Δελφούς και η Σπορά των Ελληνικών Γραμμάτων",
     summary:
-      "Ο Αγήνωρ προστάζει τους γιους του να βρουν την Ευρώπη. Ο Κάδμος φτάνει στους Δελφούς, λαμβάνει τον χρησμό της Πυθίας και χαρίζει στην ανθρωπότητα το αλφάβητο.",
-    imageUrl: cadmusAlphabetImg,
-    imageCaption: "Ο Κάδμος παραδίδει τα ιερά σύμφωνα και το ελληνικό αλφάβητο στους Δελφούς",
+      "Ο Αγήνωρ προστάζει τους γιους του να βρουν την Ευρώπη. Ο Κάδμος φτάνει στους Δελφούς, λαμβάνει τον χρησμό της Πυθίας και παραδίδει στους Έλληνες τα ιερά σύμφωνα.",
+    imageUrl: cadmusSacredConsonantsImg,
+    imageCaption: "Ο Κάδμος παραδίδει τον ιερό πάπυρο με τα σύμφωνα (Β, Γ, Δ, Ζ, Θ, Κ, Λ, Μ, Ν, Ξ, Π, Ρ, Σ, Τ, Φ, Χ, Ψ — άνευ φωνηέντων) στους Δελφούς",
     paragraphs: [
       "Πίσω στην Τύρο, ο βασιλιάς Αγήνωρ ήταν συντετριμμένος. Στεκόταν στην ακροθαλασσιά κοιτάζοντας το πέλαγος με δάκρυα στα μάτια. Κάλεσε τους γιους του —τον Κάδμο, τον Φοίνικα και τον Κίλικα— και η φωνή του αντήχησε σαν κεραυνός:",
       "— «Κάδμε! Αδέλφια της Ευρώπης! Ακούστε την απαράβατη προσταγή του πατέρα σας: Ή θα οργώσετε τις θάλασσες και θα μου φέρετε πίσω τη χαμένη μου κόρη, ή να μην τολμήσετε να πατήσετε ποτέ ξανά το πόδι σας στην Τύρο!»",
@@ -233,12 +236,13 @@ const NOVEL_CHAPTERS: NovelChapter[] = [
       "— «Ω Φοίβε Απόλλωνα, εσύ που γνωρίζεις τα πάντα! Πού κρύβεται η αγαπημένη μου αδελφή η Ευρώπη; Σε ποιο πέλαγος, σε ποια στεριά την έκρυψαν οι θεοί;»",
       "Η Πυθία, με μάτια φωτισμένα από τη θεία μανία, έδωσε τον ιστορικό χρησμό:",
       "— «Πάψε να αναζητάς την Ευρώπη, Κάδμε! Η αδελφή σου ανήκει πια στους αθανάτους και στη μοίρα των αιώνων! Βγες από το ιερό. Θα συναντήσεις μια δαμάλα με λευκό σημάδι στο πλευρό της. Ακολούθησέ την πιστά. Κι εκεί που θα λυγίσει από την κούραση και θα πέσει στη γη, εκεί θα χτίσεις την επτάπυλη πόλη σου!»",
-      "Ο Κάδμος υπάκουσε και ίδρυσε τη Θήβα. Όμως το μεγαλύτερο δώρο του προς την ανθρωπότητα ήταν τα γράμματα:",
-      "— «Με τούτα τα σύμβολα», είπε ο Κάδμος στους σοφούς της πόλης, «χαράσσουμε τη φωνή και τη σκέψη πάνω στην πέτρα και στον πάπυρο. Ο προφορικός λόγος πετά και χάνεται, μα ο γραπτός λόγος νικά τον θάνατο και τη λήθη!»",
+      "Ο Κάδμος υπάκουσε και ίδρυσε τη Θήβα. Όμως το μεγαλύτερο δώρο του προς την ανθρωπότητα ήταν τα ιερά σύμφωνα:",
+      "— «Με τούτα τα ιερά σύμφωνα», είπε ο Κάδμος ξεδιπλώνοντας τον πάπυρο με τα σύμφωνα της Φοινίκης (Β, Γ, Δ, Ζ, Θ, Κ, Λ, Μ, Ν, Ξ, Π, Ρ, Σ, Τ, Φ, Χ, Ψ) άνευ φωνηέντων, «χαράσσουμε τη θεία φωνή και την ανθρώπινη σκέψη πάνω στην πέτρα και στην περγαμηνή. Ο προφορικός λόγος πετά και χάνεται, μα ο γραπτός λόγος νικά τον θάνατο και τη λήθη! Οι Έλληνες αργότερα θα εμφυσήσουν τα επτά θεϊκά φωνήεντα για να δώσουν πνοή και μελωδία, μα η συμφωνική σπονδυλική στήλη παραδίδεται σήμερα στους Δελφούς!»",
       "Έτσι, μέσα από την αναζήτηση της Ευρώπης, γεννήθηκε το ελληνικό αλφάβητο — η βάση της ισοψηφίας, της επιστήμης και της φιλοσοφίας."
     ],
     keyTerms: [
       { term: "ΚΑΔΜΟΣ", value: 335, explanation: "Ο αδελφός της Ευρώπης, ιδρυτής της Θήβας και κομιστής των γραμμάτων." },
+      { term: "ΣΥΜΦΩΝΑ", value: 1601, explanation: "Τα ιερά σύμφωνα που εκόμισε ο Κάδμος από τη Φοινίκη άνευ φωνηέντων, βάση της γλώσσας και της ισοψηφίας." },
       { term: "ΔΕΛΦΟΙ", value: 619, explanation: "Ο ομφαλός της γης και το ιερό μαντείο του Απόλλωνος." },
       { term: "ΓΡΑΜΜΑΤΑ", value: 486, explanation: "Τα ιερά σύμβολα του λόγου, της σκέψης και της ισοψηφίας (ισάριθμο με τη νότα ΣΙ)." }
     ]
@@ -290,6 +294,95 @@ const NOVEL_CHAPTERS: NovelChapter[] = [
     ]
   }
 ];
+
+export const CADMUS_SACRED_CONSONANTS = [
+  { letter: "Β", name: "Βῆτα", val: 2 },
+  { letter: "Γ", name: "Γάμμα", val: 3 },
+  { letter: "Δ", name: "Δέλτα", val: 4 },
+  { letter: "Ζ", name: "Ζῆτα", val: 7 },
+  { letter: "Θ", name: "Θῆτα", val: 9 },
+  { letter: "Κ", name: "Κάππα", val: 20 },
+  { letter: "Λ", name: "Λάμβδα", val: 30 },
+  { letter: "Μ", name: "Μῦ", val: 40 },
+  { letter: "Ν", name: "Νῦ", val: 50 },
+  { letter: "Ξ", name: "Ξῖ", val: 60 },
+  { letter: "Π", name: "Πῖ", val: 80 },
+  { letter: "Ρ", name: "Ῥῶ", val: 100 },
+  { letter: "Σ", name: "Σῖγμα", val: 200 },
+  { letter: "Τ", name: "Ταῦ", val: 300 },
+  { letter: "Φ", name: "Φῖ", val: 500 },
+  { letter: "Χ", name: "Χῖ", val: 600 },
+  { letter: "Ψ", name: "Ψῖ", val: 700 },
+];
+
+export const CadmusSacredParchmentBox: React.FC<{ theme: AppTheme }> = ({ theme }) => {
+  return (
+    <div
+      className={`my-6 p-5 sm:p-6 rounded-2xl border-2 shadow-xl ${
+        theme === "parchment" || theme === "ancient-calligraphy"
+          ? "bg-[#f6eee0] border-[#c8a882] text-[#44280f]"
+          : theme === "solar"
+          ? "bg-[#fef9e7] border-[#f59e0b] text-[#78350f]"
+          : theme === "ethereal"
+          ? "bg-[#0c1836] border-[#3b82f6] text-[#bfdbfe]"
+          : theme === "cyber-tech"
+          ? "bg-[#06201b] border-[#10b981] text-[#a7f3d0]"
+          : "bg-[#18110a] border-amber-500/50 text-amber-100"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <div className="text-[11px] font-mono uppercase tracking-widest text-amber-500 font-bold mb-1 flex items-center gap-1.5">
+            <Scroll className="w-4 h-4 text-amber-400" />
+            <span>Ο Ιερός Πάπυρος του Κάδμου</span>
+          </div>
+          <h4 className="text-base sm:text-lg font-serif font-bold text-amber-400">
+            📜 Τα 17 Ιερά Σύμφωνα της Φοινίκης (Ἄνευ Φωνηέντων)
+          </h4>
+        </div>
+        <span className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+          Συμφωνικός Κώδικας
+        </span>
+      </div>
+
+      <p className="text-xs sm:text-sm font-serif leading-relaxed mb-4 text-justify opacity-95">
+        Ο Κάδμος εκόμισε από τη Φοινίκη το αρχέγονο σύμφωνο σύστημα (abjad), <strong>άνευ φωνηέντων</strong>.
+        Στον ιερό πάπυρο αναγράφονται αποκλειστικά τα <strong>17 σύμφωνα</strong> που συγκροτούν τη συμφωνική
+        σπονδυλική στήλη της γλώσσας. Τα 7 θεϊκά φωνήεντα (Α, Ε, Η, Ι, Ο, Υ, Ω) προστέθηκαν αργότερα από τους Έλληνες
+        για να αποδώσουν την αρμονία, τους μουσικούς τόνους και τη ζωτική πνοή του Λόγου:
+      </p>
+
+      {/* 17 Consonants Display Grid */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-9 gap-2">
+        {CADMUS_SACRED_CONSONANTS.map((c) => (
+          <div
+            key={c.letter}
+            className="p-2.5 rounded-xl bg-black/25 border border-amber-500/30 text-center hover:border-amber-400 hover:scale-105 transition-all shadow-sm group"
+          >
+            <div className="text-2xl font-serif font-black text-amber-300 group-hover:text-amber-200">
+              {c.letter}
+            </div>
+            <div className="text-[10px] font-serif font-semibold text-amber-200/80">
+              {c.name}
+            </div>
+            <div className="text-[10px] font-mono text-amber-400 font-bold mt-0.5">
+              ={c.val}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-amber-500/25 flex flex-wrap items-center justify-between gap-2 text-[11px] font-serif">
+        <span className="text-amber-300/90 font-medium">
+          ✦ Άθροισμα 17 Συμφώνων: 2+3+4+7+9+20+30+40+50+60+80+100+200+300+500+600+700 = 2705
+        </span>
+        <span className="italic opacity-80">
+          «ΣΥΜΦΩΝΑ = 1601 • Ο γραπτός λόγος νικά τη λήθη»
+        </span>
+      </div>
+    </div>
+  );
+};
 
 export const EuropeTab: React.FC<EuropeTabProps> = ({
   theme = "dark-ancient",
@@ -1034,14 +1127,14 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
                   placeholder="Αναζήτηση σε τίτλους & κείμενο..."
                   className={`w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border outline-none font-serif ${
                     theme === "parchment" || theme === "ancient-calligraphy"
-                      ? "bg-white border-[#d2be9f] text-[#3d240e]"
+                      ? "bg-[#faf2e3] border-[#d2be9f] text-[#3d240e] placeholder-[#a68660]"
                       : theme === "solar"
-                      ? "bg-white border-[#fcd34d] text-[#78350f]"
+                      ? "bg-[#fffbf0] border-[#fcd34d] text-[#78350f] placeholder-[#c49756]"
                       : theme === "ethereal"
-                      ? "bg-[#080f24] border-[#1e3a8a] text-[#e0f2fe]"
+                      ? "bg-[#080f24] border-[#1e3a8a] text-[#e0f2fe] placeholder-[#60a5fa]/60"
                       : theme === "cyber-tech"
-                      ? "bg-[#061412] border-[#065f46] text-[#ecfdf5]"
-                      : "bg-[#0e0b08] border-amber-900/50 text-[#f5ecd8]"
+                      ? "bg-[#061412] border-[#065f46] text-[#ecfdf5] placeholder-[#34d399]/60"
+                      : "bg-[#0e0b08] border-amber-900/50 text-[#f5ecd8] placeholder-amber-700/60"
                   }`}
                 />
               </div>
@@ -1294,6 +1387,11 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
                 ))}
               </div>
 
+              {/* Cadmus Sacred Consonants Parchment Box for Chapter 6 */}
+              {activeChapter.id === "chapter-6" && (
+                <CadmusSacredParchmentBox theme={theme} />
+              )}
+
               {/* Isopsephic & Mystical Terms Box of this Chapter */}
               {activeChapter.keyTerms && activeChapter.keyTerms.length > 0 && (
                 <div
@@ -1327,21 +1425,21 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
                           key={kt.term}
                           className={`p-3 rounded-xl border flex flex-col justify-between gap-2 transition-all ${
                             theme === "parchment" || theme === "ancient-calligraphy"
-                              ? "bg-white border-[#d2be9f]"
+                              ? "bg-[#faf2e3] border-[#d2be9f] text-[#3d240e]"
                               : theme === "solar"
-                              ? "bg-white border-[#fde68a]"
+                              ? "bg-[#fffbf0] border-[#fde68a] text-[#78350f]"
                               : theme === "ethereal"
-                              ? "bg-[#070e22] border-[#1e3a8a]"
+                              ? "bg-[#070e22] border-[#1e3a8a] text-[#e0f2fe]"
                               : theme === "cyber-tech"
-                              ? "bg-[#061814] border-[#065f46]"
-                              : "bg-[#1f1812] border-amber-800/50"
+                              ? "bg-[#061814] border-[#065f46] text-[#ecfdf5]"
+                              : "bg-[#1f1812] border-amber-800/50 text-[#f5ecd8]"
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-sm font-serif tracking-wider text-amber-400">
                               {kt.term}
                             </span>
-                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-black/20 border border-inherit/20 text-amber-300">
+                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-black/20 border border-amber-700/30 text-amber-300">
                               = {kt.value.toLocaleString("el-GR")}
                             </span>
                           </div>
@@ -1350,7 +1448,7 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
                             {kt.explanation}
                           </p>
 
-                          <div className="flex items-center justify-between pt-1 border-t border-inherit/15 text-[10px]">
+                          <div className="flex items-center justify-between pt-1 border-t border-amber-800/30 text-[10px]">
                             {onOpenAiModal && (
                               <button
                                 type="button"
@@ -1392,7 +1490,7 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
               )}
 
               {/* Bottom Pagination & Navigation */}
-              <div className="pt-6 border-t border-inherit/20 flex items-center justify-between gap-3 flex-wrap">
+              <div className="pt-6 border-t border-amber-800/30 flex items-center justify-between gap-3 flex-wrap">
                 <button
                   type="button"
                   disabled={activeChapterIndex === 0}
@@ -1401,7 +1499,17 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
                     handleStopSpeaking();
                     window.scrollTo({ top: 200, behavior: "smooth" });
                   }}
-                  className="px-3.5 py-2 rounded-xl border border-inherit/30 hover:bg-black/20 text-xs font-serif flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  className={`px-3.5 py-2 rounded-xl border text-xs font-serif flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors ${
+                    theme === "parchment" || theme === "ancient-calligraphy"
+                      ? "bg-[#faf2e3] hover:bg-[#ebdcc5] border-[#cbb391] text-[#3d240e]"
+                      : theme === "solar"
+                      ? "bg-[#fffbf0] hover:bg-[#fde68a] border-[#fcd34d] text-[#78350f]"
+                      : theme === "ethereal"
+                      ? "bg-[#0c1836] hover:bg-[#132552] border-[#1e3a8a] text-[#e0f2fe]"
+                      : theme === "cyber-tech"
+                      ? "bg-[#09221d] hover:bg-[#0e352d] border-[#065f46] text-[#ecfdf5]"
+                      : "bg-[#1f1812] hover:bg-[#2a2119] border-amber-800/50 text-amber-200"
+                  }`}
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Προηγούμενο Κεφάλαιο</span>
@@ -1421,7 +1529,17 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
                     handleStopSpeaking();
                     window.scrollTo({ top: 200, behavior: "smooth" });
                   }}
-                  className="px-3.5 py-2 rounded-xl border border-inherit/30 hover:bg-black/20 text-xs font-serif flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  className={`px-3.5 py-2 rounded-xl border text-xs font-serif flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors ${
+                    theme === "parchment" || theme === "ancient-calligraphy"
+                      ? "bg-[#faf2e3] hover:bg-[#ebdcc5] border-[#cbb391] text-[#3d240e]"
+                      : theme === "solar"
+                      ? "bg-[#fffbf0] hover:bg-[#fde68a] border-[#fcd34d] text-[#78350f]"
+                      : theme === "ethereal"
+                      ? "bg-[#0c1836] hover:bg-[#132552] border-[#1e3a8a] text-[#e0f2fe]"
+                      : theme === "cyber-tech"
+                      ? "bg-[#09221d] hover:bg-[#0e352d] border-[#065f46] text-[#ecfdf5]"
+                      : "bg-[#1f1812] hover:bg-[#2a2119] border-amber-800/50 text-amber-200"
+                  }`}
                 >
                   <span>Επόμενο Κεφάλαιο</span>
                   <ChevronRight className="w-4 h-4" />
@@ -1554,6 +1672,11 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
                   ))}
                 </div>
 
+                {/* Cadmus Sacred Consonants Parchment Box for Chapter 6 */}
+                {ch.id === "chapter-6" && (
+                  <CadmusSacredParchmentBox theme={theme} />
+                )}
+
                 {ch.keyTerms && ch.keyTerms.length > 0 && (
                   <div
                     className={`p-5 rounded-2xl border space-y-3 ${
@@ -1578,21 +1701,21 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
                           key={kt.term}
                           className={`p-3 rounded-xl border flex flex-col justify-between gap-1.5 ${
                             theme === "parchment" || theme === "ancient-calligraphy"
-                              ? "bg-white border-[#d2be9f]"
+                              ? "bg-[#faf2e3] border-[#d2be9f] text-[#3d240e]"
                               : theme === "solar"
-                              ? "bg-white border-[#fde68a]"
+                              ? "bg-[#fffbf0] border-[#fde68a] text-[#78350f]"
                               : theme === "ethereal"
-                              ? "bg-[#070e22] border-[#1e3a8a]"
+                              ? "bg-[#070e22] border-[#1e3a8a] text-[#e0f2fe]"
                               : theme === "cyber-tech"
-                              ? "bg-[#061814] border-[#065f46]"
-                              : "bg-[#1f1812] border-amber-800/50"
+                              ? "bg-[#061814] border-[#065f46] text-[#ecfdf5]"
+                              : "bg-[#1f1812] border-amber-800/50 text-[#f5ecd8]"
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-sm font-serif tracking-wider text-amber-400">
                               {kt.term}
                             </span>
-                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-black/20 border border-inherit/20 text-amber-300">
+                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-black/20 border border-amber-700/30 text-amber-300">
                               = {kt.value.toLocaleString("el-GR")}
                             </span>
                           </div>
