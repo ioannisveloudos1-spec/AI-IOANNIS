@@ -51,6 +51,7 @@ import {
   exportAllGrammatariDatabaseToExcel,
 } from "../utils/grammatariExport";
 import { SacredHarmonicsCard } from "./SacredHarmonicsCard";
+import { CadmusAlphabetModal } from "./CadmusAlphabetModal";
 
 interface GrammatariTabProps {
   onSaveItem?: (item: Omit<SavedIsopsephyItem, "id" | "createdAt">) => void;
@@ -99,6 +100,7 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
   const [dbSearch, setDbSearch] = useState<string>("");
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
+  const [showCadmusModal, setShowCadmusModal] = useState<boolean>(false);
 
   // Load database on mount
   useEffect(() => {
@@ -384,30 +386,30 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
           </div>
         </div>
 
-        {/* View Tabs Selector */}
-        <div className="flex items-center gap-2 mt-5 pt-4 border-t border-[#2d2014]">
+        {/* View Tabs Selector with clean flex-wrap on mobile */}
+        <div className="flex items-center flex-wrap gap-2 mt-5 pt-4 border-t border-[#2d2014]">
           <button
             onClick={() => setActiveView("solver")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-serif font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-serif font-bold transition-all cursor-pointer ${
               activeView === "solver"
                 ? "bg-[#ffd700] text-black shadow-md shadow-[#ffd700]/20"
                 : "bg-[#140e0a] text-[#c9baa6] hover:text-[#ffd700] border border-[#2d2014]"
             }`}
           >
-            <SpellCheck className="w-4 h-4" />
-            Εύρεση & Ανάλυση Λέξεων
+            <SpellCheck className="w-4 h-4 shrink-0" />
+            <span>Εύρεση &amp; Ανάλυση</span>
           </button>
 
           <button
             onClick={() => setActiveView("database")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-serif font-bold transition-all cursor-pointer relative ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-serif font-bold transition-all cursor-pointer relative ${
               activeView === "database"
                 ? "bg-[#ffd700] text-black shadow-md shadow-[#ffd700]/20"
                 : "bg-[#140e0a] text-[#c9baa6] hover:text-[#ffd700] border border-[#2d2014]"
             }`}
           >
-            <Database className="w-4 h-4" />
-            Βάση Δεδομένων Γραμματάρι
+            <Database className="w-4 h-4 shrink-0" />
+            <span>Βάση Δεδομένων</span>
             {dbRecords.length > 0 && (
               <span
                 className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
@@ -419,6 +421,15 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
                 {dbRecords.length}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => setShowCadmusModal(true)}
+            className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-serif font-bold transition-all cursor-pointer bg-gradient-to-r from-[#8a5d1b] via-[#c89b3c] to-[#dbaa45] text-black hover:brightness-110 shadow-md shadow-[#c89b3c]/20 sm:ml-auto"
+            title="Ανακαλύψτε τα 16 Αρχέγονα Γράμματα του Κάδμου, το Ηλιακό Ι (1111), την Ακτίνα Διός (666) και την Ηλιακή Προσευχή"
+          >
+            <Scroll className="w-4 h-4 shrink-0" />
+            <span>16 Γράμματα Κάδμου &amp; Ηλιακή Προσευχή</span>
           </button>
         </div>
       </div>
@@ -1370,6 +1381,14 @@ export const GrammatariTab: React.FC<GrammatariTabProps> = ({
           </div>
         </div>
       )}
+
+      {/* Cadmus 16 Letters & Solar Prayer Modal */}
+      <CadmusAlphabetModal
+        isOpen={showCadmusModal}
+        onClose={() => setShowCadmusModal(false)}
+        onSaveItem={onSaveItem}
+        onOpenAiModal={onOpenAiModal}
+      />
     </div>
   );
 };

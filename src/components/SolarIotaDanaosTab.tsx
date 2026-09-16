@@ -264,7 +264,7 @@ export const SolarIotaDanaosTab: React.FC<SolarIotaDanaosTabProps> = ({
     },
     {
       id: "core-persephone",
-      number: "ΣΤ´",
+      number: "Ϛ´",
       badge: "ΠΥΡΗΝΑΣ (6000°C) ➔ ΗΛΙΟΣ",
       title: "Ο Ήλιος στον Πυρήνα της Γης & η Περσεφόνη",
       shortDesc: "«Η Γη είναι ένας Ήλιος που κυοφορείται»: Η άνοδος της ηλιακής ουσίας διαμέσου των γαιωδών στρωμάτων",

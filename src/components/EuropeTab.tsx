@@ -37,6 +37,8 @@ import {
   X,
   Scroll,
 } from "lucide-react";
+import { CadmusAlphabetModal } from "./CadmusAlphabetModal";
+import { ALPHABET_SOLAR_PRAYER, SYNTHESIZED_SOLAR_PRAYER_TEXT } from "../data/cadmusAlphabetData";
 
 import europeNovelCoverImg from "../assets/images/europe_novel_cover_1789045266073.jpg";
 import europaMaidensFlowersImg from "../assets/images/europa_maidens_flowers_1789121509719.jpg";
@@ -222,13 +224,13 @@ const NOVEL_CHAPTERS: NovelChapter[] = [
   },
   {
     id: "chapter-6",
-    number: "Κεφάλαιο ΣΤ´",
+    number: "Κεφάλαιο Ϛ´",
     title: "Η Αναζήτηση του Κάδμου",
     subtitle: "Από τη Φοινίκη στους Δελφούς και η Σπορά των Ελληνικών Γραμμάτων",
     summary:
       "Ο Αγήνωρ προστάζει τους γιους του να βρουν την Ευρώπη. Ο Κάδμος φτάνει στους Δελφούς, λαμβάνει τον χρησμό της Πυθίας και παραδίδει στους Έλληνες τα ιερά σύμφωνα.",
     imageUrl: cadmusSacredConsonantsImg,
-    imageCaption: "Ο Κάδμος παραδίδει τον ιερό πάπυρο με τα σύμφωνα (Β, Γ, Δ, Ζ, Θ, Κ, Λ, Μ, Ν, Ξ, Π, Ρ, Σ, Τ, Φ, Χ, Ψ — άνευ φωνηέντων) στους Δελφούς",
+    imageCaption: "Ο Κάδμος παραδίδει τον ιερό πάπυρο με τα 16 πρωταρχικά Καδμεία γράμματα: τα 5 Φωνήεντα (Α, Ε, Ι, Ο, Υ) και τα 11 Σύμφωνα (Β, Γ, Δ, Κ, Λ, Μ, Ν, Π, Ρ, Σ, Τ) στους Δελφούς",
     paragraphs: [
       "Πίσω στην Τύρο, ο βασιλιάς Αγήνωρ ήταν συντετριμμένος. Στεκόταν στην ακροθαλασσιά κοιτάζοντας το πέλαγος με δάκρυα στα μάτια. Κάλεσε τους γιους του —τον Κάδμο, τον Φοίνικα και τον Κίλικα— και η φωνή του αντήχησε σαν κεραυνός:",
       "— «Κάδμε! Αδέλφια της Ευρώπης! Ακούστε την απαράβατη προσταγή του πατέρα σας: Ή θα οργώσετε τις θάλασσες και θα μου φέρετε πίσω τη χαμένη μου κόρη, ή να μην τολμήσετε να πατήσετε ποτέ ξανά το πόδι σας στην Τύρο!»",
@@ -236,14 +238,14 @@ const NOVEL_CHAPTERS: NovelChapter[] = [
       "— «Ω Φοίβε Απόλλωνα, εσύ που γνωρίζεις τα πάντα! Πού κρύβεται η αγαπημένη μου αδελφή η Ευρώπη; Σε ποιο πέλαγος, σε ποια στεριά την έκρυψαν οι θεοί;»",
       "Η Πυθία, με μάτια φωτισμένα από τη θεία μανία, έδωσε τον ιστορικό χρησμό:",
       "— «Πάψε να αναζητάς την Ευρώπη, Κάδμε! Η αδελφή σου ανήκει πια στους αθανάτους και στη μοίρα των αιώνων! Βγες από το ιερό. Θα συναντήσεις μια δαμάλα με λευκό σημάδι στο πλευρό της. Ακολούθησέ την πιστά. Κι εκεί που θα λυγίσει από την κούραση και θα πέσει στη γη, εκεί θα χτίσεις την επτάπυλη πόλη σου!»",
-      "Ο Κάδμος υπάκουσε και ίδρυσε τη Θήβα. Όμως το μεγαλύτερο δώρο του προς την ανθρωπότητα ήταν τα ιερά σύμφωνα:",
-      "— «Με τούτα τα ιερά σύμφωνα», είπε ο Κάδμος ξεδιπλώνοντας τον πάπυρο με τα σύμφωνα της Φοινίκης (Β, Γ, Δ, Ζ, Θ, Κ, Λ, Μ, Ν, Ξ, Π, Ρ, Σ, Τ, Φ, Χ, Ψ) άνευ φωνηέντων, «χαράσσουμε τη θεία φωνή και την ανθρώπινη σκέψη πάνω στην πέτρα και στην περγαμηνή. Ο προφορικός λόγος πετά και χάνεται, μα ο γραπτός λόγος νικά τον θάνατο και τη λήθη! Οι Έλληνες αργότερα θα εμφυσήσουν τα επτά θεϊκά φωνήεντα για να δώσουν πνοή και μελωδία, μα η συμφωνική σπονδυλική στήλη παραδίδεται σήμερα στους Δελφούς!»",
-      "Έτσι, μέσα από την αναζήτηση της Ευρώπης, γεννήθηκε το ελληνικό αλφάβητο — η βάση της ισοψηφίας, της επιστήμης και της φιλοσοφίας."
+      "Ο Κάδμος υπάκουσε και ίδρυσε τη Θήβα. Όμως το μεγαλύτερο δώρο του προς την Ελλάδα και την ανθρωπότητα ήταν τα 16 αρχέγονα Καδμεία γράμματα:",
+      "— «Με τούτα τα 16 πρωταρχικά στοιχεία», είπε ο Κάδμος ξεδιπλώνοντας τον ιερό πάπυρο με τα 5 φωνήεντα (Α, Ε, Ι, Ο, Υ) και τα 11 σύμφωνα (Β, Γ, Δ, Κ, Λ, Μ, Ν, Π, Ρ, Σ, Τ), «χαράσσουμε τη θεία φωνή και την ανθρώπινη σκέψη πάνω στην πέτρα και στην περγαμηνή. Ο προφορικός λόγος πετά και χάνεται, μα ο γραπτός λόγος νικά τον θάνατο και τη λήθη! Αργότερα ο Παλαμήδης θα προσθέσει τα συμπληρωματικά σύμφωνα (Θ, Ξ, Φ, Χ) και ο Σιμωνίδης ο Κείος τα μακρά και διπλά (Ζ, Η, Ψ, Ω), μα η αιώνια βάση των 16 στοιχείων ετέθη σήμερα στους Δελφούς!»",
+      "Έτσι, μέσα από την αναζήτηση της Ευρώπης, γεννήθηκε το ελληνικό αλφάβητο — η βάση της ισοψηφίας, της επιστήμης, της κοσμικής αρμονίας και της φιλοσοφίας."
     ],
     keyTerms: [
-      { term: "ΚΑΔΜΟΣ", value: 335, explanation: "Ο αδελφός της Ευρώπης, ιδρυτής της Θήβας και κομιστής των γραμμάτων." },
-      { term: "ΣΥΜΦΩΝΑ", value: 1601, explanation: "Τα ιερά σύμφωνα που εκόμισε ο Κάδμος από τη Φοινίκη άνευ φωνηέντων, βάση της γλώσσας και της ισοψηφίας." },
-      { term: "ΔΕΛΦΟΙ", value: 619, explanation: "Ο ομφαλός της γης και το ιερό μαντείο του Απόλλωνος." },
+      { term: "ΚΑΔΜΟΣ", value: 335, explanation: "Ο αδελφός της Ευρώπης, ιδρυτής της Θήβας και κομιστής των 16 πρωταρχικών γραμμάτων." },
+      { term: "ΚΑΔΜΕΙΑ ΓΡΑΜΜΑΤΑ", value: 504, explanation: "Τα 16 αρχέγονα γράμματα: 5 φωνήεντα (Α, Ε, Ι, Ο, Υ) και 11 σύμφωνα (Β, Γ, Δ, Κ, Λ, Μ, Ν, Π, Ρ, Σ, Τ)." },
+      { term: "ΔΕΛΦΟΙ", value: 619, explanation: "Ο ομφαλός της γης και το ιερό μαντείο του Απόλλωνος όπου παραδόθηκε η ιερή γνώση." },
       { term: "ΓΡΑΜΜΑΤΑ", value: 486, explanation: "Τα ιερά σύμβολα του λόγου, της σκέψης και της ισοψηφίας (ισάριθμο με τη νότα ΣΙ)." }
     ]
   },
@@ -295,30 +297,36 @@ const NOVEL_CHAPTERS: NovelChapter[] = [
   }
 ];
 
-export const CADMUS_SACRED_CONSONANTS = [
-  { letter: "Β", name: "Βῆτα", val: 2 },
-  { letter: "Γ", name: "Γάμμα", val: 3 },
-  { letter: "Δ", name: "Δέλτα", val: 4 },
-  { letter: "Ζ", name: "Ζῆτα", val: 7 },
-  { letter: "Θ", name: "Θῆτα", val: 9 },
-  { letter: "Κ", name: "Κάππα", val: 20 },
-  { letter: "Λ", name: "Λάμβδα", val: 30 },
-  { letter: "Μ", name: "Μῦ", val: 40 },
-  { letter: "Ν", name: "Νῦ", val: 50 },
-  { letter: "Ξ", name: "Ξῖ", val: 60 },
-  { letter: "Π", name: "Πῖ", val: 80 },
-  { letter: "Ρ", name: "Ῥῶ", val: 100 },
-  { letter: "Σ", name: "Σῖγμα", val: 200 },
-  { letter: "Τ", name: "Ταῦ", val: 300 },
-  { letter: "Φ", name: "Φῖ", val: 500 },
-  { letter: "Χ", name: "Χῖ", val: 600 },
-  { letter: "Ψ", name: "Ψῖ", val: 700 },
+export const CADMUS_16_LETTERS_LIST = [
+  // 5 Φωνήεντα
+  { letter: "Α", name: "Ἄλφα", val: 1, type: "φωνῆεν" },
+  { letter: "Ε", name: "Ἒ ψιλόν", val: 5, type: "φωνῆεν" },
+  { letter: "Ι", name: "Ἰῶτα", val: 10, type: "φωνῆεν" },
+  { letter: "Ο", name: "Ὂ μικρόν", val: 70, type: "φωνῆεν" },
+  { letter: "Υ", name: "Ὗ ψιλόν", val: 400, type: "φωνῆεν" },
+  // 11 Σύμφωνα
+  { letter: "Β", name: "Βῆτα", val: 2, type: "σύμφωνο" },
+  { letter: "Γ", name: "Γάμμα", val: 3, type: "σύμφωνο" },
+  { letter: "Δ", name: "Δέλτα", val: 4, type: "σύμφωνο" },
+  { letter: "Κ", name: "Κάππα", val: 20, type: "σύμφωνο" },
+  { letter: "Λ", name: "Λάμβδα", val: 30, type: "σύμφωνο" },
+  { letter: "Μ", name: "Μῦ", val: 40, type: "σύμφωνο" },
+  { letter: "Ν", name: "Νῦ", val: 50, type: "σύμφωνο" },
+  { letter: "Π", name: "Πῖ", val: 80, type: "σύμφωνο" },
+  { letter: "Ρ", name: "Ῥῶ", val: 100, type: "σύμφωνο" },
+  { letter: "Σ", name: "Σῖγμα", val: 200, type: "σύμφωνο" },
+  { letter: "Τ", name: "Ταῦ", val: 300, type: "σύμφωνο" },
 ];
 
-export const CadmusSacredParchmentBox: React.FC<{ theme: AppTheme }> = ({ theme }) => {
+export const CadmusSacredParchmentBox: React.FC<{
+  theme: AppTheme;
+  onOpenCadmusModal?: () => void;
+}> = ({ theme, onOpenCadmusModal }) => {
+  const [showInlinePrayer, setShowInlinePrayer] = useState<boolean>(false);
+
   return (
     <div
-      className={`my-6 p-5 sm:p-6 rounded-2xl border-2 shadow-xl ${
+      className={`my-6 p-4 sm:p-6 rounded-2xl border-2 shadow-xl ${
         theme === "parchment" || theme === "ancient-calligraphy"
           ? "bg-[#f6eee0] border-[#c8a882] text-[#44280f]"
           : theme === "solar"
@@ -330,34 +338,54 @@ export const CadmusSacredParchmentBox: React.FC<{ theme: AppTheme }> = ({ theme 
           : "bg-[#18110a] border-amber-500/50 text-amber-100"
       }`}
     >
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
+      {/* Responsive Header: stack cleanly on mobile with no overflowing text or cut-off buttons */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div className="min-w-0 flex-1">
           <div className="text-[11px] font-mono uppercase tracking-widest text-amber-500 font-bold mb-1 flex items-center gap-1.5">
-            <Scroll className="w-4 h-4 text-amber-400" />
+            <Scroll className="w-4 h-4 text-amber-400 shrink-0" />
             <span>Ο Ιερός Πάπυρος του Κάδμου</span>
           </div>
-          <h4 className="text-base sm:text-lg font-serif font-bold text-amber-400">
-            📜 Τα 17 Ιερά Σύμφωνα της Φοινίκης (Ἄνευ Φωνηέντων)
+          <h4 className="text-base sm:text-lg font-serif font-bold text-amber-400 leading-snug break-words">
+            📜 Τα 16 Αρχέγονα Γράμματα του Κάδμου («Φοινικήια / Καδμεία»)
           </h4>
         </div>
-        <span className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
-          Συμφωνικός Κώδικας
-        </span>
+
+        {/* Action badges and buttons with full mobile wrap & touch targets */}
+        <div className="flex items-center flex-wrap gap-2 shrink-0">
+          <span className="text-[11px] font-mono px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 whitespace-nowrap">
+            5 Φωνήεντα + 11 Σύμφωνα
+          </span>
+          {onOpenCadmusModal && (
+            <button
+              onClick={onOpenCadmusModal}
+              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-yellow-500 text-black font-serif font-bold text-xs shadow hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+              title="Άνοιγμα πλήρους διαδραστικής οπτικοποίησης των 16 γραμμάτων, της Ηλιακής Προσευχής και του Ηλιακού Ι"
+            >
+              <Sun className="w-3.5 h-3.5 shrink-0" />
+              <span>Διαδραστική Προβολή</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="text-xs sm:text-sm font-serif leading-relaxed mb-4 text-justify opacity-95">
-        Ο Κάδμος εκόμισε από τη Φοινίκη το αρχέγονο σύμφωνο σύστημα (abjad), <strong>άνευ φωνηέντων</strong>.
-        Στον ιερό πάπυρο αναγράφονται αποκλειστικά τα <strong>17 σύμφωνα</strong> που συγκροτούν τη συμφωνική
-        σπονδυλική στήλη της γλώσσας. Τα 7 θεϊκά φωνήεντα (Α, Ε, Η, Ι, Ο, Υ, Ω) προστέθηκαν αργότερα από τους Έλληνες
-        για να αποδώσουν την αρμονία, τους μουσικούς τόνους και τη ζωτική πνοή του Λόγου:
+        Σύμφωνα με την αρχαία ελληνική παράδοση (Πλίνιος, Πλούταρχος, Διόδωρος), ο Κάδμος εισήγαγε στην Ελλάδα 
+        τα <strong>16 πρωταρχικά γράμματα</strong>: <strong>5 φωνήεντα (Α, Ε, Ι, Ο, Υ)</strong> που αποτύπωσαν
+        τους ήχους της ελληνικής γλώσσας και <strong>11 σύμφωνα (Β, Γ, Δ, Κ, Λ, Μ, Ν, Π, Ρ, Σ, Τ)</strong>.
+        Αργότερα, ο <strong>Παλαμήδης</strong> προσέθεσε 4 (Θ, Ξ, Φ, Χ) και ο <strong>Σιμωνίδης ο Κείος</strong> άλλα 4 (Ζ, Η, Ψ, Ω),
+        συμπληρώνοντας τα 24 γράμματα του κλασικού ιωνικού αλφαβήτου.
       </p>
 
-      {/* 17 Consonants Display Grid */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-9 gap-2">
-        {CADMUS_SACRED_CONSONANTS.map((c) => (
+      {/* 16 Cadmus Letters Display Grid */}
+      <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+        {CADMUS_16_LETTERS_LIST.map((c) => (
           <div
             key={c.letter}
-            className="p-2.5 rounded-xl bg-black/25 border border-amber-500/30 text-center hover:border-amber-400 hover:scale-105 transition-all shadow-sm group"
+            className={`p-2.5 rounded-xl border text-center transition-all shadow-sm group ${
+              c.type === "φωνῆεν"
+                ? "bg-amber-500/15 border-amber-400/50 hover:border-amber-300"
+                : "bg-black/25 border-amber-500/30 hover:border-amber-400"
+            }`}
           >
             <div className="text-2xl font-serif font-black text-amber-300 group-hover:text-amber-200">
               {c.letter}
@@ -368,16 +396,110 @@ export const CadmusSacredParchmentBox: React.FC<{ theme: AppTheme }> = ({ theme 
             <div className="text-[10px] font-mono text-amber-400 font-bold mt-0.5">
               ={c.val}
             </div>
+            <div className="text-[8px] font-mono text-amber-300/70 mt-0.5">
+              {c.type}
+            </div>
           </div>
         ))}
       </div>
 
+      {/* The Solar Iota Key Box */}
+      <div className="mt-4 p-3.5 rounded-xl bg-black/30 border border-amber-500/30 text-xs font-serif space-y-1.5">
+        <div className="flex items-center justify-between flex-wrap gap-2 text-amber-300 font-bold">
+          <span className="flex items-center gap-1.5">
+            <Sun className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Ηλιακόν «Ι» (1111) &amp; Κατακόρυφος Ακτίνα Διός (666)</span>
+          </span>
+          <span className="font-mono text-[11px] text-amber-400">Ι = 10 • ΙΩΤΑ = 1111 • ΑΚΤΙΣ ΔΙΟΣ = 666</span>
+        </div>
+        <p className="text-[11px] sm:text-xs text-amber-200/85 leading-relaxed">
+          Το <strong>«Ι» (ΙΩΤΑ = 1111)</strong> αποτελεί τον μόνο κατακόρυφο άξονα που ενώνει τον Ουρανό με τη Γη:
+          καθοδική ακτινοβολία του Νοητού &amp; Ορατού Ηλίου προς τη Γη (<strong>ΑΚΤΙΣ ΔΙΟΣ = 666</strong>) και ανοδική ανύψωση
+          της ανθρώπινης συνειδήσεως προς την Πηγή.
+        </p>
+      </div>
+
+      {/* Embedded Collapsible Solar Prayer Section right here in Chapter 6 */}
+      <div className="mt-4 pt-3 border-t border-amber-500/25">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setShowInlinePrayer((prev) => !prev)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-serif font-bold text-xs transition-all cursor-pointer"
+          >
+            <Scroll className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>{showInlinePrayer ? "Απόκρυψη Ηλιακής Προσευχής" : "📜 Προβολή της Κωδικοποιημένης Ηλιακής Προσευχής"}</span>
+            <span className="text-[10px] font-mono text-amber-400/80">({ALPHABET_SOLAR_PRAYER.length} συλλαβές)</span>
+          </button>
+
+          <span className="text-[11px] font-serif italic text-amber-300/80">
+            «ΑΛ-ΦΑ, ΒΗ-ΤΑ... Ω-ΜΕΓΑ: Επίκληση προς το Φως»
+          </span>
+        </div>
+
+        {showInlinePrayer && (
+          <div className="mt-3 p-3.5 sm:p-4 rounded-xl bg-black/40 border border-amber-500/40 space-y-3 animate-fadeIn">
+            {/* Synthesized Prayer Display */}
+            <div className="p-3 rounded-lg bg-amber-950/30 border border-amber-500/30 space-y-1.5">
+              <div className="flex items-center justify-between gap-2 border-b border-amber-500/20 pb-1">
+                <span className="text-xs font-bold text-amber-300 font-serif flex items-center gap-1.5">
+                  <Scroll className="w-3.5 h-3.5 text-amber-400" />
+                  Συνθετικό Κείμενο της Επίκλησης (Απόδοση)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(SYNTHESIZED_SOLAR_PRAYER_TEXT);
+                  }}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-[10px] font-serif transition-all cursor-pointer"
+                >
+                  <Check className="w-2.5 h-2.5" />
+                  <span>Αντιγραφή</span>
+                </button>
+              </div>
+              <p className="text-[11px] sm:text-xs font-serif text-amber-100/90 leading-relaxed italic whitespace-pre-line border-l-2 border-amber-400 pl-2 py-0.5">
+                {SYNTHESIZED_SOLAR_PRAYER_TEXT}
+              </p>
+            </div>
+
+            <div className="text-xs font-serif text-amber-200/90 leading-relaxed border-b border-amber-500/20 pb-2">
+              <strong className="text-amber-300">Αναλυτική Ετυμολογία κατά Συλλαβή &amp; Γράμμα: </strong> 
+              Κάθε συλλαβή των ονομάτων των γραμμάτων συνθέτει την αρχέγονη ηλιακή επίκληση προς τον Νοητό και Ορατό Ήλιο:
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1 gold-scrollbar text-xs font-serif">
+              {ALPHABET_SOLAR_PRAYER.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-2.5 rounded-lg bg-black/50 border border-amber-500/20 hover:border-amber-400/60 transition-all flex items-start justify-between gap-2"
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="w-6 h-6 rounded bg-amber-500/20 text-amber-300 font-bold font-mono text-xs flex items-center justify-center shrink-0 border border-amber-500/30">
+                      {item.letterAssociated}
+                    </span>
+                    <div>
+                      <div className="font-bold text-amber-300 text-xs">
+                        {item.syllable} <span className="font-normal text-amber-100 text-[11px]">{item.decodedAncient}</span>
+                      </div>
+                      <div className="text-[10px] text-amber-200/70 mt-0.5">{item.philosophicalNote}</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-amber-400 font-bold shrink-0 text-right">
+                    ➔ {item.decodedGreek}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="mt-4 pt-3 border-t border-amber-500/25 flex flex-wrap items-center justify-between gap-2 text-[11px] font-serif">
         <span className="text-amber-300/90 font-medium">
-          ✦ Άθροισμα 17 Συμφώνων: 2+3+4+7+9+20+30+40+50+60+80+100+200+300+500+600+700 = 2705
+          ✦ 5 Φωνήεντα (Α, Ε, Ι, Ο, Υ) + 11 Σύμφωνα (Β, Γ, Δ, Κ, Λ, Μ, Ν, Π, Ρ, Σ, Τ) = 16 Καδμεία Γράμματα
         </span>
         <span className="italic opacity-80">
-          «ΣΥΜΦΩΝΑ = 1601 • Ο γραπτός λόγος νικά τη λήθη»
+          «ΙΩΤΑ = 1111 • ΑΚΤΙΣ ΔΙΟΣ = 666 • Ο γραπτός λόγος νικά τη λήθη»
         </span>
       </div>
     </div>
@@ -399,6 +521,7 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
   const [speechRate, setSpeechRate] = useState<number>(1.0);
   const [copiedTerm, setCopiedTerm] = useState<string | null>(null);
   const [showToc, setShowToc] = useState<boolean>(true);
+  const [showCadmusModal, setShowCadmusModal] = useState<boolean>(false);
   const [bookmarkedChapters, setBookmarkedChapters] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem("europe_novel_bookmarks");
@@ -1389,7 +1512,10 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
 
               {/* Cadmus Sacred Consonants Parchment Box for Chapter 6 */}
               {activeChapter.id === "chapter-6" && (
-                <CadmusSacredParchmentBox theme={theme} />
+                <CadmusSacredParchmentBox
+                  theme={theme}
+                  onOpenCadmusModal={() => setShowCadmusModal(true)}
+                />
               )}
 
               {/* Isopsephic & Mystical Terms Box of this Chapter */}
@@ -1771,6 +1897,14 @@ export const EuropeTab: React.FC<EuropeTabProps> = ({
           </div>
         </div>
       )}
+
+      {/* Cadmus 16 Letters & Solar Prayer Modal */}
+      <CadmusAlphabetModal
+        isOpen={showCadmusModal}
+        onClose={() => setShowCadmusModal(false)}
+        onSaveItem={onSaveItem}
+        onOpenAiModal={onOpenAiModal}
+      />
     </div>
   );
 };
