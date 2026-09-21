@@ -960,6 +960,24 @@ export const SearchTab: React.FC<SearchTabProps> = ({
               <button
                 type="button"
                 onClick={() => {
+                  const p = PRESET_TEXTS.find((x) => x.id === "agrilia-therasia-sirius-24");
+                  if (p) {
+                    setSelectedPresetId(p.id);
+                    setInputText(p.text);
+                    if (p.suggestedTargets && p.suggestedTargets.length > 0) {
+                      setSingleWordTarget(p.suggestedTargets[0].toString());
+                      setPhraseTarget(p.suggestedTargets[0].toString());
+                    }
+                  }
+                }}
+                className="px-2.5 py-0.5 rounded bg-[#2e2412] hover:bg-[#45361b] border border-amber-400/60 text-amber-200 text-[11px] font-serif font-bold cursor-pointer transition-colors shadow-sm ring-1 ring-amber-500/30"
+                title="Φόρτωση: Στις Πλαγιές της Θηρασιάς: Η Αγριλιά, ο Σείριος, η Δήλος & ο Αριθμός 24"
+              >
+                🌿 Αγριλιά Θηρασιάς (24)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   const p = PRESET_TEXTS.find((x) => x.id === "pythagoras-chrysa-epi-71");
                   if (p) {
                     setSelectedPresetId(p.id);

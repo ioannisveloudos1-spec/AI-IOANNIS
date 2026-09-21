@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="goldGrad192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff2a8"/>
+      <stop offset="50%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#c89b3c"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="#0f0e0c"/>
+  <circle cx="96" cy="96" r="82" fill="none" stroke="#c89b3c" stroke-width="3"/>
+  <text x="96" y="125" font-family="Cinzel, Georgia, serif" font-size="95" font-weight="bold" fill="url(#goldGrad192)" text-anchor="middle">Ω</text>
+</svg>
