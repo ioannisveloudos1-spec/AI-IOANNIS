@@ -1165,3 +1165,25 @@ body {
   animation: badgeGlowPulse 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Print & Export Rules: prevent truncation and unwanted page splits */
+@media print {
+  .export-report-modal,
+  #printable-report-content,
+  #printable-report-content > div,
+  #printable-report-content table,
+  #printable-report-content tr,
+  #printable-report-content td,
+  #printable-report-content th,
+  .print-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+.export-report-modal,
+.avoid-break-inside {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+

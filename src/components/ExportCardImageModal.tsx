@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-import { toPng, toBlob } from "html-to-image";
+import { toPng, toJpeg, toBlob } from "html-to-image";
+import jsPDF from "jspdf";
 import {
   Download,
   Copy,
@@ -14,6 +15,7 @@ import {
   Eye,
   Settings,
   RefreshCw,
+  FileText,
 } from "lucide-react";
 import { NumberingSystem } from "../types";
 
@@ -87,12 +89,77 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
     day: "numeric",
   });
 
-  const getCleanFileName = () => {
+  const getCleanFileName = (ext: "png" | "jpg" | "pdf" = "png") => {
     const cleanExpr = expression
       .trim()
       .replace(/[^a-zA-Z0-9α-ωΑ-Ωά-ώΆ-Ώ]/g, "_")
       .slice(0, 24);
-    return `isopsephy-${cleanExpr || "card"}-${totalValue}.png`;
+    return `isopsephy-${cleanExpr || "card"}-${totalValue}.${ext}`;
+  };
+
+  // Card Aspect Ratio dimension styling & pixel dimensions for crisp capture
+  const getAspectConfig = () => {
+    switch (aspect) {
+      case "landscape":
+        return {
+          containerClass: "w-full max-w-[680px] aspect-[1.91/1]",
+          exportWidth: 1200,
+          exportHeight: 628,
+        };
+      case "story":
+        return {
+          containerClass: "w-full max-w-[420px] aspect-[9/16]",
+          exportWidth: 1080,
+          exportHeight: 1920,
+        };
+      case "square":
+        return {
+          containerClass: "w-full max-w-[560px] aspect-square",
+          exportWidth: 1080,
+          exportHeight: 1080,
+        };
+      case "auto":
+      default:
+        return {
+          containerClass: "w-full max-w-[580px]",
+          exportWidth: 1200,
+          exportHeight: 800,
+        };
+    }
+  };
+
+  const getAspectContainerClass = () => {
+    return getAspectConfig().containerClass;
+  };
+
+  const getCaptureOptions = (node: HTMLElement) => {
+    const config = getAspectConfig();
+    const targetW = config.exportWidth;
+    const targetH = config.exportHeight;
+    const currentW = node.offsetWidth || 560;
+    const scale = targetW / currentW;
+
+    return {
+      cacheBust: true,
+      pixelRatio: 1,
+      width: targetW,
+      height: targetH,
+      filter: (domNode: HTMLElement) => {
+        // Exclude unwanted overlays if any
+        return !domNode.classList?.contains?.("print-exclude");
+      },
+      style: {
+        transform: `scale(${scale})`,
+        transformOrigin: "top left",
+        margin: "0",
+        maxWidth: "none",
+        maxHeight: "none",
+        width: `${currentW}px`,
+        height: `${targetH / scale}px`,
+        boxSizing: "border-box",
+        wordBreak: "break-word",
+      },
+    };
   };
 
   const handleDownloadPng = async () => {
@@ -100,13 +167,10 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
     setIsExporting(true);
     setErrorMessage("");
     try {
-      const dataUrl = await toPng(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        quality: 1,
-      });
+      const options = getCaptureOptions(cardRef.current);
+      const dataUrl = await toPng(cardRef.current, options);
       const link = document.createElement("a");
-      link.download = getCleanFileName();
+      link.download = getCleanFileName("png");
       link.href = dataUrl;
       link.click();
       setDownloadSuccess(true);
@@ -119,16 +183,84 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
     }
   };
 
+  const handleDownloadJpg = async () => {
+    if (!cardRef.current) return;
+    setIsExporting(true);
+    setErrorMessage("");
+    try {
+      const options = {
+        ...getCaptureOptions(cardRef.current),
+        quality: 0.95,
+      };
+      const dataUrl = await toJpeg(cardRef.current, options);
+      const link = document.createElement("a");
+      link.download = getCleanFileName("jpg");
+      link.href = dataUrl;
+      link.click();
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 2500);
+    } catch (err) {
+      console.error("JPG export error:", err);
+      setErrorMessage("Παρουσιάστηκε σφάλμα κατά τη δημιουργία της εικόνας JPG.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!cardRef.current) return;
+    setIsExporting(true);
+    setErrorMessage("");
+    try {
+      const config = getAspectConfig();
+      const options = getCaptureOptions(cardRef.current);
+      const dataUrl = await toPng(cardRef.current, options);
+
+      // Create PDF matching card orientation
+      const isLandscape = config.exportWidth > config.exportHeight;
+      const pdf = new jsPDF({
+        orientation: isLandscape ? "landscape" : "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const maxW = pageWidth - margin * 2;
+      const maxH = pageHeight - margin * 2;
+
+      const imgAspect = config.exportWidth / config.exportHeight;
+      let renderW = maxW;
+      let renderH = maxW / imgAspect;
+
+      if (renderH > maxH) {
+        renderH = maxH;
+        renderW = maxH * imgAspect;
+      }
+
+      const posX = (pageWidth - renderW) / 2;
+      const posY = (pageHeight - renderH) / 2;
+
+      pdf.addImage(dataUrl, "PNG", posX, posY, renderW, renderH, undefined, "FAST");
+      pdf.save(getCleanFileName("pdf"));
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 2500);
+    } catch (err) {
+      console.error("PDF export error:", err);
+      setErrorMessage("Παρουσιάστηκε σφάλμα κατά τη δημιουργία του εγγράφου PDF.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleCopyImage = async () => {
     if (!cardRef.current) return;
     setIsExporting(true);
     setErrorMessage("");
     try {
-      const blob = await toBlob(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        quality: 1,
-      });
+      const options = getCaptureOptions(cardRef.current);
+      const blob = await toBlob(cardRef.current, options);
       if (!blob) throw new Error("Could not create blob");
 
       if (navigator.clipboard && typeof ClipboardItem !== "undefined") {
@@ -163,11 +295,8 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
     setIsExporting(true);
     setErrorMessage("");
     try {
-      const blob = await toBlob(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        quality: 1,
-      });
+      const options = getCaptureOptions(cardRef.current);
+      const blob = await toBlob(cardRef.current, options);
       if (!blob) throw new Error("Could not create blob");
 
       const file = new File([blob], getCleanFileName(), { type: "image/png" });
@@ -193,21 +322,6 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
       }
     } finally {
       setIsExporting(false);
-    }
-  };
-
-  // Card Aspect Ratio dimension styling
-  const getAspectContainerClass = () => {
-    switch (aspect) {
-      case "square":
-        return "w-full max-w-[500px] aspect-square";
-      case "story":
-        return "w-full max-w-[420px] aspect-[9/16]";
-      case "landscape":
-        return "w-full max-w-[620px] aspect-[1.91/1]";
-      case "auto":
-      default:
-        return "w-full max-w-[560px] min-h-[380px]";
     }
   };
 
@@ -273,31 +387,31 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
   const tStyles = getThemeStyles();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fadeIn overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-5 bg-black/85 backdrop-blur-md animate-fadeIn overflow-y-auto" style={{ zIndex: 100 }}>
       <div className="relative w-full max-w-4xl bg-[#14110e] border border-[#3e3223] rounded-2xl shadow-2xl shadow-black/80 flex flex-col max-h-[92vh] overflow-hidden my-auto">
         
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[#2d2419] flex items-center justify-between bg-[#191511] shrink-0">
+        <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#2d2419] flex items-center justify-between bg-[#191511] shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-[#292015] border border-[#523e25] text-[#e6c670]">
               <ImageIcon className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
+              <h2 className="text-sm sm:text-lg font-serif font-bold text-[#f5ecd8] flex items-center gap-2">
                 <span>Εξαγωγή Κάρτας ως Εικόνα (PNG)</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#2e2316] text-[#ffd700] border border-[#4d3a22]">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#2e2316] text-[#ffd700] border border-[#4d3a22] hidden sm:inline-block">
                   Social Media Ready
                 </span>
               </h2>
-              <p className="text-xs text-[#a69680]">
-                Δημιουργήστε κάρτα υψηλής ανάλυσης για εύκολη κοινοποίηση σε Instagram, X, Facebook, Viber & WhatsApp.
+              <p className="text-[11px] sm:text-xs text-[#a69680]">
+                Δημιουργήστε κάρτα υψηλής ανάλυσης για εύκολη κοινοποίηση σε Instagram, X, Viber &amp; WhatsApp.
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#8c7e6c] hover:text-[#f5ecd8] hover:bg-[#251d16] transition-colors"
+            className="p-1.5 sm:p-2 rounded-lg text-[#8c7e6c] hover:text-[#f5ecd8] hover:bg-[#251d16] transition-colors cursor-pointer"
             title="Κλείσιμο"
           >
             <X className="w-5 h-5" />
@@ -468,13 +582,13 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
               </span>
             </div>
 
-            {/* Container where the rendered card lives */}
-            <div className="w-full bg-[#0b0a08] p-3 sm:p-4 rounded-2xl border border-[#2a2218] flex items-center justify-center overflow-hidden shadow-inner">
+            {/* Container where the rendered card lives with horizontal scroll allowance for small devices */}
+            <div className="w-full bg-[#0b0a08] p-2.5 sm:p-4 rounded-2xl border border-[#2a2218] flex items-center justify-center overflow-x-auto shadow-inner">
               
               {/* THE EXPORTABLE CARD NODE */}
               <div
                 ref={cardRef}
-                className={`${getAspectContainerClass()} ${tStyles.bg} ${tStyles.border} rounded-2xl p-6 sm:p-7 relative overflow-hidden flex flex-col justify-between shadow-2xl transition-all select-none`}
+                className={`${getAspectContainerClass()} ${tStyles.bg} ${tStyles.border} rounded-2xl p-5 sm:p-7 relative overflow-visible flex flex-col justify-between shadow-2xl transition-all select-none box-border`}
                 style={{
                   boxShadow: `0 20px 40px -15px ${tStyles.glowColor}`,
                 }}
@@ -507,13 +621,13 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
 
                 {/* Big Background Watermark Numeral */}
                 <div
-                  className={`absolute right-4 bottom-2 text-[120px] sm:text-[140px] font-serif font-black ${tStyles.watermarkText} pointer-events-none select-none leading-none`}
+                  className={`absolute right-4 bottom-2 text-[100px] sm:text-[130px] font-serif font-black ${tStyles.watermarkText} pointer-events-none select-none leading-none overflow-hidden`}
                 >
                   {greekNumeral || (isEnglish ? "G" : "Ω")}
                 </div>
 
                 {/* Top Card Header: App Branding & System */}
-                <div className="flex items-center justify-between gap-2 relative z-10 border-b pb-3 border-current/10">
+                <div className="flex items-center justify-between gap-2 relative z-10 border-b pb-2.5 border-current/10 shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm sm:text-base">🏛️</span>
                     <div>
@@ -534,25 +648,25 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
                 </div>
 
                 {/* Main Content Area */}
-                <div className="my-auto py-4 relative z-10 space-y-4">
+                <div className="my-auto py-3 relative z-10 space-y-3 sm:space-y-4">
                   
                   {/* Phrase / Word Display */}
                   <div>
-                    <div className={`text-[11px] font-mono uppercase tracking-widest ${tStyles.textSecondary}`}>
+                    <div className={`text-[10px] sm:text-[11px] font-mono uppercase tracking-widest ${tStyles.textSecondary}`}>
                       {isEnglish ? "Αγγλική Έκφραση (Ισοψηφία)" : "Ελληνική Έκφραση / Λέξη"}
                     </div>
                     <div
-                      className={`text-xl sm:text-3xl font-ancient-greek font-black tracking-wide ${tStyles.textPrimary} mt-0.5 break-words`}
+                      className={`text-lg sm:text-2xl lg:text-3xl font-ancient-greek font-black tracking-wide ${tStyles.textPrimary} mt-0.5 break-words leading-snug`}
                     >
                       «{expression.trim()}»
                     </div>
                   </div>
 
                   {/* Big Number & Numeral Hero Block */}
-                  <div className="flex flex-wrap items-baseline gap-4">
+                  <div className="flex flex-wrap items-baseline gap-3 sm:gap-4">
                     <div className="flex items-baseline gap-2">
                       <span
-                        className={`text-5xl sm:text-6xl font-serif font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r ${tStyles.numGrad} drop-shadow-sm`}
+                        className={`text-4xl sm:text-5xl lg:text-6xl font-serif font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r ${tStyles.numGrad} drop-shadow-sm leading-none`}
                       >
                         {totalValue.toLocaleString("el-GR")}
                       </span>
@@ -560,10 +674,10 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
 
                     {showGreekNumeral && greekNumeral && (
                       <div
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-xl border ${tStyles.badgeBg} shadow-sm`}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border ${tStyles.badgeBg} shadow-sm shrink-0`}
                       >
                         <span className="text-[10px] font-sans opacity-70">Ιωνικό:</span>
-                        <span className="text-base sm:text-lg font-serif font-bold tracking-wider">
+                        <span className="text-sm sm:text-base font-serif font-bold tracking-wider">
                           {greekNumeral}
                         </span>
                       </div>
@@ -574,7 +688,7 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
                   {showMathProps && (
                     <div className="flex flex-wrap items-center gap-1.5">
                       <div
-                        className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg border text-[11px] font-mono font-semibold ${tStyles.badgeBg}`}
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] sm:text-[11px] font-mono font-semibold ${tStyles.badgeBg}`}
                       >
                         <span className="opacity-70">Πυθμένας:</span>
                         <span className="font-bold">{mathProps.pythmen}</span>
@@ -603,7 +717,7 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
                   {/* Letter Breakdown Formula */}
                   {showLetterBreakdown && wordBreakdowns.length > 0 && (
                     <div
-                      className={`p-2.5 rounded-xl border ${tStyles.innerCard} text-[11px] font-mono space-y-1`}
+                      className={`p-2 sm:p-2.5 rounded-xl border ${tStyles.innerCard} text-[10px] sm:text-[11px] font-mono space-y-1`}
                     >
                       <div className={`text-[10px] font-serif font-bold uppercase tracking-wider ${tStyles.textSecondary}`}>
                         Ανάλυση Γραμμάτων & Αθροίσματος:
@@ -618,7 +732,7 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
                   )}
 
                   {stepsExplanation && (
-                    <div className={`text-[10px] font-mono ${tStyles.textSecondary} italic truncate`}>
+                    <div className={`text-[10px] font-mono ${tStyles.textSecondary} italic break-words`}>
                       {stepsExplanation}
                     </div>
                   )}
@@ -626,7 +740,7 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
 
                 {/* Bottom Card Footer: Watermark & Attribution */}
                 {showWatermark && (
-                  <div className="pt-2 border-t border-current/10 flex items-center justify-between text-[10px] font-serif relative z-10">
+                  <div className="pt-2 border-t border-current/10 flex items-center justify-between text-[10px] font-serif relative z-10 shrink-0">
                     <span className={`${tStyles.textSecondary} font-semibold flex items-center gap-1`}>
                       <span>✨</span>
                       <span>{researcherSignature || "Ελληνική Ισοψηφία & Λεξάριθμοι"}</span>
@@ -643,69 +757,98 @@ export const ExportCardImageModal: React.FC<ExportCardImageModalProps> = ({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="px-5 py-4 border-t border-[#2d2419] bg-[#191511] flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="text-xs text-[#8c7e6c] font-serif hidden sm:block">
-            Υψηλή πιστότητα (2x Resolution PNG) • Ιδανικό για αποθήκευση και αναρτήσεις
+        <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-[#2d2419] bg-[#191511] flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 pb-6 sm:pb-4">
+          <div className="text-xs text-[#8c7e6c] font-serif hidden lg:block">
+            Ακριβείς διαστάσεις ανά αναλογία ({getAspectConfig().exportWidth}×{getAspectConfig().exportHeight}px) • PNG, JPG & PDF
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            {/* Copy to Clipboard */}
-            <button
-              type="button"
-              onClick={handleCopyImage}
-              disabled={isExporting}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#251d15] hover:bg-[#34271c] border border-[#443625] text-xs font-serif text-[#d6c7b2] transition-all cursor-pointer disabled:opacity-50"
-              title="Αντιγραφή εικόνας στο Πρόχειρο"
-            >
-              {copiedSuccess ? (
-                <>
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-300 font-bold">Αντιγράφηκε!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4 text-[#c89b3c]" />
-                  <span>Αντιγραφή Εικόνας</span>
-                </>
-              )}
-            </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* Copy to Clipboard */}
+              <button
+                type="button"
+                onClick={handleCopyImage}
+                disabled={isExporting}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#251d15] hover:bg-[#34271c] border border-[#443625] text-xs font-serif text-[#d6c7b2] transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
+                title="Αντιγραφή εικόνας στο Πρόχειρο"
+              >
+                {copiedSuccess ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span className="text-emerald-300 font-bold">Αντιγράφηκε!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 text-[#c89b3c]" />
+                    <span>Αντιγραφή</span>
+                  </>
+                )}
+              </button>
 
-            {/* Native Share (Web Share API) */}
-            <button
-              type="button"
-              onClick={handleShareNative}
-              disabled={isExporting}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#282015] hover:bg-[#382b1c] border border-[#c89b3c]/40 text-xs font-serif text-[#e6c670] transition-all cursor-pointer disabled:opacity-50"
-              title="Κοινοποίηση σε εφαρμογές"
-            >
-              <Share2 className="w-4 h-4" />
-              <span>Κοινοποίηση</span>
-            </button>
+              {/* Native Share (Web Share API) */}
+              <button
+                type="button"
+                onClick={handleShareNative}
+                disabled={isExporting}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#282015] hover:bg-[#382b1c] border border-[#c89b3c]/40 text-xs font-serif text-[#e6c670] transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
+                title="Κοινοποίηση σε εφαρμογές"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Κοινοποίηση</span>
+              </button>
+            </div>
 
-            {/* Primary Download Button */}
-            <button
-              type="button"
-              onClick={handleDownloadPng}
-              disabled={isExporting}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#8a6825] via-[#c89b3c] to-[#dbaa42] hover:from-[#a0792c] hover:to-[#ebbb4e] text-[#120f0c] text-xs sm:text-sm font-bold font-serif shadow-lg shadow-[#c89b3c]/20 transition-all cursor-pointer disabled:opacity-50"
-            >
-              {isExporting ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-[#120f0c]" />
-                  <span>Δημιουργία PNG...</span>
-                </>
-              ) : downloadSuccess ? (
-                <>
-                  <Check className="w-4 h-4 text-emerald-950 font-black" />
-                  <span>Λήφθηκε Επιτυχώς!</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4 text-[#120f0c]" />
-                  <span>Λήψη Εικόνας (PNG)</span>
-                </>
-              )}
-            </button>
+            {/* Export Format Action Buttons: JPG, PDF, PNG */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* JPG Button */}
+              <button
+                type="button"
+                onClick={handleDownloadJpg}
+                disabled={isExporting}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#221c15] hover:bg-[#30261c] border border-[#d4af37]/40 text-[#f5ecd8] text-xs font-serif font-bold transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
+                title="Λήψη ως εικόνα JPG"
+              >
+                <Download className="w-3.5 h-3.5 text-[#c89b3c]" />
+                <span>JPG</span>
+              </button>
+
+              {/* PDF Button */}
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={isExporting}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#221c15] hover:bg-[#30261c] border border-[#d4af37]/40 text-[#f5ecd8] text-xs font-serif font-bold transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
+                title="Λήψη ως έγγραφο PDF A4"
+              >
+                <FileText className="w-3.5 h-3.5 text-[#c89b3c]" />
+                <span>PDF</span>
+              </button>
+
+              {/* Primary PNG Button */}
+              <button
+                type="button"
+                onClick={handleDownloadPng}
+                disabled={isExporting}
+                className="flex-2 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#8a6825] via-[#c89b3c] to-[#dbaa42] hover:from-[#a0792c] hover:to-[#ebbb4e] text-[#120f0c] text-xs sm:text-sm font-bold font-serif shadow-lg shadow-[#c89b3c]/20 transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
+              >
+                {isExporting ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin text-[#120f0c]" />
+                    <span>Εξαγωγή...</span>
+                  </>
+                ) : downloadSuccess ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-950 font-black" />
+                    <span>Επιτυχία!</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 text-[#120f0c]" />
+                    <span>PNG</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

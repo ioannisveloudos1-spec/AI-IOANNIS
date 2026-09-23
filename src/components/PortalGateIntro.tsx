@@ -162,49 +162,6 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
         onChange={handleFileSelect}
       />
 
-      {/* Top Floating Utility Controls */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 sm:top-4 sm:left-4 sm:right-4 z-30 flex items-center justify-between pointer-events-auto">
-        {/* Mobile / Desktop Upload Button */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading || isTransitioning}
-          className={`px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full border text-[11px] sm:text-xs font-serif tracking-wider transition-all flex items-center gap-1.5 backdrop-blur-md cursor-pointer ${
-            hasCustomAudio
-              ? "bg-black/70 border-[#c89b3c]/50 text-[#e6c670] hover:bg-black/90 hover:border-[#c89b3c]"
-              : "bg-[#251b11]/95 border-[#c89b3c] text-[#fff2be] shadow-[0_0_15px_rgba(200,155,60,0.5)] animate-pulse"
-          }`}
-          title="Επιλέξτε το δικό σας αρχείο MP3"
-        >
-          {isUploading ? (
-            <>
-              <div className="w-3 h-3 border-2 border-[#e6c670] border-t-transparent rounded-full animate-spin" />
-              <span>Αποθήκευση...</span>
-            </>
-          ) : uploadSuccess ? (
-            <>
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-300 font-bold">Αποθηκεύτηκε!</span>
-            </>
-          ) : (
-            <>
-              {hasCustomAudio ? <Music className="w-3.5 h-3.5 text-[#c89b3c]" /> : <Upload className="w-3.5 h-3.5 text-[#f0cf7e]" />}
-              <span>{hasCustomAudio ? "Αλλαγή MP3" : "🎵 Φόρτωση MP3"}</span>
-            </>
-          )}
-        </button>
-
-        {/* Skip / Direct Enter Button */}
-        <button
-          type="button"
-          onClick={triggerEntranceSequence}
-          className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full bg-black/70 hover:bg-black/90 border border-[#c89b3c]/40 text-[#e6c670] text-[11px] sm:text-xs font-serif tracking-wider transition-all cursor-pointer backdrop-blur-sm flex items-center gap-1.5"
-        >
-          <span>{isPlaying ? "Παράλειψη" : "Άμεση Είσοδος"}</span>
-          <FastForward className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-        </button>
-      </div>
-
       {/* Background Fullscreen Tunnel with Rock-Carved ΛΑΥΡΕΙΟΝ, Pillar Inscription ΙΑΝΕΥΣ and Dynamic Metamorphosis Zoom */}
       <div
         className={`absolute inset-0 w-full h-full flex items-center justify-center bg-black transition-all ${
@@ -298,12 +255,59 @@ export const PortalGateIntro: React.FC<PortalGateIntroProps> = ({ onEnter }) => 
 
       {!isPlaying && <div className="flex-1" />}
 
-      {/* Bottom Floating Area: Inscription & 3D Mechanical Button */}
+      {/* Interactive Controls Area: Carefully positioned above the bottom bar with safe padding */}
       <div
-        className={`relative z-10 w-full max-w-md mx-auto px-3.5 pb-4 sm:pb-8 pt-1 flex flex-col items-center gap-2.5 sm:gap-3.5 transition-all duration-700 ${
+        className={`relative z-10 w-full max-w-md mx-auto px-4 pb-8 sm:pb-12 pt-2 flex flex-col items-center gap-3 transition-all duration-700 ${
           isTransitioning ? "opacity-0 translate-y-8 pointer-events-none" : "opacity-100 translate-y-0"
         }`}
       >
+        {/* Utility Controls (MP3 & Direct Enter) Placed ABOVE the Monolith Stone
+            This ensures they never collide with the Android navigation / system bar at the bottom,
+            nor with the notification bar / notch at the top. */}
+        <div className="w-full max-w-[420px] sm:max-w-[460px] mx-auto flex items-center justify-between gap-3">
+          {/* Custom MP3 Upload Button */}
+          <button
+            id="btn-portal-mp3-upload"
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading || isTransitioning}
+            className={`px-3 py-1.5 rounded-full border text-[11px] sm:text-xs font-serif tracking-wider transition-all flex items-center gap-1.5 backdrop-blur-md cursor-pointer shadow-lg active:scale-95 ${
+              hasCustomAudio
+                ? "bg-black/85 border-[#c89b3c]/80 text-[#ffd700] hover:bg-black/95 hover:border-[#ffd700]"
+                : "bg-[#251b11]/90 border-[#c89b3c]/70 text-[#fff2be] hover:bg-[#342618]"
+            }`}
+            title="Επιλέξτε το δικό σας αρχείο MP3"
+          >
+            {isUploading ? (
+              <>
+                <div className="w-3 h-3 border-2 border-[#e6c670] border-t-transparent rounded-full animate-spin" />
+                <span>Αποθήκευση...</span>
+              </>
+            ) : uploadSuccess ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-emerald-300 font-bold">Αποθηκεύτηκε!</span>
+              </>
+            ) : (
+              <>
+                {hasCustomAudio ? <Music className="w-3.5 h-3.5 text-[#ffd700]" /> : <Upload className="w-3.5 h-3.5 text-[#f0cf7e]" />}
+                <span>{hasCustomAudio ? "Αλλαγή MP3" : "🎵 Φόρτωση MP3"}</span>
+              </>
+            )}
+          </button>
+
+          {/* Direct Enter / Skip Button */}
+          <button
+            id="btn-portal-direct-enter"
+            type="button"
+            onClick={triggerEntranceSequence}
+            className="px-3.5 py-1.5 rounded-full bg-black/85 hover:bg-black/95 border border-[#c89b3c]/70 hover:border-[#ffd700] text-[#ffd700] text-[11px] sm:text-xs font-serif tracking-wider transition-all cursor-pointer backdrop-blur-md flex items-center gap-1.5 shadow-lg active:scale-95"
+          >
+            <span>{isPlaying ? "Παράλειψη" : "Άμεση Είσοδος"}</span>
+            <FastForward className="w-3.5 h-3.5 text-[#ffd700]" />
+          </button>
+        </div>
+
         {/* Mystical Inscription */}
         {!isPlaying && (
           <p className="text-[11px] sm:text-xs md:text-sm font-serif italic text-[#f0cf7e] tracking-wide max-w-md leading-tight sm:leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,1)] px-2">
